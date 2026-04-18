@@ -48,6 +48,7 @@ lazy val jfx = Project(id = "scalajs-jfx2", base = file("library"))
     name := "scalajs-jfx2",
     moduleName := "scalajs-jfx2",
     Compile / doc / sources := Seq.empty,
+    libraryDependencies += "com.anjunar" %%% "scalajs-lexical" % "1.0.6",
     libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.8.1",
     libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.19" % Test
   )

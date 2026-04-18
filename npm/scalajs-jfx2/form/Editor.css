@@ -8,6 +8,204 @@
     height: auto;
 }
 
+.jfx-editor-host {
+    min-height: 220px;
+    display: block;
+    border: 1px solid var(--aj-line);
+    border-radius: var(--aj-radius-panel, 16px);
+    overflow: hidden;
+    background: var(--aj-surface-overlay, var(--aj-surface));
+}
+
+.jfx-editor-fallback,
+.jfx-editor-readonly {
+    min-height: 220px;
+    padding: 18px;
+    color: var(--aj-ink);
+    background: var(--aj-surface-overlay, var(--aj-surface));
+}
+
+.jfx-editor-fallback {
+    display: grid;
+    place-items: center;
+    color: var(--aj-ink-muted);
+}
+
+.jfx-editor-readonly {
+    display: grid;
+    gap: 12px;
+}
+
+.jfx-editor,
+.jfx-editor__shell {
+    min-height: inherit;
+    height: 100%;
+}
+
+.jfx-editor__shell {
+    display: grid;
+    grid-template-rows: auto 1fr;
+}
+
+.jfx-editor__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 10px;
+    padding: 10px;
+    border-bottom: 1px solid var(--aj-line-soft);
+    background: color-mix(in srgb, var(--aj-surface-muted) 72%, transparent);
+}
+
+.jfx-editor__toolbar-group {
+    display: grid;
+    gap: 5px;
+    align-content: start;
+}
+
+.jfx-editor__toolbar-group-label {
+    padding-left: 4px;
+    color: var(--aj-ink-faint);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.jfx-editor__toolbar-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.jfx-editor__toolbar-button {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px solid var(--aj-line);
+    border-radius: 999px;
+    padding: 0 12px;
+    color: var(--aj-ink);
+    background: var(--aj-surface-overlay);
+    cursor: pointer;
+    font: inherit;
+}
+
+.jfx-editor__toolbar-button:hover {
+    border-color: var(--aj-accent);
+    background: var(--aj-accent-muted);
+}
+
+.jfx-editor__toolbar-button.is-active,
+.jfx-editor__toolbar-button.active {
+    border-color: var(--aj-accent);
+    color: var(--aj-accent-strong);
+    background: color-mix(in srgb, var(--aj-accent-muted) 86%, transparent);
+}
+
+.jfx-editor__toolbar-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
+}
+
+.jfx-editor__toolbar-icon {
+    font-size: 18px;
+}
+
+.jfx-editor__surface-wrap {
+    position: relative;
+    min-height: 180px;
+}
+
+.jfx-editor__surface {
+    min-height: 180px;
+    height: 100%;
+    padding: 18px;
+    color: var(--aj-ink);
+    outline: none;
+}
+
+.jfx-editor__surface:focus {
+    box-shadow: inset var(--aj-shadow-focus);
+}
+
+.jfx-editor__placeholder {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    right: 18px;
+    pointer-events: none;
+    color: var(--aj-ink-muted);
+}
+
+.jfx-editor-readonly .lexical-paragraph,
+.jfx-editor-readonly .lexical-heading,
+.jfx-editor-readonly .lexical-quote {
+    margin: 0;
+}
+
+.jfx-editor-readonly .lexical-heading {
+    font-size: 1.35rem;
+    font-weight: 850;
+    letter-spacing: -0.04em;
+}
+
+.jfx-editor-readonly .lexical-quote {
+    border-left: 3px solid var(--aj-accent);
+    padding-left: 14px;
+    color: var(--aj-ink-soft);
+}
+
+.jfx-editor-readonly__placeholder {
+    margin: 0;
+    color: var(--aj-ink-muted);
+}
+
+.jfx-editor-code {
+    margin: 0;
+    border: 1px solid var(--aj-line-soft);
+    border-radius: var(--aj-radius-control, 12px);
+    padding: 14px;
+    overflow: auto;
+    color: var(--aj-ink);
+    background: color-mix(in srgb, var(--aj-surface-muted) 76%, transparent);
+    font-family: "Cascadia Code", "JetBrains Mono", "Fira Code", monospace;
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
+.jfx-editor-code__content {
+    white-space: pre;
+}
+
+.hljs-keyword {
+    color: var(--aj-accent-strong);
+    font-weight: 800;
+}
+
+.hljs-string {
+    color: var(--aj-warning);
+}
+
+.hljs-number {
+    color: var(--aj-info);
+}
+
+.hljs-comment {
+    color: var(--aj-ink-muted);
+    font-style: italic;
+}
+
+.hljs-tag,
+.hljs-name,
+.hljs-attr,
+.hljs-attribute {
+    color: var(--aj-accent-strong);
+}
+
 .editor .lexical-ribbon-wrapper {
     display: flex;
     flex-direction: column;

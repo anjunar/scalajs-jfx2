@@ -32,7 +32,16 @@ abstract class ClientOnlyComponent[E <: dom.Element](
       mountClient(element)
     }
 
-  private def renderFallback(
+  protected final def replaceServerFallback(
+    factory: Scope ?=> NodeComponent[? <: dom.Node]
+  ): Unit =
+    if (RenderBackend.current.isServer) {
+      clearChildren()
+      hostElement.clearChildren()
+      renderFallback(factory)
+    }
+
+  protected final def renderFallback(
     factory: Scope ?=> NodeComponent[? <: dom.Node]
   ): Unit =
     DslRuntime.currentScope { currentScope =>

@@ -3,9 +3,10 @@ package app
 import jfx.action.Button.*
 import jfx.browser.Browser
 import jfx.control.Link.*
-import jfx.core.component.ClientOnly.*
 import jfx.core.component.ElementComponent.*
 import jfx.core.state.{ListProperty, Property}
+import jfx.form.Editor.editor
+import jfx.form.editor.plugins.*
 import jfx.form.Input.*
 import jfx.hydration.Hydration
 import jfx.layout.Div.div
@@ -117,26 +118,12 @@ object Main {
             text = "Route /editor"
           }
 
-          clientOnly("RouteEditor")(
-            div {
-              classes = "jfx2-demo__client-fallback"
-              text = "SSR-Fallback: Route kann browser-only Komponenten enthalten."
-            }
-          ) {
-            div {
-              classes = "jfx2-demo__client-widget"
-
-              div {
-                classes = "jfx2-demo__client-widget-title"
-                text = "Editor-Route hydriert"
-              }
-
-              div {
-                classes = "jfx2-demo__client-widget-copy"
-                text = "Auch innerhalb einer Router-Page bleibt ClientOnly sauber vom SSR getrennt."
-              }
-            }
+          val routeEditor = editor("route-editor") {
+            defaultPlugins()
           }
+          routeEditor.classProperty += "jfx2-demo__lexical"
+          routeEditor.placeholder = "Route-Notiz schreiben..."
+          routeEditor.value = "Diese Lexical-Instanz wurde erst im Browser dynamisch geladen."
         }
       },
       Route.scoped("*") {
@@ -290,26 +277,12 @@ object Main {
             }
           }
 
-          clientOnly("DemoEditor")(
-            div {
-              classes = "jfx2-demo__client-fallback"
-              text = "SSR-Fallback: dieser Editor ist browser-only und wird erst nach Hydration aktiv."
-            }
-          ) {
-            div {
-              classes = "jfx2-demo__client-widget"
-
-              div {
-                classes = "jfx2-demo__client-widget-title"
-                text = "Client-only Editor Boundary"
-              }
-
-              div {
-                classes = "jfx2-demo__client-widget-copy"
-                text = "Stell dir hier Lexical vor: Der Client-Block wurde auf dem Server nicht ausgefuehrt, ersetzt den Fallback aber im Browser."
-              }
-            }
+          val demoEditor = editor("demo-editor") {
+            defaultPlugins()
           }
+          demoEditor.classProperty += "jfx2-demo__lexical"
+          demoEditor.placeholder = "Schreibe etwas in Lexical..."
+          demoEditor.value = "Das ist jetzt ein echter Lexical-Editor hinter einer ClientOnly-Boundary."
         }
 
         div {

@@ -5,6 +5,8 @@ import jfx.core.component.ClientOnly.*
 import jfx.core.component.ElementComponent.*
 import jfx.core.state.{ListProperty, Property}
 import jfx.control.Link.*
+import jfx.form.Editor.editor
+import jfx.form.editor.plugins.*
 import jfx.form.Input.*
 import jfx.layout.Div.div
 import jfx.router.Route
@@ -189,6 +191,40 @@ final class SsrSpec extends AnyFlatSpec with Matchers {
       }
 
     html.shouldBe("""<div><a href="/base/people/ada?tab=notes">Ada</a></div>""")
+  }
+
+  it should "render lexical editor fallback on the server" in {
+    val html =
+      Ssr.renderToString {
+        div {
+          val lexicalEditor = editor("body") {
+            defaultPlugins()
+          }
+          lexicalEditor.value = "Client-only value"
+        }
+      }
+
+    html.shouldBe(
+      """<div><div data-jfx-client-only="LexicalEditor" data-jfx-client-only-state="fallback" class="jfx-editor-host" data-jfx-control-name="body"><div class="jfx-editor-readonly"><p class="lexical-paragraph">Client-only value</p></div></div></div>"""
+    )
+  }
+
+  it should "render highlighted CodeMirror nodes in the editor SSR fallback" in {
+    val state =
+      """{"root":{"children":[{"type":"codemirror","code":"val answer = 42\n// ok","language":"scala","version":1}],"type":"root","version":1}}"""
+
+    val html =
+      Ssr.renderToString {
+        div {
+          val lexicalEditor = editor("body")
+          lexicalEditor.value = state
+        }
+      }
+
+    html.should(include("""<pre class="jfx-editor-code language-scala">"""))
+    html.should(include("""<span class="hljs-keyword">val</span>"""))
+    html.should(include("""<span class="hljs-number">42</span>"""))
+    html.should(include("""<span class="hljs-comment">// ok</span>"""))
   }
 
 }

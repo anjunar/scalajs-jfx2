@@ -26,12 +26,16 @@
     ".": {
       "import": "./index.js"
     },
+    "./lexical-client": {
+      "import": "./lexical-client.js"
+    },
     "./index.css": "./index.css",
     "./css": "./index.css",
     "./package.json": "./package.json"
   },
   "files": [
     "index.js",
+    "lexical-client.js",
     "index.css",
     "action",
     "control",
