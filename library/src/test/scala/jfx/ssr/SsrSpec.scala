@@ -6,11 +6,16 @@ import jfx.core.component.ElementComponent.*
 import jfx.core.state.{ListProperty, Property}
 import jfx.form.Input.*
 import jfx.layout.Div.div
+import jfx.router.Route
+import jfx.router.RouteContext.routeContext
+import jfx.router.Router.router
 import jfx.statement.Conditional.*
 import jfx.statement.ForEach.*
 import jfx.statement.ObserveRender.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
+import scala.scalajs.js
 
 final class SsrSpec extends AnyFlatSpec with Matchers {
 
@@ -136,6 +141,40 @@ final class SsrSpec extends AnyFlatSpec with Matchers {
       }
 
     html.shouldBe("<div><div>Hello Ada</div></div>")
+  }
+
+  it should "render router content through a native child slot" in {
+    val routes = js.Array(
+      Route.scoped("/") {
+        div {
+          text = "Home"
+        }
+      },
+      Route.scoped("/people/:name") {
+        val context = routeContext
+
+        div {
+          text = s"${context.pathParams("name")}:${context.queryParams("tab")}"
+        }
+      }
+    )
+
+    val html =
+      Ssr.renderToStringFor(Ssr.Request(path = "/people/ada?tab=notes")) {
+        div {
+          div {
+            text = "Before"
+          }
+
+          router(routes)
+
+          div {
+            text = "After"
+          }
+        }
+      }
+
+    html.shouldBe("<div><div>Before</div><div>ada:notes</div><div>After</div></div>")
   }
 
 }

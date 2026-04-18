@@ -357,6 +357,82 @@ html[data-theme="dark"] select {
     background: color-mix(in srgb, var(--aj-warning) 14%, transparent);
 }
 
+.jfx2-demo__router {
+    display: grid;
+    gap: 12px;
+    border-radius: 22px;
+    padding: 16px;
+    background:
+        radial-gradient(circle at top left, color-mix(in srgb, var(--aj-info) 14%, transparent), transparent 36%),
+        color-mix(in srgb, var(--aj-surface-overlay) 64%, transparent);
+}
+
+.jfx2-demo__route-page {
+    display: grid;
+    gap: 7px;
+    border: 1px solid color-mix(in srgb, var(--aj-info) 26%, var(--aj-line));
+    border-radius: 18px;
+    padding: 16px;
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--aj-surface-overlay) 84%, transparent), color-mix(in srgb, var(--aj-info) 8%, transparent));
+}
+
+.jfx2-demo__route-page.is-accent {
+    border-color: color-mix(in srgb, var(--aj-accent) 34%, var(--aj-line));
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--aj-accent) 13%, transparent), color-mix(in srgb, var(--aj-surface-overlay) 72%, transparent));
+}
+
+.jfx2-demo__route-page.is-editor {
+    border-style: dashed;
+}
+
+.jfx2-demo__route-page.is-missing {
+    border-color: color-mix(in srgb, var(--aj-danger) 36%, var(--aj-line));
+    background: color-mix(in srgb, var(--aj-danger) 8%, transparent);
+}
+
+.jfx2-demo__route-kicker {
+    color: var(--aj-ink-muted);
+    font-size: 0.76rem;
+    font-weight: 850;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.jfx2-demo__route-title {
+    color: var(--aj-ink);
+    font-size: 1.08rem;
+    font-weight: 850;
+    letter-spacing: -0.03em;
+}
+
+.jfx2-demo__route-copy {
+    color: var(--aj-ink-soft);
+    font-size: 0.95rem;
+}
+
+.jfx2-demo__route-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.jfx2-demo__route-button {
+    min-height: 38px;
+    border: 1px solid var(--aj-line);
+    border-radius: 999px;
+    padding: 0 13px;
+    color: var(--aj-ink);
+    background: var(--aj-surface-overlay);
+    cursor: pointer;
+}
+
+.jfx2-demo__route-button:hover {
+    border-color: var(--aj-accent);
+    background: var(--aj-accent-muted);
+}
+
 .jfx2-demo__milestones {
     display: grid;
     gap: 8px;
@@ -420,6 +496,14 @@ html[data-theme="dark"] select {
     }
 
     .jfx2-demo__button {
+        width: 100%;
+    }
+
+    .jfx2-demo__route-actions {
+        display: grid;
+    }
+
+    .jfx2-demo__route-button {
         width: 100%;
     }
 }

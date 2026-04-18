@@ -8,12 +8,16 @@ import jfx.core.state.{ListProperty, Property}
 import jfx.form.Input.*
 import jfx.hydration.Hydration
 import jfx.layout.Div.div
+import jfx.router.Route
+import jfx.router.RouteContext.routeContext
+import jfx.router.Router.router
 import jfx.ssr.Ssr
 import jfx.statement.Conditional.*
 import jfx.statement.ForEach.*
 import org.scalajs.dom
 import org.scalajs.dom.HTMLElement
 
+import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportTopLevel
 
 object Main {
@@ -54,6 +58,109 @@ object Main {
     milestones += "SSR rendert ohne Browser-DOM"
     milestones += "Hydration claimed bestehende Nodes"
     milestones += "Statements arbeiten ueber NativeComponent-Slots"
+    milestones += "Router ersetzt Pages ueber denselben Slot-Mechanismus"
+
+    val routes = js.Array(
+      Route.scoped("/") {
+        val context = routeContext
+
+        div {
+          classes = "jfx2-demo__route-page"
+
+          div {
+            classes = "jfx2-demo__route-kicker"
+            text = "Route /"
+          }
+
+          div {
+            classes = "jfx2-demo__route-title"
+            text = "Home aus dem NativeComponent-Router"
+          }
+
+          div {
+            classes = "jfx2-demo__route-copy"
+            text = s"Diese Page wurde fuer ${context.url} direkt in einen ChildSlot gerendert."
+          }
+        }
+      },
+      Route.scoped("/hello/:name") {
+        val context = routeContext
+        val routeName = context.pathParams("name")
+        val tab = context.queryParams.get("tab").getOrElse("overview")
+
+        div {
+          classes = "jfx2-demo__route-page is-accent"
+
+          div {
+            classes = "jfx2-demo__route-kicker"
+            text = s"Route ${context.fullPath}"
+          }
+
+          div {
+            classes = "jfx2-demo__route-title"
+            text = s"Hallo $routeName"
+          }
+
+          div {
+            classes = "jfx2-demo__route-copy"
+            text = s"Path-Param und Query sind im RouteContext angekommen. tab=$tab"
+          }
+        }
+      },
+      Route.scoped("/editor") {
+        div {
+          classes = "jfx2-demo__route-page is-editor"
+
+          div {
+            classes = "jfx2-demo__route-kicker"
+            text = "Route /editor"
+          }
+
+          clientOnly("RouteEditor")(
+            div {
+              classes = "jfx2-demo__client-fallback"
+              text = "SSR-Fallback: Route kann browser-only Komponenten enthalten."
+            }
+          ) {
+            div {
+              classes = "jfx2-demo__client-widget"
+
+              div {
+                classes = "jfx2-demo__client-widget-title"
+                text = "Editor-Route hydriert"
+              }
+
+              div {
+                classes = "jfx2-demo__client-widget-copy"
+                text = "Auch innerhalb einer Router-Page bleibt ClientOnly sauber vom SSR getrennt."
+              }
+            }
+          }
+        }
+      },
+      Route.scoped("*") {
+        val context = routeContext
+
+        div {
+          classes = "jfx2-demo__route-page is-missing"
+
+          div {
+            classes = "jfx2-demo__route-kicker"
+            text = "Wildcard"
+          }
+
+          div {
+            classes = "jfx2-demo__route-title"
+            text = "Route nicht gefunden"
+          }
+
+          div {
+            classes = "jfx2-demo__route-copy"
+            text = s"Kein Problem: ${context.path} landet im *-Fallback."
+          }
+        }
+      }
+    )
 
     div {
       classes = "jfx2-demo"
@@ -137,6 +244,42 @@ object Main {
               div {
                 classes = "jfx2-demo__slot-status is-odd"
                 text = "Conditional-Slot: ungerade Anzahl Klicks"
+              }
+            }
+          }
+
+          div {
+            classes = "jfx2-demo__router"
+
+            div {
+              classes = "jfx2-demo__label"
+              text = "Router"
+            }
+
+            val appRouter = router(routes)
+
+            div {
+              classes = "jfx2-demo__route-actions"
+
+              button("Home") {
+                classes = "jfx2-demo__route-button"
+                onClick { _ =>
+                  appRouter.navigate("/")
+                }
+              }
+
+              button("Hello Ada") {
+                classes = "jfx2-demo__route-button"
+                onClick { _ =>
+                  appRouter.navigate("/hello/ada?tab=notes")
+                }
+              }
+
+              button("Editor Route") {
+                classes = "jfx2-demo__route-button"
+                onClick { _ =>
+                  appRouter.navigate("/editor")
+                }
               }
             }
           }

@@ -80,9 +80,9 @@ function normalizeRenderPath(value) {
   const withoutBase = withoutOrigin.startsWith(basePath)
     ? withoutOrigin.slice(basePath.length) || '/'
     : withoutOrigin
-  const pathOnly = withoutBase.split('?')[0].split('#')[0]
+  const pathWithSearch = withoutBase.split('#')[0] || '/'
 
-  return pathOnly.startsWith('/') ? pathOnly : `/${pathOnly}`
+  return pathWithSearch.startsWith('/') ? pathWithSearch : `/${pathWithSearch}`
 }
 
 function isAssetRequest(url) {
