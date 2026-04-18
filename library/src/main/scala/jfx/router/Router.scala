@@ -287,6 +287,9 @@ final class Router private[router] (
 
 object Router {
 
+  private val SchemePattern =
+    "^[a-zA-Z][a-zA-Z0-9+.-]*:".r
+
   def apply(routes: js.Array[Route])(using Scope): Router =
     router(routes)
 
@@ -354,13 +357,27 @@ object Router {
     }
   }
 
-  def toFullPath(path: String): String = {
-    if (basePath.isEmpty) path
-    else if (path.startsWith(basePath)) path
-    else {
-      val normalized = if (path.startsWith("/")) path else "/" + path
-      basePath + normalized
-    }
+  def isInternalPath(path: String): Boolean = {
+    val value = Option(path).getOrElse("").trim
+
+    value.nonEmpty &&
+      !value.startsWith("#") &&
+      !value.startsWith("//") &&
+      SchemePattern.findPrefixOf(value).isEmpty
+  }
+
+  def toFullPath(path: String): String =
+    toFullPath(path, basePath)
+
+  def toFullPath(path: String, basePath: String): String = {
+    val rawPath = Option(path).getOrElse("")
+    if (!isInternalPath(rawPath)) return rawPath
+
+    val normalizedBase = normalizeBasePath(basePath)
+
+    if (normalizedBase.isEmpty) normalizePathWithLeadingSlash(rawPath)
+    else if (rawPath.startsWith(normalizedBase)) rawPath
+    else normalizedBase + normalizePathWithLeadingSlash(rawPath)
   }
 
   def toRelativePath(path: String): String = {
@@ -397,5 +414,22 @@ object Router {
       case None =>
         throw IllegalStateException(s"$statementName can only be used inside a NativeComponent")
     }
+
+  private def normalizeBasePath(value: String): String = {
+    val raw = Option(value).getOrElse("").trim
+    if (raw.isEmpty || raw == "/") ""
+    else {
+      val withLeadingSlash =
+        if (raw.startsWith("/")) raw
+        else "/" + raw
+
+      if (withLeadingSlash.endsWith("/")) withLeadingSlash.dropRight(1)
+      else withLeadingSlash
+    }
+  }
+
+  private def normalizePathWithLeadingSlash(path: String): String =
+    if (path.startsWith("/")) path
+    else "/" + path
 
 }

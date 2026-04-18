@@ -420,12 +420,16 @@ html[data-theme="dark"] select {
 
 .jfx2-demo__route-button {
     min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid var(--aj-line);
     border-radius: 999px;
     padding: 0 13px;
     color: var(--aj-ink);
     background: var(--aj-surface-overlay);
     cursor: pointer;
+    text-decoration: none;
 }
 
 .jfx2-demo__route-button:hover {

@@ -4,6 +4,7 @@ import jfx.action.Button.*
 import jfx.core.component.ClientOnly.*
 import jfx.core.component.ElementComponent.*
 import jfx.core.state.{ListProperty, Property}
+import jfx.control.Link.*
 import jfx.form.Input.*
 import jfx.layout.Div.div
 import jfx.router.Route
@@ -175,6 +176,19 @@ final class SsrSpec extends AnyFlatSpec with Matchers {
       }
 
     html.shouldBe("<div><div>Before</div><div>ada:notes</div><div>After</div></div>")
+  }
+
+  it should "render internal router links with an SSR base path" in {
+    val html =
+      Ssr.renderToStringFor(Ssr.Request(path = "/", attributes = Map("basePath" -> "/base"))) {
+        div {
+          link("/people/ada?tab=notes") {
+            text = "Ada"
+          }
+        }
+      }
+
+    html.shouldBe("""<div><a href="/base/people/ada?tab=notes">Ada</a></div>""")
   }
 
 }

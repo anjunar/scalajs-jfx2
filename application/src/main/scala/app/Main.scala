@@ -2,6 +2,7 @@ package app
 
 import jfx.action.Button.*
 import jfx.browser.Browser
+import jfx.control.Link.*
 import jfx.core.component.ClientOnly.*
 import jfx.core.component.ElementComponent.*
 import jfx.core.state.{ListProperty, Property}
@@ -47,7 +48,7 @@ object Main {
 
   @JSExportTopLevel("renderSsr")
   def renderSsr(path: String): String =
-    Ssr.renderToStringFor(Ssr.Request(path = path)) {
+    Ssr.renderToStringFor(Ssr.Request(path = path, attributes = Map("basePath" -> "/scalajs-jfx2"))) {
       demo()
     }
 
@@ -256,30 +257,24 @@ object Main {
               text = "Router"
             }
 
-            val appRouter = router(routes)
+            router(routes)
 
             div {
               classes = "jfx2-demo__route-actions"
 
-              button("Home") {
+              link("/") {
                 classes = "jfx2-demo__route-button"
-                onClick { _ =>
-                  appRouter.navigate("/")
-                }
+                text = "Home"
               }
 
-              button("Hello Ada") {
+              link("/hello/ada?tab=notes") {
                 classes = "jfx2-demo__route-button"
-                onClick { _ =>
-                  appRouter.navigate("/hello/ada?tab=notes")
-                }
+                text = "Hello Ada"
               }
 
-              button("Editor Route") {
+              link("/editor") {
                 classes = "jfx2-demo__route-button"
-                onClick { _ =>
-                  appRouter.navigate("/editor")
-                }
+                text = "Editor Route"
               }
             }
           }
