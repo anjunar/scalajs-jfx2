@@ -2,6 +2,7 @@ package app
 
 import jfx.action.Button.*
 import jfx.browser.Browser
+import jfx.core.component.ClientOnly.*
 import jfx.core.component.ElementComponent.*
 import jfx.core.state.Property
 import jfx.form.Input.*
@@ -115,6 +116,27 @@ object Main {
 
             onClick { _ =>
               clicks.set(clicks.get + 1)
+            }
+          }
+
+          clientOnly("DemoEditor")(
+            div {
+              classes = "jfx2-demo__client-fallback"
+              text = "SSR-Fallback: dieser Editor ist browser-only und wird erst nach Hydration aktiv."
+            }
+          ) {
+            div {
+              classes = "jfx2-demo__client-widget"
+
+              div {
+                classes = "jfx2-demo__client-widget-title"
+                text = "Client-only Editor Boundary"
+              }
+
+              div {
+                classes = "jfx2-demo__client-widget-copy"
+                text = "Stell dir hier Lexical vor: Der Client-Block wurde auf dem Server nicht ausgefuehrt, ersetzt den Fallback aber im Browser."
+              }
             }
           }
         }

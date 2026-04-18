@@ -1,6 +1,7 @@
 package jfx.ssr
 
 import jfx.action.Button.*
+import jfx.core.component.ClientOnly.*
 import jfx.core.component.ElementComponent.*
 import jfx.form.Input.*
 import jfx.layout.Div.div
@@ -29,6 +30,34 @@ final class SsrSpec extends AnyFlatSpec with Matchers {
 
     html.shouldBe(
       """<div class="panel featured">Hello &lt;World&gt;<button type="submit">Save</button><input name="email" placeholder="Email" value="ada@example.test"></div>"""
+    )
+  }
+
+  it should "render client-only fallbacks without evaluating the client component" in {
+    var clientEvaluated = false
+
+    val html =
+      Ssr.renderToString {
+        div {
+          clientOnly("LexicalEditor")(
+            div {
+              classes = "editor-fallback"
+              text = "Editor fallback"
+            }
+          ) {
+            clientEvaluated = true
+
+            div {
+              classes = "editor-client"
+              text = "Client editor"
+            }
+          }
+        }
+      }
+
+    clientEvaluated.shouldBe(false)
+    html.shouldBe(
+      """<div><div data-jfx-client-only="LexicalEditor" data-jfx-client-only-state="fallback"><div class="editor-fallback">Editor fallback</div></div></div>"""
     )
   }
 

@@ -345,6 +345,40 @@ html[data-theme="dark"] select {
     transform: translateY(-1px);
 }
 
+.jfx2-demo__client-fallback,
+.jfx2-demo__client-widget {
+    border-radius: 18px;
+    padding: 16px;
+}
+
+.jfx2-demo__client-fallback {
+    border: 1px dashed color-mix(in srgb, var(--aj-warning) 52%, var(--aj-line));
+    color: var(--aj-ink-soft);
+    background:
+        linear-gradient(90deg, transparent, color-mix(in srgb, var(--aj-warning) 12%, transparent), transparent),
+        var(--aj-surface-muted);
+}
+
+.jfx2-demo__client-widget {
+    border: 1px solid color-mix(in srgb, var(--aj-accent) 32%, var(--aj-line));
+    color: var(--aj-ink);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--aj-accent) 20%, transparent), transparent 34%),
+        var(--aj-surface-overlay);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
+}
+
+.jfx2-demo__client-widget-title {
+    font-weight: 850;
+    letter-spacing: -0.02em;
+}
+
+.jfx2-demo__client-widget-copy {
+    margin-top: 6px;
+    color: var(--aj-ink-soft);
+    font-size: 0.95rem;
+}
+
 .jfx2-demo__note {
     margin-top: 24px;
     color: var(--aj-ink-muted);

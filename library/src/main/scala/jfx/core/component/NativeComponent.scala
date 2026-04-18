@@ -61,7 +61,7 @@ abstract class NativeComponent[E <: dom.Element](tagName: String) extends Childr
   private def finishAttach(child: NodeComponent[? <: dom.Node]): Unit = {
     child.parent = Some(this)
 
-    if (!RenderBackend.current.isServer && !child.isMounted) {
+    if (!RenderBackend.current.isServer && isMounted && !child.isMounted) {
       child.onMount()
     }
   }
