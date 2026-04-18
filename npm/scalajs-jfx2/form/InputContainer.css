@@ -1,0 +1,65 @@
+.input-container {
+    padding: 10px 0 6px;
+
+    .label {
+        height: 12px;
+        margin-bottom: 6px;
+
+        span.placeholder {
+            display: inline;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 0.72;
+        }
+    }
+
+    &.empty {
+        .label span.placeholder {
+            display: none;
+        }
+    }
+
+    .label .focus {
+        color: var(--aj-accent) !important;
+    }
+
+    .label .dirty {
+        color: var(--aj-warning) !important;;
+    }
+
+    .label .invalid {
+        color: var(--aj-danger) !important;;
+    }
+
+
+
+
+    hr {
+        border : 0;
+        height : 2px;
+        margin : 0;
+        padding : 0
+    }
+
+    hr.focus {
+        background-color: var(--aj-accent);
+    }
+
+    hr.dirty {
+        background-color: var(--aj-warning);
+    }
+
+    hr.invalid {
+        background-color: var(--aj-danger);
+    }
+
+    .errors {
+        margin-top: 6px;
+        color: var(--aj-danger);
+        font-size: 10px;
+        height: 12px;
+    }
+
+
+}
