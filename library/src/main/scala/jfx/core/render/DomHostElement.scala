@@ -5,8 +5,7 @@ import org.scalajs.dom
 
 final class DomHostElement(
   override val tagName: String,
-  val element: dom.Element,
-  private[render] val hydrationCursor: Option[HydrationCursor] = None
+  val element: dom.Element
 ) extends HostElement {
 
   override def domNodeOption: Option[dom.Node] =

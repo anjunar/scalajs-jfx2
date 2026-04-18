@@ -24,12 +24,16 @@ final class HydrationCursor private (
       case Some(element) if element.tagName.equalsIgnoreCase(tagName) =>
         element
       case Some(element) =>
+        val parentInfo = parent.map(p => s" in <${p.tagName.toLowerCase}>").getOrElse("")
+        val siblings = parent.map(p => s" (existing children: ${p.children.map(_.tagName.toLowerCase).mkString(", ")})").getOrElse("")
         dom.console.warn(
-          s"JFX2 hydration mismatch: expected <$tagName> but found <${element.tagName.toLowerCase}>. Creating a fresh node."
+          s"JFX2 hydration mismatch: expected <$tagName> but found <${element.tagName.toLowerCase}>$parentInfo.$siblings Creating a fresh node."
         )
         dom.document.createElement(tagName)
       case None =>
-        dom.console.warn(s"JFX2 hydration mismatch: expected <$tagName> but no server node was available.")
+        val parentInfo = parent.map(p => s" in <${p.tagName.toLowerCase}>").getOrElse("")
+        val siblings = parent.map(p => s" (total children: ${p.children.length})").getOrElse("")
+        dom.console.warn(s"JFX2 hydration mismatch: expected <$tagName> but no server node was available$parentInfo$siblings. Creating a fresh node.")
         dom.document.createElement(tagName)
     }
   }

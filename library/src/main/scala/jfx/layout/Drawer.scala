@@ -13,11 +13,13 @@ final class Drawer extends NativeComponent[HTMLDivElement]("div") {
   val sideProperty: Property[Drawer.Side] = Property(Drawer.Side.Start)
   val closeOnScrimClickProperty: Property[Boolean] = Property(true)
 
-  private val scrim = DslRuntime.withComponentContext(ComponentContext(None)) { new Div() }
-  private val panelShell = DslRuntime.withComponentContext(ComponentContext(None)) { new Div() }
-  private val panel = DslRuntime.withComponentContext(ComponentContext(None)) { new Div() }
-  private val navigationHost = DslRuntime.withComponentContext(ComponentContext(None)) { new Div() }
-  private val contentHost = DslRuntime.withComponentContext(ComponentContext(None)) { new Div() }
+  private val scrim = DslRuntime.withComponentContext(ComponentContext(Some(this))) { new Div() }
+  private val panelShell = DslRuntime.withComponentContext(ComponentContext(Some(this))) { new Div() }
+  private val panel = DslRuntime.withComponentContext(ComponentContext(Some(panelShell))) { new Div() }
+  private val navigationHost = DslRuntime.withComponentContext(ComponentContext(Some(panel))) { new Div() }
+  private val contentHost = DslRuntime.withComponentContext(ComponentContext(Some(this))) { new Div() }
+
+  private val structureSlot = reserveChildSlot()
 
   private var structureInitialized = false
 
@@ -106,9 +108,7 @@ final class Drawer extends NativeComponent[HTMLDivElement]("div") {
       navigationHost.hostElement.setStyleProperty("height", "100%")
       contentHost.hostElement.setStyleProperty("height", "100%")
 
-      addChild(scrim)
-      addChild(panelShell)
-      addChild(contentHost)
+      structureSlot.replace(Vector(scrim, panelShell, contentHost))
 
       panelShell.addChild(panel)
       panel.addChild(navigationHost)
@@ -162,7 +162,7 @@ object Drawer {
       val currentContext = DslRuntime.currentComponentContext()
       val component = new Drawer()
 
-      DslRuntime.withComponentContext(ComponentContext(None)) {
+      DslRuntime.withComponentContext(ComponentContext(Some(component))) {
         given Scope = currentScope
         given Drawer = component
         init

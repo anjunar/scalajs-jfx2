@@ -52,13 +52,18 @@ final class SsrRenderBackend extends RenderBackend {
 
 final class HydrationRenderBackend private (rootCursor: HydrationCursor) extends RenderBackend {
 
+  private val cursors = mutable.Map.empty[HostElement, HydrationCursor]
+
   override def createElement(tagName: String, parent: Option[HostElement]): HostElement = {
     val cursor =
-      parent.collect { case host: DomHostElement => host.hydrationCursor }.flatten
-        .getOrElse(rootCursor)
+      parent.flatMap(p => cursors.get(p).orElse {
+        val c = HydrationCursor.children(p.domElementOption.get)
+        cursors.update(p, c)
+        Some(c)
+      }).getOrElse(rootCursor)
 
     val element = cursor.claim(tagName)
-    new DomHostElement(tagName, element, Some(HydrationCursor.children(element)))
+    new DomHostElement(tagName, element)
   }
 
   override def isServer: Boolean =

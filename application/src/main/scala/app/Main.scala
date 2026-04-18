@@ -5,11 +5,17 @@ import jfx.browser.Browser
 import jfx.control.Link.*
 import jfx.core.component.ElementComponent.*
 import jfx.core.state.{ListProperty, Property}
+import jfx.dsl.*
+import jfx.form.Input.*
 import jfx.form.Editor.editor
 import jfx.form.editor.plugins.*
-import jfx.form.Input.*
+import jfx.form.InputContainer.inputContainer
 import jfx.hydration.Hydration
 import jfx.layout.Div.div
+import jfx.layout.Drawer.*
+import jfx.layout.HBox.hbox
+import jfx.layout.VBox.vbox
+import jfx.layout.HorizontalLine.horizontalLine
 import jfx.router.Route
 import jfx.router.RouteContext.routeContext
 import jfx.router.Router.router
@@ -54,253 +60,248 @@ object Main {
     }
 
   private def demo() = {
-    val name = Property("Ada")
-    val clicks = Property(0)
-    val milestones = ListProperty[String]()
-    milestones += "SSR rendert ohne Browser-DOM"
-    milestones += "Hydration claimed bestehende Nodes"
-    milestones += "Statements arbeiten ueber NativeComponent-Slots"
-    milestones += "Router ersetzt Pages ueber denselben Slot-Mechanismus"
+    val drawerOpen = Property(true)
 
     val routes = js.Array(
       Route.scoped("/") {
-        val context = routeContext
-
-        div {
-          classes = "jfx2-demo__route-page"
-
-          div {
-            classes = "jfx2-demo__route-kicker"
-            text = "Route /"
-          }
-
-          div {
-            classes = "jfx2-demo__route-title"
-            text = "Home aus dem NativeComponent-Router"
-          }
-
-          div {
-            classes = "jfx2-demo__route-copy"
-            text = s"Diese Page wurde fuer ${context.url} direkt in einen ChildSlot gerendert."
+        showcasePage("Overview", "Willkommen zur JFX2 API Dokumentation.") {
+          vbox {
+            classes = "showcase-intro"
+            div {
+              classes = "showcase-intro__text"
+              text = "JFX2 ist ein reaktives UI-Framework für Scala.js mit Fokus auf SSR-Kompatibilität, Typisierung und architektonische Klarheit."
+            }
+            horizontalLine()
+            div {
+              classes = "showcase-intro__links"
+              text = "Wähle eine Komponente aus der Sidebar, um Details und Live-Beispiele zu sehen."
+            }
           }
         }
       },
-      Route.scoped("/hello/:name") {
-        val context = routeContext
-        val routeName = context.pathParams("name")
-        val tab = context.queryParams.get("tab").getOrElse("overview")
-
-        div {
-          classes = "jfx2-demo__route-page is-accent"
-
-          div {
-            classes = "jfx2-demo__route-kicker"
-            text = s"Route ${context.fullPath}"
+      Route.scoped("/button") {
+        showcasePage("Button", "Die primäre Aktions-Komponente.") {
+          vbox {
+            style { gap = "24px" }
+            componentShowcase("Standard Button") {
+              button("Klick mich") {
+                onClick { _ => dom.window.alert("Button geklickt!") }
+              }
+            }
+            apiSection("Usage") {
+              codeBlock("scala", "button(\"Klick mich\") {\n  onClick { _ => println(\"Geklickt\") }\n}")
+            }
           }
-
-          div {
-            classes = "jfx2-demo__route-title"
-            text = s"Hallo $routeName"
-          }
-
-          div {
-            classes = "jfx2-demo__route-copy"
-            text = s"Path-Param und Query sind im RouteContext angekommen. tab=$tab"
+        }
+      },
+      Route.scoped("/input") {
+        showcasePage("Input", "Texteingabe-Felder für Formulare.") {
+          vbox {
+            style { gap = "24px" }
+            componentShowcase("Text Input") {
+              val name = Property("")
+              vbox {
+                input("name") {
+                  placeholder = "Name eingeben..."
+                  stringValueProperty.observe(name.set)
+                }
+                val label = div {
+                  classes = "showcase-result"
+                  text = s"Eingabe: ${name.get}"
+                }
+                label.addDisposable(name.observe(v => label.textContent = s"Eingabe: $v"))
+              }
+            }
+            apiSection("Usage") {
+              codeBlock("scala", "input(\"username\") {\n  placeholder = \"Benutzername\"\n  stringValueProperty.observe(v => println(v))\n}")
+            }
           }
         }
       },
       Route.scoped("/editor") {
-        div {
-          classes = "jfx2-demo__route-page is-editor"
-
-          div {
-            classes = "jfx2-demo__route-kicker"
-            text = "Route /editor"
+        showcasePage("Rich Text Editor", "Ein leistungsfähiger WYSIWYG Editor basierend auf Lexical.") {
+          vbox {
+            style { gap = "24px" }
+            componentShowcase("Live Editor") {
+              val e = editor("demo-editor") {
+                defaultPlugins()
+              }
+              e.value = "Dies ist ein **fetter** Text im Editor."
+            }
+            apiSection("Usage") {
+              codeBlock("scala", "editor(\"body\") {\n  defaultPlugins()\n  value = \"Startinhalt\"\n}")
+            }
           }
-
-          val routeEditor = editor("route-editor") {
-            defaultPlugins()
-          }
-          routeEditor.classProperty += "jfx2-demo__lexical"
-          routeEditor.placeholder = "Route-Notiz schreiben..."
-          routeEditor.value = "Diese Lexical-Instanz wurde erst im Browser dynamisch geladen."
         }
       },
-      Route.scoped("*") {
-        val context = routeContext
-
-        div {
-          classes = "jfx2-demo__route-page is-missing"
-
-          div {
-            classes = "jfx2-demo__route-kicker"
-            text = "Wildcard"
-          }
-
-          div {
-            classes = "jfx2-demo__route-title"
-            text = "Route nicht gefunden"
-          }
-
-          div {
-            classes = "jfx2-demo__route-copy"
-            text = s"Kein Problem: ${context.path} landet im *-Fallback."
+      Route.scoped("/layout") {
+        showcasePage("Layout Components", "HBox, VBox und Div zur Strukturierung.") {
+          vbox {
+            style { gap = "24px" }
+            componentShowcase("HBox & VBox") {
+              vbox {
+                style { gap = "10px" }
+                hbox {
+                  style { gap = "10px" }
+                  div { classes = "demo-box"; text = "H1" }
+                  div { classes = "demo-box"; text = "H2" }
+                }
+                vbox {
+                  style { gap = "5px" }
+                  div { classes = "demo-box"; text = "V1" }
+                  div { classes = "demo-box"; text = "V2" }
+                }
+              }
+            }
           }
         }
       }
     )
 
     div {
-      classes = "jfx2-demo"
+      classes = "app-shell"
 
-      div {
-        classes = "jfx2-demo__ambient"
+      val component = drawer {
+        drawerNavigation {
+          div {
+            classes = "app-sidebar"
+            
+            div {
+              classes = "app-sidebar__header"
+              div { classes = "app-sidebar__logo"; text = "JFX2 API" }
+            }
+
+            div {
+              classes = "app-sidebar__nav"
+              sidebarSection("General")
+              navLink("/", "Overview", "Introduction")
+              
+              sidebarSection("Actions")
+              navLink("/button", "Button", "Trigger actions")
+              
+              sidebarSection("Forms")
+              navLink("/input", "Input", "Text fields")
+              navLink("/editor", "Editor", "Rich text")
+              
+              sidebarSection("Layout")
+              navLink("/layout", "Layouts", "HBox, VBox, Div")
+            }
+            
+            div {
+              classes = "app-sidebar__footer"
+              text = "Built with JFX2"
+            }
+          }
+        }
+
+        drawerContent {
+          div {
+            classes = "app-main"
+            
+            div {
+              classes = "app-toolbar"
+              button("menu") {
+                classes = "app-toolbar__menu-toggle material-icons"
+                text = "menu"
+                onClick { _ => drawerOpen.set(!drawerOpen.get) }
+              }
+              div {
+                classes = "app-toolbar__title"
+                text = "Live Documentation"
+              }
+              div { classes = "spacer" }
+              div {
+                classes = "app-toolbar__version"
+                text = "v2.0.0-alpha"
+              }
+            }
+
+            div {
+              classes = "app-content-viewport"
+              router(routes)
+            }
+
+            div {
+              classes = "app-footer"
+              div {
+                classes = "app-footer__text"
+                text = s"┬⌐ ${new js.Date().getFullYear()} Anjunar. Pure Scala.js Architecture."
+              }
+            }
+          }
+        }
       }
 
+      component.addDisposable(drawerOpen.observe(component.isOpen = _))
+    }
+  }
+
+  private def showcasePage(title: String, subtitle: String)(content: => Unit) = {
+    vbox {
+      classes = "showcase-page"
+      vbox {
+        classes = "showcase-page__header"
+        div { classes = "showcase-page__title"; text = title }
+        div { classes = "showcase-page__subtitle"; text = subtitle }
+      }
       div {
-        classes = "jfx2-demo__panel"
-
-        div {
-          classes = "jfx2-demo__eyebrow"
-          text = "request-time SSR + hydration"
-        }
-
-        div {
-          classes = "jfx2-demo__title"
-          text = "scalajs-jfx2"
-        }
-
-        div {
-          classes = "jfx2-demo__copy"
-          text = "Eine kleine Core-Demo: dieselbe DSL rendert HTML auf dem Server, hydriert vorhandenes Markup und laeuft danach interaktiv im Browser."
-        }
-
-        div {
-          classes = "jfx2-demo__card"
-
-          div {
-            classes = "jfx2-demo__label"
-            text = "Name"
-          }
-
-          val nameField =
-            input("name") {
-              classes = "jfx2-demo__input"
-              placeholder = "Dein Name"
-              stringValueProperty.set(name.get)
-            }
-
-          nameField.addDisposable(
-            Property.subscribeBidirectional(nameField.stringValueProperty, name)
-          )
-
-          val greeting =
-            div {
-              classes = "jfx2-demo__result"
-              text = greetingText(name.get, clicks.get)
-            }
-
-          greeting.addDisposable(
-            name.observe { value =>
-              greeting.textContent = greetingText(value, clicks.get)
-            }
-          )
-
-          greeting.addDisposable(
-            clicks.observe { value =>
-              greeting.textContent = greetingText(name.get, value)
-            }
-          )
-
-          button("Hydration testen") {
-            classes = "jfx2-demo__button"
-
-            onClick { _ =>
-              clicks.set(clicks.get + 1)
-            }
-          }
-
-          conditional(clicks.map(_ % 2 == 0)) {
-            thenDo {
-              div {
-                classes = "jfx2-demo__slot-status"
-                text = "Conditional-Slot: gerade Anzahl Klicks"
-              }
-            }
-
-            elseDo {
-              div {
-                classes = "jfx2-demo__slot-status is-odd"
-                text = "Conditional-Slot: ungerade Anzahl Klicks"
-              }
-            }
-          }
-
-          div {
-            classes = "jfx2-demo__router"
-
-            div {
-              classes = "jfx2-demo__label"
-              text = "Router"
-            }
-
-            router(routes)
-
-            div {
-              classes = "jfx2-demo__route-actions"
-
-              link("/") {
-                classes = "jfx2-demo__route-button"
-                text = "Home"
-              }
-
-              link("/hello/ada?tab=notes") {
-                classes = "jfx2-demo__route-button"
-                text = "Hello Ada"
-              }
-
-              link("/editor") {
-                classes = "jfx2-demo__route-button"
-                text = "Editor Route"
-              }
-            }
-          }
-
-          div {
-            classes = "jfx2-demo__milestones"
-
-            forEach(milestones) { item =>
-              div {
-                classes = "jfx2-demo__milestone"
-                text = item
-              }
-            }
-          }
-
-          val demoEditor = editor("demo-editor") {
-            defaultPlugins()
-          }
-          demoEditor.classProperty += "jfx2-demo__lexical"
-          demoEditor.placeholder = "Schreibe etwas in Lexical..."
-          demoEditor.value = "Das ist jetzt ein echter Lexical-Editor hinter einer ClientOnly-Boundary."
-        }
-
-        div {
-          classes = "jfx2-demo__note"
-          text = "SSR export: window.renderSsr(location.pathname). Hydration: wenn #root bereits Markup hat, wird es wiederverwendet."
-        }
+        classes = "showcase-page__content"
+        content
       }
     }
   }
 
-  private def greetingText(name: String, clicks: Int): String = {
-    val displayName =
-      Option(name)
-        .map(_.trim)
-        .filter(_.nonEmpty)
-        .getOrElse("Welt")
+  private def componentShowcase(title: String)(content: => Unit) = {
+    vbox {
+      classes = "component-showcase"
+      div { classes = "component-showcase__title"; text = title }
+      div {
+        classes = "component-showcase__render"
+        content
+      }
+    }
+  }
 
-    s"Hallo $displayName. Button-Klicks: $clicks"
+  private def apiSection(title: String)(content: => Unit) = {
+    vbox {
+      classes = "api-section"
+      div { classes = "api-section__title"; text = title }
+      div {
+        classes = "api-section__content"
+        content
+      }
+    }
+  }
+
+  private def codeBlock(lang: String, code: String) = {
+    div {
+      classes = "code-block"
+      div {
+        classes = "code-block__content"
+        text = code
+      }
+    }
+  }
+
+  private def sidebarSection(title: String) = {
+    div {
+      classes = "app-sidebar__section-title"
+      text = title
+    }
+  }
+
+  private def navLink(path: String, label: String, sub: String) = {
+    link(path) {
+      classes = "app-nav-link"
+      div {
+        classes = "app-nav-link__label"
+        text = label
+      }
+      div {
+        classes = "app-nav-link__sub"
+        text = sub
+      }
+    }
   }
 
 }
