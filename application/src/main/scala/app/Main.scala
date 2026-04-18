@@ -4,11 +4,13 @@ import jfx.action.Button.*
 import jfx.browser.Browser
 import jfx.core.component.ClientOnly.*
 import jfx.core.component.ElementComponent.*
-import jfx.core.state.Property
+import jfx.core.state.{ListProperty, Property}
 import jfx.form.Input.*
 import jfx.hydration.Hydration
 import jfx.layout.Div.div
 import jfx.ssr.Ssr
+import jfx.statement.Conditional.*
+import jfx.statement.ForEach.*
 import org.scalajs.dom
 import org.scalajs.dom.HTMLElement
 
@@ -48,6 +50,10 @@ object Main {
   private def demo() = {
     val name = Property("Ada")
     val clicks = Property(0)
+    val milestones = ListProperty[String]()
+    milestones += "SSR rendert ohne Browser-DOM"
+    milestones += "Hydration claimed bestehende Nodes"
+    milestones += "Statements arbeiten ueber NativeComponent-Slots"
 
     div {
       classes = "jfx2-demo"
@@ -116,6 +122,33 @@ object Main {
 
             onClick { _ =>
               clicks.set(clicks.get + 1)
+            }
+          }
+
+          conditional(clicks.map(_ % 2 == 0)) {
+            thenDo {
+              div {
+                classes = "jfx2-demo__slot-status"
+                text = "Conditional-Slot: gerade Anzahl Klicks"
+              }
+            }
+
+            elseDo {
+              div {
+                classes = "jfx2-demo__slot-status is-odd"
+                text = "Conditional-Slot: ungerade Anzahl Klicks"
+              }
+            }
+          }
+
+          div {
+            classes = "jfx2-demo__milestones"
+
+            forEach(milestones) { item =>
+              div {
+                classes = "jfx2-demo__milestone"
+                text = item
+              }
             }
           }
 

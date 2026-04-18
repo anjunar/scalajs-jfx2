@@ -345,6 +345,31 @@ html[data-theme="dark"] select {
     transform: translateY(-1px);
 }
 
+.jfx2-demo__slot-status {
+    border-radius: 16px;
+    padding: 12px 14px;
+    color: var(--aj-ink);
+    background: color-mix(in srgb, var(--aj-info) 12%, transparent);
+    font-weight: 750;
+}
+
+.jfx2-demo__slot-status.is-odd {
+    background: color-mix(in srgb, var(--aj-warning) 14%, transparent);
+}
+
+.jfx2-demo__milestones {
+    display: grid;
+    gap: 8px;
+}
+
+.jfx2-demo__milestone {
+    border-left: 3px solid var(--aj-accent);
+    border-radius: 10px;
+    padding: 9px 12px;
+    color: var(--aj-ink-soft);
+    background: color-mix(in srgb, var(--aj-surface-overlay) 62%, transparent);
+}
+
 .jfx2-demo__client-fallback,
 .jfx2-demo__client-widget {
     border-radius: 18px;
