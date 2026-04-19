@@ -149,7 +149,7 @@ final class TableView[S] extends Box("div") {
         })
       }
 
-      addDisposable(host.addEventListener("scroll", (e: dom.Event) => {
+      addDisposable(summon[Box].host.addEventListener("scroll", (e: dom.Event) => {
         val target = e.currentTarget.asInstanceOf[dom.html.Div]
         scrollTopProperty.set(target.scrollTop)
         scrollLeftProperty.set(target.scrollLeft)
