@@ -15,8 +15,14 @@ final class DomHostElement(val tagName: String, val element: dom.Element) extend
     else element.setAttribute("class", classes.mkString(" "))
   }
 
+  override def getStyle(name: String): String =
+    element.asInstanceOf[dom.html.Element].style.getPropertyValue(name)
+    
   override def setStyle(name: String, value: String): Unit = 
     element.asInstanceOf[dom.html.Element].style.setProperty(name, value)
+
+  override def clientHeight: Int = element.clientHeight
+  override def clientWidth: Int = element.clientWidth
 
   override def addEventListener(name: String, listener: dom.Event => Unit): Disposable = {
     element.addEventListener(name, listener)

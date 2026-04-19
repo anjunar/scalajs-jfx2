@@ -1,123 +1,215 @@
 package jfx.control
 
 import jfx.core.component.{Box, Component}
+import jfx.core.component.Component.*
 import jfx.core.state.{ListProperty, Property}
 import jfx.dsl.DslRuntime
-import jfx.core.component.Component.*
 import jfx.statement.ForEach.forEach
 import org.scalajs.dom
+import org.scalajs.dom.Event
 
-class TableView[S] extends Box("div") {
+final class TableView[S] extends Box("div") {
+
   val items = new ListProperty[S]()
   val columns = new ListProperty[TableColumn[S, ?]]()
   val showHeaderProperty = Property(true)
-  
+
   val rowHeightProperty = Property(32.0)
   val scrollTopProperty = Property(0.0)
   val viewportHeightProperty = Property(400.0)
 
+  private case class VisibleRow(index: Int, item: S, epoch: Long)
+
   override def compose(): Unit = {
     given Component = this
+
+    val scrollLeftProperty = Property(0.0)
+    val renderEpochProperty = Property(0L)
+    val visibleRows = new ListProperty[VisibleRow]()
+
+    def totalColumnWidth: Double =
+      columns.get.toSeq.foldLeft(0.0)((sum, col) => sum + col.prefWidth)
+
+    def bumpEpoch(): Unit =
+      renderEpochProperty.set(renderEpochProperty.get + 1)
+
+    def recomputeVisibleRows(): Unit = {
+      val total = items.length
+      val rowHeight = math.max(1.0, rowHeightProperty.get)
+      val viewportHeight = math.max(0.0, viewportHeightProperty.get)
+
+      if (total == 0) {
+        visibleRows.setAll(Seq.empty)
+      } else {
+        val overscan = 4
+        val firstVisible = math.floor(scrollTopProperty.get / rowHeight).toInt
+        val visibleCount = math.ceil(viewportHeight / rowHeight).toInt + 1
+
+        val start = math.max(0, firstVisible - overscan)
+        val end = math.min(total, firstVisible + visibleCount + overscan)
+
+        visibleRows.setAll(
+          (start until end).map(i => VisibleRow(i, items(i), renderEpochProperty.get))
+        )
+      }
+    }
+
     addClass("jfx-table-view")
-    
-    // 1. Header
+    style {
+      display = "flex"
+      flexDirection = "column"
+      width = "100%"
+      height = "100%"
+      overflow = "hidden"
+    }
+
+    addDisposable(scrollTopProperty.observe(_ => recomputeVisibleRows()))
+    addDisposable(viewportHeightProperty.observe(_ => recomputeVisibleRows()))
+    addDisposable(items.observeChanges(_ => recomputeVisibleRows()))
+    addDisposable(columns.observeChanges(_ => {
+      bumpEpoch()
+      recomputeVisibleRows()
+    }))
+    addDisposable(rowHeightProperty.observe(_ => {
+      bumpEpoch()
+      recomputeVisibleRows()
+    }))
+
     jfx.statement.Condition.condition(showHeaderProperty) {
       jfx.statement.Condition.thenDo {
         Box.box("div") {
           addClass("jfx-table-header")
           style {
-            display = "flex"
+            position = "relative"
+            overflow = "hidden"
             width = "100%"
+            flex = "0 0 auto"
           }
-          forEach(columns) { col =>
-            Box.box("div") {
-              addClass("jfx-table-header-cell")
+
+          Box.box("div") {
+            addClass("jfx-table-header-content")
+
+            def syncHeaderLayout(): Unit = {
+              val columnWidth = totalColumnWidth
               style {
-                width = s"${col.prefWidth}px"
-                minWidth = s"${col.prefWidth}px"
-                flex = "0 0 auto"
+                display = "flex"
+                width = s"${columnWidth}px"
+                minWidth = s"${columnWidth}px"
+                transform = s"translateX(-${scrollLeftProperty.get}px)"
               }
-              text = col.text
+            }
+
+            syncHeaderLayout()
+
+            addDisposable(scrollLeftProperty.observe(_ => syncHeaderLayout()))
+            addDisposable(columns.observeChanges(_ => syncHeaderLayout()))
+
+            forEach(columns) { col =>
+              Box.box("div") {
+                addClass("jfx-table-header-cell")
+                style {
+                  width = s"${col.prefWidth}px"
+                  minWidth = s"${col.prefWidth}px"
+                  maxWidth = s"${col.prefWidth}px"
+                  flex = "0 0 auto"
+                  boxSizing = "border-box"
+                }
+                text = col.text
+              }
             }
           }
         }
       }
     }
 
-    // 2. Body with Virtual Scroll
     Box.box("div") {
       addClass("jfx-table-viewport")
       style {
-        flex = "1"
-        overflowY = "auto"
+        flex = "1 1 auto"
         position = "relative"
+        overflow = "auto"
+        width = "100%"
       }
-      
-      // Listen to scroll events
+
+      def syncViewportMetrics(): Unit =
+        viewportHeightProperty.set(math.max(0.0, host.clientHeight.toDouble))
+
+      dom.window.requestAnimationFrame((_: Double) => syncViewportMetrics())
+
+      val listener: Event => Unit = (_: Event) => {
+        syncViewportMetrics()
+      }
+      dom.window.addEventListener("resize", listener)
+
+      addDisposable(() => { 
+        dom.window.removeEventListener("resize", listener)
+      })
+
       addDisposable(host.addEventListener("scroll", (e: dom.Event) => {
-        val target = e.target.asInstanceOf[dom.html.Div]
+        val target = e.currentTarget.asInstanceOf[dom.html.Div]
         scrollTopProperty.set(target.scrollTop)
+        scrollLeftProperty.set(target.scrollLeft)
+        viewportHeightProperty.set(target.clientHeight.toDouble)
       }))
 
       Box.box("div") {
         addClass("jfx-table-content")
-        
-        // Dynamic height based on items
-        addDisposable(items.observe { list =>
+
+        def syncContentLayout(): Unit = {
+          val columnWidth = totalColumnWidth
           style {
-            height = s"${list.length * rowHeightProperty.get}px"
-            width = "100%"
             position = "relative"
+            height = s"${items.length * rowHeightProperty.get}px"
+            width = s"${columnWidth}px"
+            minWidth = s"${columnWidth}px"
           }
-        })
-
-        // Virtualized rows
-        val visibleItems = Property(Seq.empty[(Int, S)])
-
-        def updateVisibleRange(): Unit = {
-          val scrollTop = scrollTopProperty.get
-          val viewportHeight = viewportHeightProperty.get
-          val rowHeight = rowHeightProperty.get
-          val totalItems = items.length
-          
-          if (totalItems == 0) {
-            visibleItems.set(Seq.empty)
-            return
-          }
-
-          val startIdx = Math.max(0, Math.floor(scrollTop / rowHeight).toInt)
-          val endIdx = Math.min(totalItems - 1, Math.ceil((scrollTop + viewportHeight) / rowHeight).toInt)
-          
-          val visible = (startIdx to endIdx).map(i => (i, items(i)))
-          visibleItems.set(visible)
         }
 
-        addDisposable(scrollTopProperty.observe(_ => updateVisibleRange()))
-        addDisposable(items.observeChanges(_ => updateVisibleRange()))
-        
-        // Initial range
-        updateVisibleRange()
+        syncContentLayout()
 
-        // Render visible rows
-        // We use forEach on a ListProperty of visible items
-        val visibleList = new ListProperty[(Int, S)]()
-        addDisposable(visibleItems.observe(v => visibleList.setAll(v)))
+        addDisposable(items.observeChanges(_ => syncContentLayout()))
+        addDisposable(columns.observeChanges(_ => syncContentLayout()))
+        addDisposable(rowHeightProperty.observe(_ => syncContentLayout()))
 
-        forEach(visibleList) { (idx, item) =>
-          val row = new TableRow[S]()
-          DslRuntime.build(row) {
-            row.bind(idx, item, this, columns.get.toSeq, rowHeightProperty.get)
+        forEach(visibleRows) { rowDef =>
+          Box.box("div") {
+            addClass("jfx-table-row-slot")
+            style {
+              position = "absolute"
+              top = s"${rowDef.index * rowHeightProperty.get}px"
+              left = "0"
+              width = s"${totalColumnWidth}px"
+              height = s"${rowHeightProperty.get}px"
+              display = "flex"
+            }
+
+            val row = new TableRow[S]()
+            DslRuntime.build(row) {
+              row.bind(
+                rowDef.index,
+                rowDef.item,
+                TableView.this,
+                columns.get.toSeq,
+                rowHeightProperty.get
+              )
+            }
           }
         }
       }
     }
+
+    recomputeVisibleRows()
   }
 }
 
 object TableView {
-  def tableView[S](init: TableView[S] ?=> Unit): TableView[S] = {
-    DslRuntime.build(new TableView[S])(init)
-  }
 
-  def items[S](using t: TableView[S]): ListProperty[S] = t.items
+  def tableView[S](init: TableView[S] ?=> Unit): TableView[S] =
+    DslRuntime.build(new TableView[S])(init)
+
+  def items[S](using t: TableView[S]): ListProperty[S] =
+    t.items
+
+  def columns[S](using t: TableView[S]): ListProperty[TableColumn[S, ?]] =
+    t.columns
 }

@@ -28,7 +28,13 @@ final class SsrHostElement(val tagName: String) extends HostElement {
     else attributes.update("class", classes.mkString(" "))
   }
 
+  override def getStyle(name: String): String = styles(name)
+
   override def setStyle(name: String, value: String): Unit = styles.update(name, value)
+
+  override def clientHeight: Int = 0
+
+  override def clientWidth: Int = 0
 
   override def addEventListener(name: String, listener: dom.Event => Unit): Disposable = () => ()
 

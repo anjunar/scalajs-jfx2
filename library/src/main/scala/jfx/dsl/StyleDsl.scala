@@ -12,11 +12,17 @@ object StyleDsl {
   }
 
   // DSL Properties
+  def boxSizing(using s: StyleProxy): String = ""
+  def boxSizing_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("box-sizing", v)
+
   def flex(using s: StyleProxy): String = ""
   def flex_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("flex", v)
 
   def height(using s: StyleProxy): String = ""
   def height_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("height", v)
+
+  def transform(using s: StyleProxy): String = ""
+  def transform_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("transform", v)
 
   def width(using s: StyleProxy): String = ""
   def width_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("width", v)
