@@ -164,17 +164,20 @@ object Main {
         showcasePage("TableView", "Einfache Tabellen-Struktur.") {
           vbox {
             style { gap = "24px" }
-            componentShowcase("B\u00fccher (statische Liste)") {
+            componentShowcase("B\u00fccher (virtuelle Liste mit 1000 Einträgen)") {
               val books = new ListProperty[ShowcaseBook]()
-              books.setAll(buildShowcaseBooks(5))
+              books.setAll(buildShowcaseBooks(1000))
               tableView[ShowcaseBook] {
                 val table = summon[TableView[ShowcaseBook]]
-                style { height = "200px" }
+                style { height = "400px" }
+                table.rowHeightProperty.set(40.0)
 
                 column[ShowcaseBook, String]("Titel") { item =>
+                   style { flex = "1" }
                    text = item.title
                 }
                 column[ShowcaseBook, String]("Autor") { item =>
+                   style { width = "200px" }
                    text = item.author
                 }
 

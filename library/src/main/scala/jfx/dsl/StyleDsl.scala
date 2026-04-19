@@ -83,4 +83,10 @@ object StyleDsl {
 
   def overflow(using s: StyleProxy): String = ""
   def overflow_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("overflow", v)
+
+  def overflowY(using s: StyleProxy): String = ""
+  def overflowY_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("overflow-y", v)
+
+  def overflowX(using s: StyleProxy): String = ""
+  def overflowX_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("overflow-x", v)
 }
