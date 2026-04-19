@@ -2,6 +2,7 @@ package jfx.control
 
 import jfx.core.component.{Box, Component}
 import jfx.core.component.Component.*
+import jfx.core.render.RenderBackend
 import jfx.core.state.{ListProperty, Property}
 import jfx.dsl.DslRuntime
 import jfx.statement.ForEach.forEach
@@ -134,16 +135,19 @@ final class TableView[S] extends Box("div") {
       def syncViewportMetrics(): Unit =
         viewportHeightProperty.set(math.max(0.0, host.clientHeight.toDouble))
 
-      dom.window.requestAnimationFrame((_: Double) => syncViewportMetrics())
+      if (! RenderBackend.current.isServer) {
+        val listener: Event => Unit = (_: Event) => {
+          syncViewportMetrics()
+        }
 
-      val listener: Event => Unit = (_: Event) => {
-        syncViewportMetrics()
+        dom.window.requestAnimationFrame((_: Double) => syncViewportMetrics())
+
+        dom.window.addEventListener("resize", listener)
+
+        addDisposable(() => {
+          dom.window.removeEventListener("resize", listener)
+        })
       }
-      dom.window.addEventListener("resize", listener)
-
-      addDisposable(() => { 
-        dom.window.removeEventListener("resize", listener)
-      })
 
       addDisposable(host.addEventListener("scroll", (e: dom.Event) => {
         val target = e.currentTarget.asInstanceOf[dom.html.Div]

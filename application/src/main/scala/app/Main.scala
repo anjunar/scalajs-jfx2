@@ -265,7 +265,7 @@ object Main {
                 table.rowHeightProperty.set(40.0)
 
                 column[ShowcaseBook, String]("Titel") { item =>
-                   style { flex = "1" }
+                   style { width = "200px" }
                    text = item.title
                 }
                 column[ShowcaseBook, String]("Autor") { item =>
