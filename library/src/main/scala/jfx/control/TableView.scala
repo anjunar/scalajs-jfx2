@@ -1,6 +1,8 @@
 package jfx.control
 
+import jfx.control.TableView.placeholder_=
 import jfx.core.component.{ElementComponent, NodeComponent}
+import jfx.core.render.{HostElement, RenderBackend}
 import jfx.core.state.{CompositeDisposable, Disposable, ListProperty, Property, RemoteListProperty}
 import jfx.dsl.{ComponentContext, DslRuntime, Scope}
 import org.scalajs.dom.{Event, HTMLDivElement, Node, document, window}
@@ -18,18 +20,17 @@ class TableView[S] extends ElementComponent[HTMLDivElement]("div") {
   private def newDiv(): HTMLDivElement =
     document.createElement("div").asInstanceOf[HTMLDivElement]
 
-  private def nnDiv(el: HTMLDivElement | Null): HTMLDivElement =
-    if (el == null) throw IllegalStateException("TableView inner DOM not initialized")
-    else el
+  private def nnDiv(host: jfx.core.render.HostNode): HTMLDivElement =
+    host.domNodeOption.collect { case el: HTMLDivElement => el }
+      .getOrElse(throw IllegalStateException("TableView inner DOM not initialized or not a div"))
 
-  /** Erst in [[initializeStructure]] gesetzt, damit der Konstruktor bei SSR kein `document` anfasst. */
-  private var headerViewport: HTMLDivElement | Null = null
-  private var headerContent: HTMLDivElement | Null = null
-  private var bodyWrapper: HTMLDivElement | Null = null
-  private var scrollViewport: HTMLDivElement | Null = null
-  private var rowsContainer: HTMLDivElement | Null = null
-  private var placeholderLayer: HTMLDivElement | Null = null
-  private var defaultPlaceholder: HTMLDivElement | Null = null
+  private val headerViewport: HostElement = RenderBackend.current.createElement("div", Some(hostElement))
+  private val headerContent: HostElement = RenderBackend.current.createElement("div", Some(headerViewport))
+  private val bodyWrapper: HostElement = RenderBackend.current.createElement("div", Some(headerViewport))
+  private val scrollViewport: HostElement = RenderBackend.current.createElement("div", Some(headerViewport))
+  private val rowsContainer: HostElement = RenderBackend.current.createElement("div", Some(bodyWrapper))
+  private val placeholderLayer: HostElement = RenderBackend.current.createElement("div", Some(bodyWrapper))
+  private val defaultPlaceholder: HostElement = RenderBackend.current.createElement("div", Some(hostElement))
 
   private val itemsRefProperty: Property[ListProperty[S]] = Property(new ListProperty[S]())
   val columnsProperty: ListProperty[TableColumn[S, ?]] = new ListProperty[TableColumn[S, ?]]()
@@ -111,40 +112,24 @@ class TableView[S] extends ElementComponent[HTMLDivElement]("div") {
   }
 
   private def initializeStructure(): Unit = {
-    val hv = newDiv()
-    val hc = newDiv()
-    val bw = newDiv()
-    val sv = newDiv()
-    val rc = newDiv()
-    val pl = newDiv()
-    val dp = newDiv()
+    headerViewport.setClassNames(Seq("jfx-table-header-viewport"))
 
-    headerViewport = hv
-    headerContent = hc
-    bodyWrapper = bw
-    scrollViewport = sv
-    rowsContainer = rc
-    placeholderLayer = pl
-    defaultPlaceholder = dp
+    headerContent.setClassNames(Seq("jfx-table-header-content"))
 
-    hv.className = "jfx-table-header-viewport"
+    bodyWrapper.setClassNames(Seq("jfx-table-body-wrapper"))
 
-    hc.className = "jfx-table-header-content"
+    scrollViewport.setClassNames(Seq("jfx-table-viewport"))
 
-    bw.className = "jfx-table-body-wrapper"
+    rowsContainer.setClassNames(Seq("jfx-table-content"))
 
-    sv.className = "jfx-table-viewport"
+    placeholderLayer.setClassNames(Seq("jfx-table-placeholder"))
 
-    rc.className = "jfx-table-content"
-
-    pl.className = "jfx-table-placeholder"
-
-    hv.appendChild(hc)
-    sv.appendChild(rc)
-    bw.appendChild(sv)
-    bw.appendChild(pl)
-    element.appendChild(hv)
-    element.appendChild(bw)
+    headerViewport.appendChild(headerContent)
+    scrollViewport.appendChild(rowsContainer)
+    bodyWrapper.appendChild(scrollViewport)
+    bodyWrapper.appendChild(placeholderLayer)
+    hostElement.appendChild(headerViewport)
+    hostElement.appendChild(bodyWrapper)
   }
 
   private def initializeDefaultPlaceholder(): Unit = {
@@ -729,7 +714,7 @@ class TableView[S] extends ElementComponent[HTMLDivElement]("div") {
 
     val minTotal = minWidths.sum
     val maxTotal =
-      if (maxWidths.exists(_.isPosInfinity)) Double.PositiveInfinity
+      if (maxWidths.exists(_ == Double.PositiveInfinity)) Double.PositiveInfinity
       else maxWidths.sum
     val desiredTotal = math.max(0.0, viewportWidth)
     val targetTotal = math.max(minTotal, math.min(desiredTotal, maxTotal))
@@ -827,7 +812,7 @@ class TableView[S] extends ElementComponent[HTMLDivElement]("div") {
 
     if (adjustable.isEmpty) return widths
 
-    val targetIndex = adjustable.maxBy(buffer)
+    val targetIndex = adjustable.maxBy(buffer(_))
     buffer(targetIndex) = clampWidth(buffer(targetIndex) + difference, minWidths(targetIndex), maxWidths(targetIndex))
     buffer.toVector
   }
