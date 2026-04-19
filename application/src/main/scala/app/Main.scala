@@ -3,15 +3,17 @@ package app
 import jfx.action.Button.*
 import jfx.core.component.Box.*
 import jfx.core.state.{ListProperty, Property}
+import jfx.dsl.Dsl.*
 import jfx.dsl.DslRuntime
-import jfx.form.Input.*
 import jfx.hydration.Hydration
 import jfx.layout.Div.div
 import jfx.layout.VBox.vbox
 import jfx.layout.HBox.hbox
+import jfx.layout.Drawer.*
+import jfx.layout.Drawer
+import jfx.router.Router
+import jfx.router.Router.router
 import jfx.ssr.Ssr
-import jfx.statement.Condition.{condition, thenDo, elseDo}
-import jfx.statement.ForEach.forEach
 import org.scalajs.dom
 import scala.scalajs.js.annotation.JSExportTopLevel
 
@@ -25,127 +27,118 @@ object Main {
   def boot(): Unit = {
     val root = dom.document.getElementById("root")
     if (root != null && root.children.length > 0) {
+      println("Existing content found, starting hydration...")
       Hydration.hydrate(root) {
-        demo()
+        appShell()
       }
     } else if (root != null) {
       val backend = jfx.core.render.BrowserRenderBackend
       val cursor = backend.nextCursor(Some(new jfx.core.render.DomHostElement("div", root)))
       jfx.core.render.RenderBackend.withBackend(backend) {
         DslRuntime.withCursor(cursor) {
-          demo()
+          appShell()
         }
       }
     }
   }
 
-  private def demo() = {
-    val name = Property("Ada")
-    val clicks = Property(0)
-    val milestones = ListProperty[String]()
-    milestones += "SSR rendert ohne Browser-DOM"
-    milestones += "Hydration claimed bestehende Nodes"
-    milestones += "Interne Strukturen sind echte Komponenten"
-    milestones += "Parent-Kontext ist im Baum verankert"
+  private def appShell() = {
+    drawer {
+      classes = Seq("app-shell")
+      width = "320px"
 
-    vbox {
-      classes = Seq("jfx2-demo")
-      
-      div {
-        classes = Seq("jfx2-demo__panel")
-        
+      drawerNavigation {
+        // No extra vbox here, the navigationHost is already the container
         div {
-          classes = Seq("jfx2-demo__eyebrow")
-          text = "jfx2 architecture showcase"
-        }
-
-        div {
-          classes = Seq("jfx2-demo__title")
-          text = "Consistency & Truth"
-        }
-
-        div {
-          classes = Seq("jfx2-demo__copy")
-          text = "Diese Demo zeigt den neuen JFX2-Kern: Ein einziger Aufbaupfad f\u00fcr SSR, Hydration und Interaktivit\u00e4t."
-        }
-
-        div {
-          classes = Seq("jfx2-demo__card")
+          classes = Seq("app-nav-intro")
+          
+          div {
+            classes = Seq("app-state-chip")
+            text = "JFX2 Demo"
+          }
 
           div {
-             classes = Seq("jfx2-demo__label")
-             text = "Dein Name"
+            classes = Seq("app-nav-intro__title")
+            text = "Architecture"
           }
+          
+          div {
+            classes = Seq("app-nav-intro__copy")
+            text = "Experience SSR and Hydration in action."
+          }
+        }
 
-          input("name") {
-            classes = Seq("jfx2-demo__input")
-            placeholder = "Name eingeben..."
-            stringValueProperty.set(name.get)
+        div {
+          classes = Seq("app-nav-group")
+          style { marginTop = "18px" }
+          
+          navCard("Home", "Start", "Welcome", "/")
+          navCard("Components", "Library", "Controls", "/components")
+          navCard("About", "Info", "Architecture", "/about")
+        }
+      }
+
+      drawerContent {
+        vbox {
+          classes = Seq("app-frame")
+          
+          div {
+            classes = Seq("app-shell__controls")
             
-            addDisposable(name.observe(stringValueProperty.set))
-            addDisposable(stringValueProperty.observe(name.set))
-          }
-
-          val result = div {
-            classes = Seq("jfx2-demo__result")
-          }
-          
-          def updateGreeting() = {
-             result.host.setText(s"Hallo ${name.get}. Klicks: ${clicks.get}")
-          }
-          
-          addDisposable(name.observe(_ => updateGreeting()))(using result)
-          addDisposable(clicks.observe(_ => updateGreeting()))(using result)
-          updateGreeting()
-
-          button("Klick mich!") {
-            classes = Seq("jfx2-demo__button")
-            onClick { _ => clicks.set(clicks.get + 1) }
-          }
-        }
-
-        condition(clicks.map(_ % 2 == 0)) {
-          thenDo {
-            div {
-              classes = Seq("jfx2-demo__slot-status")
-              text = "Gerade Anzahl an Klicks"
+            button("menu") {
+              classes = Seq("material-icons", "app-menu-button")
+              onClick { _ =>
+                toggle()
+              }
             }
           }
-          elseDo {
+
+          div {
+            classes = Seq("app-content")
+            style { flex = "1" }
+            
+            router(Routes.routes)
+          }
+
+          hbox {
+            classes = Seq("app-footer")
             div {
-              classes = Seq("jfx2-demo__slot-status", "is-odd")
-              text = "Ungerade Anzahl an Klicks"
+              classes = Seq("app-footer__copy")
+              text = "Built with JFX2 - Consistency & Truth"
             }
           }
         }
+      }
+    }
+  }
 
-        div {
-          classes = Seq("jfx2-demo__label")
-          text = "Architektur-Meilensteine"
-        }
-
-        div {
-          classes = Seq("jfx2-demo__milestones")
-          forEach(milestones) { item =>
-            div {
-              classes = Seq("jfx2-demo__milestone")
-              text = item
-            }
-          }
-        }
+  private def navCard(title: String, zone: String, section: String, path: String)(using d: Drawer): Unit = {
+    div {
+      classes = Seq("app-nav-card")
+      
+      div {
+        classes = Seq("app-nav-card__meta")
+        div { classes = Seq("app-nav-card__zone"); text = zone }
+        div { classes = Seq("app-nav-card__section"); text = section }
       }
       
       div {
-         classes = Seq("jfx2-demo__note")
-         text = "Nutze window.renderSsr('/') in der Konsole, um den SSR-Output zu sehen."
+        classes = Seq("app-nav-card__title")
+        text = title
       }
+
+      addDisposable(host.addEventListener("click", _ => {
+        dom.window.history.pushState(null, "", path)
+        dom.window.dispatchEvent(new dom.Event("popstate"))
+        open = false // Close drawer after navigation
+      }))
     }
   }
 
   @JSExportTopLevel("renderSsr")
   def renderSsr(path: String): String = {
     Ssr.renderToString {
-      demo()
+      appShell()
     }
   }
 }

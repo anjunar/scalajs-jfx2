@@ -50,6 +50,15 @@ object DslRuntime {
     component
   }
 
+  def withComponentScope[A](component: Component)(block: => A): A = {
+    val cursor = jfx.core.render.RenderBackend.current.nextCursor(Some(component.host))
+    withCursor(cursor) {
+      withContext(ComponentContext(Some(component))) {
+        block
+      }
+    }
+  }
+
   def build[C <: Component](factory: => C)(init: C ?=> Unit): C = {
     val component = factory
     val cursor = currentCursor

@@ -1,6 +1,7 @@
 package jfx.layout
 
 import jfx.core.component.{Box, Component}
+import jfx.dsl.Dsl.*
 import jfx.dsl.DslRuntime
 
 object Div {
@@ -11,8 +12,8 @@ object Div {
 
 object VBox {
   def vbox(init: Box ?=> Unit): Box = {
-    DslRuntime.build(new Box("div")) { b ?=>
-      b.host.setClassNames(Seq("jfx-vbox"))
+    DslRuntime.build(new Box("div")) {
+      classes = Seq("vbox")
       init
     }
   }
@@ -20,8 +21,8 @@ object VBox {
 
 object HBox {
   def hbox(init: Box ?=> Unit): Box = {
-    DslRuntime.build(new Box("div")) { b ?=>
-      b.host.setClassNames(Seq("jfx-hbox"))
+    DslRuntime.build(new Box("div")) {
+      classes = Seq("hbox")
       init
     }
   }

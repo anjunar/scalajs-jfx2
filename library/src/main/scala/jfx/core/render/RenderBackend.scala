@@ -82,9 +82,13 @@ private class DomInsertionCursor(parent: HostElement, index: Int) extends Cursor
 
 final class HydrationRenderBackend private (cursor: HydrationCursor) extends RenderBackend {
   override def isServer: Boolean = false
-  override def nextCursor(parent: Option[HostElement]): Cursor = cursor
+  override def nextCursor(parent: Option[HostElement]): Cursor = {
+    parent match {
+      case Some(h) => new HydrationCursor(h.domNode.get)
+      case None => cursor
+    }
+  }
   override def insertionCursor(parent: HostElement, index: Int): Cursor = {
-    // If we are still hydrating, we might need a mix or just use the dom insertion if we are adding new nodes
     new DomInsertionCursor(parent, index)
   }
 }

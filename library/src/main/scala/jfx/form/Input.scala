@@ -35,7 +35,6 @@ object Input {
     DslRuntime.build(new Input(name))(init)
   }
 
-  def classes_=(names: Seq[String])(using i: Input): Unit = i.host.setClassNames(names)
   def placeholder(using i: Input): String = i.placeholder
   def placeholder_=(value: String)(using i: Input): Unit = i.placeholder = value
   def stringValueProperty(using i: Input): Property[String] = i.stringValueProperty
