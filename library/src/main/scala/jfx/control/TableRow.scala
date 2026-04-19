@@ -33,10 +33,12 @@ class TableRow[S] extends Box("div") {
     itemProperty.set(rowValue)
     
     // Update position
+/*
     style {
       top = s"${rowIndex * rowHeight}px"
       height = s"${rowHeight}px"
     }
+*/
 
     // For Virtualization, we MUST rebuild or update the cell content.
     // Since cellRenderer is a function S => Unit, we currently rebuild the cell's children
