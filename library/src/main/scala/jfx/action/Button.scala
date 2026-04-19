@@ -20,4 +20,7 @@ object Button {
   def button(text: String)(init: Button ?=> Unit): Button = {
     DslRuntime.build(new Button(text))(init)
   }
+
+  def classes_=(names: Seq[String])(using b: Button): Unit = b.host.setClassNames(names)
+  def onClick(handler: dom.MouseEvent => Unit)(using b: Button): Unit = b.onClick(handler)
 }

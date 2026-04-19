@@ -1,52 +1,65 @@
 package jfx.statement
 
 import jfx.core.component.Component
-import jfx.core.render.{Cursor, HostElement}
 import jfx.core.state.ReadOnlyProperty
 import jfx.dsl.{ComponentContext, DslRuntime}
 import org.scalajs.dom
 
-class Condition(
-  val property: ReadOnlyProperty[Boolean],
-  val thenBranch: () => Unit,
-  val elseBranch: () => Unit
-) extends Component {
+class Condition(val property: ReadOnlyProperty[Boolean]) extends Component {
   override def tagName: String = "jfx-condition"
+
+  private var thenBuilder: Option[() => Unit] = None
+  private var elseBuilder: Option[() => Unit] = None
+
+  def registerThen(builder: => Unit): Unit = {
+    thenBuilder = Some(() => builder)
+  }
+
+  def registerElse(builder: => Unit): Unit = {
+    elseBuilder = Some(() => builder)
+  }
 
   override def compose(): Unit = {
     render()
-
     addDisposable(property.observe { _ =>
       render()
     })
   }
 
   private def render(): Unit = {
-    // Clear old children
+    // 1. Dispose and remove old children
     children.toSeq.foreach { c =>
       removeChild(c)
       c.dispose()
     }
     host.clearChildren()
 
-    val cursor = jfx.core.render.RenderBackend.current.insertionCursor(host, 0)
-    DslRuntime.withCursor(cursor) {
-      DslRuntime.withContext(ComponentContext(Some(this))) {
-        if (property.get) thenBranch()
-        else elseBranch()
+    // 2. Build new branch
+    val builder = if (property.get) thenBuilder else elseBuilder
+    builder.foreach { b =>
+      // We use an InsertionCursor at 0 to ensure we stay within our host
+      val cursor = jfx.core.render.RenderBackend.current.insertionCursor(host, 0)
+      DslRuntime.withCursor(cursor) {
+        DslRuntime.withContext(ComponentContext(Some(this))) {
+          b()
+        }
       }
     }
   }
 }
 
 object Condition {
-  def condition(property: ReadOnlyProperty[Boolean])(thenBranch: => Unit)(using dummy: DummyImplicit): Condition = {
-     DslRuntime.build(new Condition(property, () => thenBranch, () => ())) {
-     }
+  def condition(property: ReadOnlyProperty[Boolean])(init: Condition ?=> Unit): Condition = {
+    DslRuntime.build(new Condition(property)) { c ?=>
+      init
+    }
   }
 
-  def condition(property: ReadOnlyProperty[Boolean])(thenBranch: => Unit)(elseBranch: => Unit): Condition = {
-     DslRuntime.build(new Condition(property, () => thenBranch, () => elseBranch)) {
-     }
+  def thenDo(builder: => Unit)(using c: Condition): Unit = {
+    c.registerThen(builder)
+  }
+
+  def elseDo(builder: => Unit)(using c: Condition): Unit = {
+    c.registerElse(builder)
   }
 }
