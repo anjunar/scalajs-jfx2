@@ -84,6 +84,16 @@ trait Component extends Disposable {
   def baseClasses: Seq[String] = _baseClasses.toSeq
   def userClasses: Seq[String] = _userClasses.toSeq
 
+  def classes: Seq[String] = {
+     _host match {
+       case h: HostElement => h.attribute("class").getOrElse("").split(" ").toSeq.filter(_.nonEmpty)
+       case _ => (_baseClasses ++ _userClasses).distinct.toSeq
+     }
+  }
+
+  def classes_=(names: Seq[String]): Unit = setUserClasses(names)
+  def classes_=(name: String): Unit = setUserClasses(name.split("\\s+").toSeq.filter(_.nonEmpty))
+
   private[jfx] def addBaseClass(name: String): Unit = {
     if (!_baseClasses.contains(name)) {
       _baseClasses += name
@@ -128,6 +138,10 @@ trait Component extends Disposable {
   def tagName: String
   def compose(): Unit = {}
   
+  def onClick(handler: dom.MouseEvent => Unit): Unit = {
+    addDisposable(host.addEventListener("click", e => handler(e.asInstanceOf[dom.MouseEvent])))
+  }
+
   def addDisposable(d: Disposable): Unit = disposable.add(d)
 
   override def dispose(): Unit = {
@@ -138,14 +152,14 @@ trait Component extends Disposable {
 }
 
 object Component {
-  def classes(using c: Component): Seq[String] = c.userClasses
+  def classes(using c: Component): Seq[String] = c.classes
     
   def classes_=(names: Seq[String])(using c: Component): Unit = {
-    c.setUserClasses(names)
+    c.classes = names
   }
 
   def classes_=(name: String)(using c: Component): Unit = {
-    classes_=(name.split("\\s+").toSeq.filter(_.nonEmpty))
+    c.classes = name
   }
 
   def addClass(name: String)(using c: Component): Unit = {
@@ -161,6 +175,8 @@ object Component {
     c.addDisposable(d)
 
   def host(using c: Component): jfx.core.render.HostElement = c.host
+
+  def onClick(handler: dom.MouseEvent => Unit)(using c: Component): Unit = c.onClick(handler)
 
   export jfx.dsl.StyleDsl.*
 }

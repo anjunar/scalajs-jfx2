@@ -60,6 +60,32 @@ object DslRuntime {
   }
 
   /**
+   * Helper for components that render branches dynamically (Router, Condition, ForEach).
+   * Ensures the correct backend and cursor context are maintained.
+   */
+  def updateBranch[C <: Component](component: C, backend: jfx.core.render.RenderBackend, index: Option[Int] = None)(block: => Unit): Unit = {
+    jfx.core.render.RenderBackend.withBackend(backend) {
+      val cursor = if (component.parent.isEmpty) {
+        component.bindCursor
+      } else {
+        val baseOffset = component.calculateDomOffset
+        val offset = index.map { i =>
+           // If we have a specific logical index, calculate its physical offset
+           baseOffset + component.children.take(i).map(_.domNodeCount).sum
+        }.getOrElse(baseOffset)
+        
+        jfx.core.render.RenderBackend.current.insertionCursor(component.host, offset)
+      }
+
+      withCursor(cursor) {
+        withContext(ComponentContext(Some(component), index)) {
+          block
+        }
+      }
+    }
+  }
+
+  /**
    * Main entry point for DSL: Creates a component and binds it immediately.
    */
   def build[C <: Component](factory: => C)(init: C ?=> Unit): C = {
