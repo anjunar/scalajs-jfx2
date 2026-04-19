@@ -23,31 +23,24 @@ class Drawer extends Box("div") {
     given Component = this
     addBaseClass("jfx-drawer")
     
-    // Hardcode layout styles to prevent DSL collisions
-    host.setStyle("display", "flex")
-    host.setStyle("width", "100%")
-    host.setStyle("height", "100%")
-    host.setStyle("position", "relative")
+    // Core layout styles
+    style { 
+      display = "flex"
+      width = "100%"
+      height = "100%"
+      position = "relative"
+    }
 
     addDisposable(openProperty.observe(syncOpenState))
     addDisposable(drawerWidthProperty.observe(_ => syncPanelWidth()))
     addDisposable(sideProperty.observe(syncSideState))
 
-    // 1. Scrim
-    Box.box("div") {
-      addClass("jfx-drawer__scrim")
-      addDisposable(host.addEventListener("click", _ => {
-        if (closeOnScrimClickProperty.get && openProperty.get) openProperty.set(false)
-      }))
-    }
-
-    // 2. Navigation Panel
+    // 1. Navigation Panel (Shell)
     Box.box("div") {
       addClass("jfx-drawer__panel-shell")
       style { 
         height = "100%"
         position = "relative"
-        zIndex = "100"
       }
       
       addDisposable(drawerWidthProperty.observe(_ => syncPanelWidth()))
@@ -69,6 +62,10 @@ class Drawer extends Box("div") {
           }
         }
       }
+    }
+
+    Box.box("div") {
+      addClass("jfx-drawer__scrim")
     }
 
     // 3. Main Content Area
@@ -118,7 +115,6 @@ class Drawer extends Box("div") {
       val responsiveWidth = s"min(92vw, $widthValue)"
       shell.host.setStyle("width", if (openProperty.get) responsiveWidth else "0px")
       
-      // Also sync the inner panel
       shell.children.collectFirst { case b: Box if b.baseClasses.contains("jfx-drawer__panel") => b }.foreach { panel =>
          panel.host.setStyle("width", widthValue)
       }
