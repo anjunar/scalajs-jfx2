@@ -1,60 +1,73 @@
 package jfx.dsl
 
-import jfx.core.component.NodeComponent
+import jfx.core.component.Component
+import jfx.core.render.Cursor
 import org.scalajs.dom
-
 import scala.collection.mutable
-import scala.compiletime.summonFrom
 
-private[jfx] final case class ComponentContext(
-  parent: Option[NodeComponent[? <: dom.Node]],
-  attachOverride: Option[NodeComponent[? <: dom.Node] => Unit] = None
+/**
+ * Context for DSL composition.
+ */
+final case class ComponentContext(
+  parent: Option[jfx.core.component.Component]
 )
 
-private[jfx] object ComponentContext {
-  val root: ComponentContext = ComponentContext(None)
+object ComponentContext {
+  val root = ComponentContext(None)
+}
+
+/**
+ * Placeholder for Scope.
+ */
+trait Scope
+object Scope {
+  val root = new Scope {}
 }
 
 object DslRuntime {
+  private val cursorStack = mutable.ArrayBuffer.empty[Cursor]
+  private val contextStack = mutable.ArrayBuffer(ComponentContext.root)
 
-  private val componentContextStack =
-    mutable.ArrayBuffer(ComponentContext.root)
-  private val scopeStack =
-    mutable.ArrayBuffer.empty[Scope]
+  def currentCursor: Cursor = cursorStack.lastOption.getOrElse(
+    throw IllegalStateException("No active DSL cursor found")
+  )
 
-  inline def currentScope[A](block: Scope => A): A =
-    summonFrom {
-      case given Scope =>
-        block(summon[Scope])
-      case _ =>
-        if (scopeStack.nonEmpty) block(scopeStack.last)
-        else block(Scope.root())
-    }
+  def currentContext: ComponentContext = contextStack.last
 
-  def activeScopeOption(): Option[Scope] =
-    scopeStack.lastOption
-
-  private[jfx] def currentComponentContext(): ComponentContext =
-    componentContextStack.last
-
-  def withScope[A](scope: Scope)(block: => A): A = {
-    scopeStack += scope
-    try block
-    finally scopeStack.remove(scopeStack.length - 1)
+  def withCursor[A](cursor: Cursor)(block: => A): A = {
+    cursorStack += cursor
+    try block finally cursorStack.remove(cursorStack.length - 1)
   }
 
-  private[jfx] def attach(component: NodeComponent[? <: dom.Node], context: ComponentContext): Unit =
-    context.attachOverride match {
-      case Some(attachOverride) =>
-        attachOverride(component)
-      case None =>
-        context.parent.foreach(_.attachChild(component))
-    }
-
-  private[jfx] def withComponentContext[A](context: ComponentContext)(block: => A): A = {
-    componentContextStack += context
-    try block
-    finally componentContextStack.remove(componentContextStack.length - 1)
+  def withContext[A](context: ComponentContext)(block: => A): A = {
+    contextStack += context
+    try block finally contextStack.remove(contextStack.length - 1)
   }
 
+  def attach[C <: Component](component: C): C = {
+    component.bind(currentCursor)
+    component
+  }
+
+  /**
+   * Main entry point for DSL: Creates a component and binds it immediately.
+   */
+  def build[C <: Component](factory: => C)(init: C ?=> Unit): C = {
+    val component = factory
+    
+    // ATTACHMENT Logic: Always through Cursor
+    component.bind(currentCursor)
+    
+    // COMPOSITION Logic: Set as parent for children
+    // The children created in `init` must be attached to this component's host
+    val sub = currentCursor.subCursor(component.host)
+    withCursor(sub) {
+      withContext(ComponentContext(Some(component))) {
+        given c: C = component
+        init
+      }
+    }
+    
+    component
+  }
 }

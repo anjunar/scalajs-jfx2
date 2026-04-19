@@ -1,46 +1,25 @@
 package jfx.hydration
 
-import jfx.core.component.NodeComponent
+import jfx.core.component.Component
 import jfx.core.render.{HydrationRenderBackend, RenderBackend}
-import jfx.dsl.Scope
+import jfx.dsl.DslRuntime
 import org.scalajs.dom
 
 object Hydration {
-
-  def hydrateInto[C <: NodeComponent[? <: dom.Node]](
-    container: dom.Element
-  )(factory: Scope ?=> C): C = {
-    val component =
-      RenderBackend.withBackend(HydrationRenderBackend.into(container)) {
-        Scope.scope {
-          factory
-        }
+  /**
+   * Main entry point for Hydration.
+   * Takes a root component factory and a DOM element where SSR content is located.
+   */
+  def hydrate(rootElement: dom.Element)(factory: => Component): Component = {
+    val backend = HydrationRenderBackend.root(rootElement)
+    val cursor = backend.nextCursor(None)
+    
+    RenderBackend.withBackend(backend) {
+      DslRuntime.withCursor(cursor) {
+        val root = factory
+        // The tree is now bound to existing nodes
+        root
       }
-
-    attachIfMissing(container, component)
-    component.onMount()
-    component
-  }
-
-  def hydrateRoot[C <: NodeComponent[? <: dom.Node]](
-    root: dom.Element
-  )(factory: Scope ?=> C): C = {
-    val component =
-      RenderBackend.withBackend(HydrationRenderBackend.root(root)) {
-        Scope.scope {
-          factory
-        }
-      }
-
-    component.onMount()
-    component
-  }
-
-  private def attachIfMissing(container: dom.Element, component: NodeComponent[? <: dom.Node]): Unit = {
-    val node = component.element
-    if (node.parentNode != container) {
-      container.appendChild(node)
     }
   }
-
 }

@@ -2,85 +2,56 @@ package jfx.core.component
 
 import jfx.core.render.HostNode
 import jfx.core.state.{CompositeDisposable, Disposable}
-import jfx.dsl.DslRuntime
 import org.scalajs.dom
 
+/**
+ * Base trait for ALL components in the JFX2 tree.
+ * Enforces parent-child relationship and lifecycle.
+ */
 trait NodeComponent[E <: dom.Node] extends Disposable {
-
+  private var _parent: Option[NodeComponent[? <: dom.Node]] = None
   private var mounted = false
 
-  var parent: Option[NodeComponent[? <: dom.Node]] = None
+  def parent: Option[NodeComponent[? <: dom.Node]] = _parent
+  
+  private[jfx] def setParent(newParent: Option[NodeComponent[? <: dom.Node]]): Unit = {
+    _parent = newParent
+  }
 
   private[jfx] def hostNode: HostNode
+  
+  def renderHtml: String = hostNode.html
 
-  def element: E =
-    hostNode.domNodeOption
-      .getOrElse {
-        throw IllegalStateException(
-          s"${getClass.getSimpleName}.element is only available while rendering in the browser or during hydration"
-        )
-      }
-      .asInstanceOf[E]
-
-  def renderHtml: String =
-    hostNode.html
-
-  final def onMount(): Unit = {
+  def onMount(): Unit = {
     if (mounted) return
-
     mounted = true
     mountContent()
-    afterMount()
-    childComponentsIterator.foreach { child =>
-      if (!child.isMounted) {
-        child.onMount()
-      }
-    }
+    childComponentsIterator.foreach(_.onMount())
+  }
+
+  def onUnmount(): Unit = {
+    if (!mounted) return
+    childComponentsIterator.foreach(_.onUnmount())
+    unmountContent()
+    mounted = false
   }
 
   protected def mountContent(): Unit = {}
+  protected def unmountContent(): Unit = {}
 
-  protected def afterMount(): Unit = {}
+  def isMounted: Boolean = mounted
 
-  private[jfx] final def onUnmount(): Unit = {
-    if (!mounted) return
-
-    mounted = false
-    childComponentsIterator.foreach(_.onUnmount())
-    afterUnmount()
-  }
-
-  protected def afterUnmount(): Unit = {}
-
-  private[jfx] final def isMounted: Boolean =
-    mounted
-
-  val disposable = new CompositeDisposable()
-
-  def addDisposable(value: Disposable): Unit =
-    disposable.add(value)
-
-  override def dispose(): Unit =
-    disposable.dispose()
+  private[jfx] def childComponentsIterator: Iterator[NodeComponent[? <: dom.Node]] = Iterator.empty
 
   private[jfx] def attachChild(child: NodeComponent[? <: dom.Node]): Unit =
     throw IllegalStateException(s"${getClass.getSimpleName} does not accept child components")
 
-  private[jfx] def detachChild(child: NodeComponent[? <: dom.Node]): Boolean =
-    false
+  private[jfx] def detachChild(child: NodeComponent[? <: dom.Node]): Unit = {}
 
-  private[jfx] def childComponentsIterator: Iterator[NodeComponent[? <: dom.Node]] =
-    Iterator.empty
-
-}
-
-object NodeComponent {
-
-  def mount[C <: NodeComponent[? <: dom.Node]](component: C): C =
-    DslRuntime.currentScope { _ =>
-      val currentContext = DslRuntime.currentComponentContext()
-      DslRuntime.attach(component, currentContext)
-      component
-    }
-
+  val disposable = new CompositeDisposable()
+  def addDisposable(d: Disposable): Unit = disposable.add(d)
+  override def dispose(): Unit = {
+    onUnmount()
+    disposable.dispose()
+  }
 }

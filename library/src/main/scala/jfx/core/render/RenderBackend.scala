@@ -1,85 +1,62 @@
 package jfx.core.render
 
 import org.scalajs.dom
-
 import scala.collection.mutable
 
 trait RenderBackend {
-
-  def createElement(tagName: String, parent: Option[HostElement]): HostElement
-
   def isServer: Boolean
-
-  def isHydrating: Boolean =
-    false
-
+  def nextCursor(parent: Option[HostElement]): Cursor
 }
 
 object RenderBackend {
-
   private val stack = mutable.ArrayBuffer.empty[RenderBackend]
-
-  def current: RenderBackend =
-    stack.lastOption.getOrElse(BrowserRenderBackend)
-
+  def current: RenderBackend = stack.lastOption.getOrElse(BrowserRenderBackend)
   def withBackend[A](backend: RenderBackend)(block: => A): A = {
     stack += backend
-    try block
-    finally stack.remove(stack.length - 1)
+    try block finally stack.remove(stack.length - 1)
   }
+}
 
+trait Cursor {
+  def claimElement(tagName: String): HostElement
+  def claimText(initial: String): HostNode
+  def subCursor(element: HostElement): Cursor
 }
 
 object BrowserRenderBackend extends RenderBackend {
-
-  override def createElement(tagName: String, parent: Option[HostElement]): HostElement =
-    new DomHostElement(tagName, dom.document.createElement(tagName))
-
-  override def isServer: Boolean =
-    false
-
-}
-
-final class SsrRenderBackend extends RenderBackend {
-
-  override def createElement(tagName: String, parent: Option[HostElement]): HostElement =
-    new SsrHostElement(tagName)
-
-  override def isServer: Boolean =
-    true
-
-}
-
-final class HydrationRenderBackend private (rootCursor: HydrationCursor) extends RenderBackend {
-
-  private val cursors = mutable.Map.empty[HostElement, HydrationCursor]
-
-  override def createElement(tagName: String, parent: Option[HostElement]): HostElement = {
-    val cursor =
-      parent.flatMap(p => cursors.get(p).orElse {
-        val c = HydrationCursor.children(p.domElementOption.get)
-        cursors.update(p, c)
-        Some(c)
-      }).getOrElse(rootCursor)
-
-    val element = cursor.claim(tagName)
-    new DomHostElement(tagName, element)
+  override def isServer: Boolean = false
+  override def nextCursor(parent: Option[HostElement]): Cursor = {
+    new DomCreationCursor(parent.flatMap(_.domNode).collect { case e: dom.Element => e })
   }
+}
 
-  override def isServer: Boolean =
-    false
+private class DomCreationCursor(parent: Option[dom.Element]) extends Cursor {
+  override def claimElement(tagName: String): HostElement = {
+    val el = dom.document.createElement(tagName)
+    parent.foreach(_.appendChild(el))
+    new DomHostElement(tagName, el)
+  }
+  
+  override def claimText(initial: String): HostNode = {
+    val t = dom.document.createTextNode(initial)
+    parent.foreach(_.appendChild(t))
+    new HostNode {
+      def html = initial
+      def domNode = Some(t)
+    }
+  }
+  
+  override def subCursor(element: HostElement): Cursor = {
+    new DomCreationCursor(element.domNode.collect { case e: dom.Element => e })
+  }
+}
 
-  override def isHydrating: Boolean =
-    true
-
+final class HydrationRenderBackend private (cursor: HydrationCursor) extends RenderBackend {
+  override def isServer: Boolean = false
+  override def nextCursor(parent: Option[HostElement]): Cursor = cursor
 }
 
 object HydrationRenderBackend {
-
-  def into(container: dom.Element): HydrationRenderBackend =
-    new HydrationRenderBackend(HydrationCursor.children(container))
-
-  def root(root: dom.Element): HydrationRenderBackend =
-    new HydrationRenderBackend(HydrationCursor.exact(root))
-
+  def root(root: dom.Element): HydrationRenderBackend = 
+    new HydrationRenderBackend(new HydrationCursor(root))
 }

@@ -1,61 +1,56 @@
 package jfx.core.render
 
 import org.scalajs.dom
+import scala.collection.mutable
 
-final class HydrationCursor private (
-  exact: Option[dom.Element],
-  parent: Option[dom.Element]
-) {
+/**
+ * Traverses existing DOM during hydration.
+ */
+class HydrationCursor(val root: dom.Node) extends Cursor {
+  private val childNodes = root.childNodes
+  private var index = 0
 
-  private var exactClaimed = false
-  private var childIndex = 0
-
-  def claim(tagName: String): dom.Element = {
-    val claimed =
-      exact match {
-        case Some(element) if !exactClaimed =>
-          exactClaimed = true
-          Some(element)
-        case _ =>
-          parent.flatMap(nextChild)
-      }
-
-    claimed match {
-      case Some(element) if element.tagName.equalsIgnoreCase(tagName) =>
-        element
-      case Some(element) =>
-        val parentInfo = parent.map(p => s" in <${p.tagName.toLowerCase}>").getOrElse("")
-        val siblings = parent.map(p => s" (existing children: ${p.children.map(_.tagName.toLowerCase).mkString(", ")})").getOrElse("")
-        dom.console.warn(
-          s"JFX2 hydration mismatch: expected <$tagName> but found <${element.tagName.toLowerCase}>$parentInfo.$siblings Creating a fresh node."
-        )
-        dom.document.createElement(tagName)
-      case None =>
-        val parentInfo = parent.map(p => s" in <${p.tagName.toLowerCase}>").getOrElse("")
-        val siblings = parent.map(p => s" (total children: ${p.children.length})").getOrElse("")
-        dom.console.warn(s"JFX2 hydration mismatch: expected <$tagName> but no server node was available$parentInfo$siblings. Creating a fresh node.")
-        dom.document.createElement(tagName)
+  private def skipWhitespaces(): Unit = {
+    while (index < childNodes.length && 
+           childNodes.item(index).nodeType == dom.Node.TEXT_NODE && 
+           childNodes.item(index).textContent.trim.isEmpty) {
+      index += 1
     }
   }
 
-  private def nextChild(parentElement: dom.Element): Option[dom.Element] = {
-    val children = parentElement.children
-    val child =
-      if (childIndex >= children.length) None
-      else Option(children.item(childIndex))
-
-    childIndex += 1
-    child
+  override def claimElement(tagName: String): HostElement = {
+    skipWhitespaces()
+    if (index >= childNodes.length) {
+      throw new IllegalStateException(s"Hydration failed: expected <$tagName> but no more nodes found in parent <${root.nodeName}>")
+    }
+    
+    val node = childNodes.item(index)
+    if (node.nodeType != dom.Node.ELEMENT_NODE) {
+      throw new IllegalStateException(s"Hydration failed: expected <$tagName> but found node type ${node.nodeType}")
+    }
+    
+    val el = node.asInstanceOf[dom.Element]
+    if (el.tagName.toLowerCase != tagName.toLowerCase) {
+      throw new IllegalStateException(s"Hydration failed: expected <$tagName> but found <${el.tagName}>")
+    }
+    
+    index += 1
+    new DomHostElement(tagName, el)
   }
 
-}
+  override def claimText(initial: String): HostNode = {
+    // For text, we don't skip whitespaces as they might be the text itself
+    if (index >= childNodes.length) throw new IllegalStateException(s"Hydration failed: expected text but no more nodes found")
+    
+    val t = childNodes.item(index)
+    index += 1
+    new HostNode {
+      def html = t.textContent
+      def domNode = Some(t)
+    }
+  }
 
-object HydrationCursor {
-
-  def exact(root: dom.Element): HydrationCursor =
-    new HydrationCursor(Some(root), None)
-
-  def children(parent: dom.Element): HydrationCursor =
-    new HydrationCursor(None, Some(parent))
-
+  override def subCursor(element: HostElement): Cursor = {
+    new HydrationCursor(element.domNode.get)
+  }
 }
