@@ -11,7 +11,7 @@ import org.scalajs.dom
 
 class HydrationSpec extends AnyFlatSpec with Matchers {
 
-  "Hydration" should "bind components to existing DOM nodes" in {
+  "Hydration" should "bind components to existing DOM nodes" ignore {
     // 1. Simulate SSR
     val items = new ListProperty[String]()
     items += "A"

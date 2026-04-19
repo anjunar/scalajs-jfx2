@@ -5,7 +5,7 @@ import jfx.core.state.Disposable
 
 final class DomHostElement(val tagName: String, val element: dom.Element) extends HostElement {
   override def domNode: Option[dom.Node] = Some(element)
-  override def html: String = element.outerHTML
+  override def renderHtml(indent: Int): String = element.outerHTML
 
   override def setAttribute(name: String, value: String): Unit = element.setAttribute(name, value)
   override def attribute(name: String): Option[String] = Option(element.getAttribute(name))
@@ -14,8 +14,6 @@ final class DomHostElement(val tagName: String, val element: dom.Element) extend
     if (classes.isEmpty) element.removeAttribute("class")
     else element.setAttribute("class", classes.mkString(" "))
   }
-
-  override def setText(text: String): Unit = element.textContent = text
 
   override def setStyle(name: String, value: String): Unit = 
     element.asInstanceOf[dom.html.Element].style.setProperty(name, value)

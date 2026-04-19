@@ -10,8 +10,6 @@ import jfx.core.component.Component.*
 import jfx.core.state.{ListProperty, Property}
 import jfx.dsl.*
 import jfx.form.Input.*
-// Note: Editor and plugins are currently skipped as they are complex to port immediately
-// but I keep the structure as close as possible.
 import jfx.hydration.Hydration
 import jfx.layout.Div.div
 import jfx.layout.Drawer.*
@@ -189,10 +187,10 @@ object Main {
       }
     )
 
-    div {
+    val root = div {
       classes = "app-shell"
 
-      drawer {
+      val component = drawer {
         classes = "app-shell-drawer"
         addDisposable(drawerOpen.observe(open = _))
         open = drawerOpen.get
@@ -239,7 +237,6 @@ object Main {
               classes = "app-toolbar"
               button("menu") {
                 classes = Seq("app-toolbar__menu-toggle", "material-icons")
-                text = "menu"
                 onClick { _ => drawerOpen.set(!drawerOpen.get) }
               }
               div {
@@ -263,13 +260,16 @@ object Main {
               classes = "app-footer"
               div {
                 classes = "app-footer__text"
-                text = s"┬⌐ ${new js.Date().getFullYear()} Anjunar. Pure Scala.js Architecture."
+                text = s"\u00a9 ${new js.Date().getFullYear()} Anjunar. Pure Scala.js Architecture."
               }
             }
           }
         }
       }
+
+      component.addDisposable(drawerOpen.observe(component.openProperty.set))
     }
+    root
   }
 
   private def showcasePage(title: String, subtitle: String)(content: => Unit) = {

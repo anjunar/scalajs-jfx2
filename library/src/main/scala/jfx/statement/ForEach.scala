@@ -15,8 +15,10 @@ class ForEach[T](
   val renderItem: T => Unit
 ) extends Component {
   override def tagName: String = "" 
+  private var activeBackend: jfx.core.render.RenderBackend = _
 
   override def compose(): Unit = {
+    activeBackend = jfx.core.render.RenderBackend.current
     // Initial render
     items.foreach { item =>
       renderItem(item)
@@ -41,31 +43,37 @@ class ForEach[T](
   }
 
   private def insertItem(index: Int, item: T): Unit = {
-    // 1. Physical target
-    val baseOffset = calculateDomOffset
-    val itemOffset = children.take(index).map(_.domNodeCount).sum
-    val cursor = jfx.core.render.RenderBackend.current.insertionCursor(host, baseOffset + itemOffset)
-    
-    // 2. Build with logical index
-    DslRuntime.withCursor(cursor) {
-      DslRuntime.withContext(ComponentContext(Some(this), Some(index))) {
-        renderItem(item)
+    jfx.core.render.RenderBackend.withBackend(activeBackend) {
+      // 1. Physical target
+      val baseOffset = calculateDomOffset
+      val itemOffset = children.take(index).map(_.domNodeCount).sum
+      val cursor = jfx.core.render.RenderBackend.current.insertionCursor(host, baseOffset + itemOffset)
+      
+      // 2. Build with logical index
+      DslRuntime.withCursor(cursor) {
+        DslRuntime.withContext(ComponentContext(Some(this), Some(index))) {
+          renderItem(item)
+        }
       }
     }
   }
 
   private def removeItem(index: Int): Unit = {
-    val child = children(index)
-    removeChild(child)
-    child.dispose()
+    jfx.core.render.RenderBackend.withBackend(activeBackend) {
+      val child = children(index)
+      removeChild(child)
+      child.dispose()
+    }
   }
 
   private def resetItems(): Unit = {
-    children.toSeq.foreach { c =>
-      removeChild(c)
-      c.dispose()
+    jfx.core.render.RenderBackend.withBackend(activeBackend) {
+      children.toSeq.foreach { c =>
+        removeChild(c)
+        c.dispose()
+      }
+      items.foreach(appendItem)
     }
-    items.foreach(appendItem)
   }
 }
 

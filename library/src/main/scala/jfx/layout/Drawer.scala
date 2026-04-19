@@ -3,7 +3,7 @@ package jfx.layout
 import jfx.core.component.{Box, Component}
 import jfx.core.component.Component.*
 import jfx.core.state.Property
-import jfx.dsl.{ComponentContext, DslRuntime}
+import jfx.dsl.{ComponentContext, DslRuntime, StyleProxy}
 import org.scalajs.dom.{Event, KeyboardEvent, window}
 import scala.compiletime.uninitialized
 
@@ -20,12 +20,20 @@ class Drawer extends Box("div") {
   def contentHost: Box = _contentHost
 
   override def compose(): Unit = {
-    classes = Seq("jfx-drawer")
+    given Component = this
+    addClass("jfx-drawer")
+    style { 
+      display = "flex"
+      width = "100%"
+      height = "100%"
+      position = "relative"
+    }
 
     addDisposable(openProperty.observe(syncOpenState))
     addDisposable(widthProperty.observe(_ => syncPanelWidth()))
     addDisposable(sideProperty.observe(syncSideState))
 
+    // 1. Scrim (Overlay when open)
     Box.box("div") {
       classes = Seq("jfx-drawer__scrim")
       addDisposable(host.addEventListener("click", _ => {
@@ -33,29 +41,49 @@ class Drawer extends Box("div") {
       }))
     }
 
+    // 2. Navigation Panel
     Box.box("div") {
       classes = Seq("jfx-drawer__panel-shell")
-      style { height = "100%" }
+      style { 
+        height = "100%"
+        position = "relative"
+        zIndex = "100"
+      }
       
       addDisposable(widthProperty.observe(_ => syncPanelWidth()))
       addDisposable(openProperty.observe(_ => syncPanelWidth()))
 
       Box.box("div") {
         classes = Seq("jfx-drawer__panel")
-        style { height = "100%" }
-        addDisposable(widthProperty.observe(w => host.setStyle("width", w)))
+        style { 
+          height = "100%"
+          overflow = "hidden"
+        }
+        
         style { width = widthProperty.get }
 
         _navigationHost = Box.box("div") {
           classes = Seq("jfx-drawer__navigation")
-          style { height = "100%" }
+          style { 
+            height = "100%" 
+            display = "flex"
+            flexDirection = "column"
+          }
         }
       }
     }
 
+    // 3. Main Content Area
     _contentHost = Box.box("div") {
       classes = Seq("jfx-drawer__content")
-      style { height = "100%" }
+      style { 
+        height = "100%"
+        flex = "1"
+        display = "flex"
+        flexDirection = "column"
+        minWidth = "0" 
+        // ENSURE NO FIXED WIDTH HERE
+      }
     }
 
     if (!jfx.core.render.RenderBackend.current.isServer) {

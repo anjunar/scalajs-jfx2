@@ -10,6 +10,7 @@ class Condition(val property: ReadOnlyProperty[Boolean]) extends Component {
 
   private var thenBuilder: Option[() => Unit] = None
   private var elseBuilder: Option[() => Unit] = None
+  private var activeBackend: jfx.core.render.RenderBackend = _
 
   def registerThen(builder: => Unit): Unit = {
     thenBuilder = Some(() => builder)
@@ -20,28 +21,36 @@ class Condition(val property: ReadOnlyProperty[Boolean]) extends Component {
   }
 
   override def compose(): Unit = {
-    render()
+    activeBackend = jfx.core.render.RenderBackend.current
     addDisposable(property.observe { _ =>
       render()
     })
   }
 
   private def render(): Unit = {
-    // 1. Dispose and remove old children
-    children.toSeq.foreach { c =>
-      removeChild(c)
-      c.dispose()
-    }
+    jfx.core.render.RenderBackend.withBackend(activeBackend) {
+      // 1. Dispose and remove old children
+      children.toSeq.foreach { c =>
+        removeChild(c)
+        c.dispose()
+      }
 
-    // 2. Build new branch
-    val builder = if (property.get) thenBuilder else elseBuilder
-    builder.foreach { b =>
-      // Start at our own calculated offset in the physical host
-      val offset = calculateDomOffset
-      val cursor = jfx.core.render.RenderBackend.current.insertionCursor(host, offset)
-      DslRuntime.withCursor(cursor) {
-        DslRuntime.withContext(ComponentContext(Some(this))) {
-          b()
+      // 2. Build new branch
+      val builder = if (property.get) thenBuilder else elseBuilder
+      builder.foreach { b =>
+        val cursor = parent match {
+          case Some(_) => 
+            val offset = calculateDomOffset
+            jfx.core.render.RenderBackend.current.insertionCursor(host, offset)
+          case None => 
+            // Re-use binding cursor for root level
+            bindCursor
+        }
+
+        DslRuntime.withCursor(cursor) {
+          DslRuntime.withContext(ComponentContext(Some(this))) {
+            b()
+          }
         }
       }
     }
@@ -50,9 +59,11 @@ class Condition(val property: ReadOnlyProperty[Boolean]) extends Component {
 
 object Condition {
   def condition(property: ReadOnlyProperty[Boolean])(init: Condition ?=> Unit): Condition = {
-    DslRuntime.build(new Condition(property)) { c ?=>
+    val c = DslRuntime.build(new Condition(property)) { c ?=>
       init
     }
+    c.render() // Trigger initial render after init block has registered branches
+    c
   }
 
   def thenDo(builder: => Unit)(using c: Condition): Unit = {

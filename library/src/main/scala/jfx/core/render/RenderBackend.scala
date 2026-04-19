@@ -2,6 +2,7 @@ package jfx.core.render
 
 import org.scalajs.dom
 import scala.collection.mutable
+import jfx.core.state.Disposable
 
 trait RenderBackend {
   def isServer: Boolean
@@ -44,7 +45,7 @@ private class DomCreationCursor(parent: Option[dom.Element]) extends Cursor {
   override def claimText(initial: String): HostNode = {
     val t = dom.document.createTextNode(initial)
     new HostNode {
-      def html = initial
+      override def renderHtml(indent: Int): String = initial
       def domNode = Some(t)
     }
   }
@@ -68,7 +69,7 @@ private class DomInsertionCursor(parent: HostElement, index: Int) extends Cursor
   override def claimText(initial: String): HostNode = {
     val t = dom.document.createTextNode(initial)
     val host = new HostNode {
-      def html = initial
+      override def renderHtml(indent: Int): String = initial
       def domNode = Some(t)
     }
     currentIndex += 1
@@ -89,7 +90,8 @@ final class HydrationRenderBackend private (cursor: HydrationCursor) extends Ren
     }
   }
   override def insertionCursor(parent: HostElement, index: Int): Cursor = {
-    new DomInsertionCursor(parent, index)
+    val root = parent.domNode.get
+    new HydrationCursor(root, index)
   }
 }
 

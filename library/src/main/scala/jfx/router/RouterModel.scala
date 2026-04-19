@@ -45,25 +45,30 @@ object RouteMatcher {
   def resolve(routes: Seq[Route], path: String): List[RouteMatch] = {
     val normalized = normalize(path)
     
-    // 1. Try exact match
-    routes.collectFirst {
-      case r if normalize(r.path) == normalized => List(RouteMatch(r, normalized, Map.empty))
-    }.orElse {
-      // 2. Try matching without base path if it doesn't match directly
-      // This is a bit hacky but works for many dev setups.
-      // Better would be to know the base path explicitly.
-      val withoutBase = if (normalized.startsWith("/scalajs-jfx2")) normalized.stripPrefix("/scalajs-jfx2") else normalized
-      val normalizedWithoutBase = if (withoutBase.isEmpty) "/" else withoutBase
-      
+    def tryMatch(p: String): Option[List[RouteMatch]] = {
       routes.collectFirst {
-        case r if normalize(r.path) == normalizedWithoutBase => List(RouteMatch(r, normalized, Map.empty))
+        case r if normalize(r.path) == p => List(RouteMatch(r, normalized, Map.empty))
       }
+    }
+
+    // 1. Try direct match
+    tryMatch(normalized).orElse {
+      // 2. Try matching without base paths
+      val withoutBase = normalized
+        .stripPrefix("/scalajs-jfx2")
+        .stripPrefix("/scalajs-jfx")
+      
+      val p = if (withoutBase.isEmpty) "/" else withoutBase
+      tryMatch(p)
     }.getOrElse(Nil)
   }
 
   private def normalize(path: String): String = {
-    val p = path.takeWhile(_ != '?').takeWhile(_ != '#')
-    if (p == "/") p
-    else p.stripSuffix("/")
+    if (path == null || path.isEmpty || path == "/") "/"
+    else {
+      val p = path.takeWhile(_ != '?').takeWhile(_ != '#')
+      val s = if (p.endsWith("/")) p.dropRight(1) else p
+      if (s.isEmpty) "/" else s
+    }
   }
 }

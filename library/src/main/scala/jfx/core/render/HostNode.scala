@@ -4,7 +4,8 @@ import org.scalajs.dom
 import jfx.core.state.Disposable
 
 trait HostNode {
-  def html: String
+  def html: String = renderHtml(0)
+  def renderHtml(indent: Int): String
   def domNode: Option[dom.Node]
 }
 
@@ -13,7 +14,6 @@ trait HostElement extends HostNode {
   def setAttribute(name: String, value: String): Unit
   def attribute(name: String): Option[String]
   def setClassNames(classes: Seq[String]): Unit
-  def setText(text: String): Unit
   def setStyle(name: String, value: String): Unit
   def addEventListener(name: String, listener: dom.Event => Unit): Disposable
   def clearChildren(): Unit

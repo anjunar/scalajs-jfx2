@@ -59,30 +59,46 @@ object DslRuntime {
     }
   }
 
+  /**
+   * Main entry point for DSL: Creates a component and binds it immediately.
+   */
   def build[C <: Component](factory: => C)(init: C ?=> Unit): C = {
     val component = factory
     val cursor = currentCursor
     val context = currentContext
     
+    // 1. Establish logical parent immediately
     component.setParent(context.parent)
-
-    // 1. Physical bind (obtains _host)
-    component.bind(cursor)
-
-    // 2. Logical link via parent
     context.parent.foreach { p =>
       context.insertionIndex match {
-        case Some(idx) => p.insertChild(idx, component)
-        case None => p.addChild(component)
+        case Some(idx) => p._children.insert(idx, component)
+        case None => p._children += component
       }
     }
+
+    // 2. Physical bind (obtains _host)
+    component.bind(cursor)
+
+    // 3. Physical sync with parent host (only for non-virtual children)
+    if (!component.isVirtual) {
+       context.parent.foreach { p =>
+         // Only sync if we are not in hydration mode (or if it's a dynamic addition)
+         if (!jfx.core.render.RenderBackend.current.isInstanceOf[jfx.core.render.HydrationRenderBackend]) {
+           p.syncChildAddition(component)
+         }
+       }
+    }
     
-    // COMPOSITION Logic: Set as parent for children
+    // 4. COMPOSITION Logic: Set as parent for children
     if (component.isVirtual) {
-      withContext(ComponentContext(Some(component))) {
-        given c: C = component
-        component.compose()
-        init
+      // For virtual components, we STAY in the same cursor context
+      // but we need to ensure the cursor is available for compose()
+      withCursor(cursor) {
+        withContext(ComponentContext(Some(component))) {
+          given c: C = component
+          component.compose()
+          init
+        }
       }
     } else {
       component.hostNode match {

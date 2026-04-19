@@ -8,21 +8,27 @@ class SsrCursor(
   private val target: Option[SsrHostElement] = None,
   private val index: Option[Int] = None
 ) extends Cursor {
+  private val rootElements = mutable.ArrayBuffer.empty[HostNode]
   private var currentIndex = index.getOrElse(0)
 
   override def position: Option[Int] = index.map(_ => currentIndex)
 
   override def claimElement(tagName: String): HostElement = {
     val el = new SsrHostElement(tagName)
-    val res = el
+    if (target.isEmpty && index.isEmpty) {
+      rootElements += el
+    }
     if (index.isDefined) currentIndex += 1
-    res
+    el
   }
 
   override def claimText(initial: String): HostNode = {
     val t = new HostNode {
-      def html = HtmlEscaper.text(initial)
+      override def renderHtml(indent: Int): String = HtmlEscaper.text(initial)
       def domNode = None
+    }
+    if (target.isEmpty && index.isEmpty) {
+      rootElements += t
     }
     if (index.isDefined) currentIndex += 1
     t
@@ -33,6 +39,10 @@ class SsrCursor(
   }
 
   def resultHtml(root: Component): String = {
-    root.hostNode.html
+    if (root.isVirtual) {
+      rootElements.map(_.renderHtml(0)).mkString("")
+    } else {
+      root.hostNode.renderHtml(0)
+    }
   }
 }

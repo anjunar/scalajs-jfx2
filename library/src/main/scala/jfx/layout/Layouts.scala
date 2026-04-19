@@ -13,7 +13,7 @@ object Div {
 object VBox {
   def vbox(init: Box ?=> Unit): Box = {
     DslRuntime.build(new Box("div")) {
-      classes = Seq("vbox")
+      addClass("vbox")
       init
     }
   }
@@ -22,7 +22,7 @@ object VBox {
 object HBox {
   def hbox(init: Box ?=> Unit): Box = {
     DslRuntime.build(new Box("div")) {
-      classes = Seq("hbox")
+      addClass("hbox")
       init
     }
   }
