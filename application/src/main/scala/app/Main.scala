@@ -265,11 +265,11 @@ object Main {
                 table.rowHeightProperty.set(40.0)
 
                 column[ShowcaseBook, String]("Titel") { item =>
-                   style { width = "200px" }
+//                   style { width = "200px" }
                    text = item.title
                 }
                 column[ShowcaseBook, String]("Autor") { item =>
-                   style { width = "200px" }
+//                   style { width = "200px" }
                    text = item.author
                 }
 
