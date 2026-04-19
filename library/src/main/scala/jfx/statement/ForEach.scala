@@ -14,7 +14,7 @@ class ForEach[T](
   val items: ListProperty[T],
   val renderItem: T => Unit
 ) extends Component {
-  override def tagName: String = "jfx-foreach" 
+  override def tagName: String = "" 
 
   override def compose(): Unit = {
     // Initial render
@@ -41,9 +41,14 @@ class ForEach[T](
   }
 
   private def insertItem(index: Int, item: T): Unit = {
-    val cursor = jfx.core.render.RenderBackend.current.insertionCursor(host, index)
+    // 1. Physical target
+    val baseOffset = calculateDomOffset
+    val itemOffset = children.take(index).map(_.domNodeCount).sum
+    val cursor = jfx.core.render.RenderBackend.current.insertionCursor(host, baseOffset + itemOffset)
+    
+    // 2. Build with logical index
     DslRuntime.withCursor(cursor) {
-      DslRuntime.withContext(ComponentContext(Some(this))) {
+      DslRuntime.withContext(ComponentContext(Some(this), Some(index))) {
         renderItem(item)
       }
     }
@@ -56,8 +61,10 @@ class ForEach[T](
   }
 
   private def resetItems(): Unit = {
-    children.foreach(_.dispose())
-    host.clearChildren()
+    children.toSeq.foreach { c =>
+      removeChild(c)
+      c.dispose()
+    }
     items.foreach(appendItem)
   }
 }

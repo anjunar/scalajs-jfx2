@@ -6,7 +6,7 @@ import jfx.dsl.{ComponentContext, DslRuntime}
 import org.scalajs.dom
 
 class Condition(val property: ReadOnlyProperty[Boolean]) extends Component {
-  override def tagName: String = "jfx-condition"
+  override def tagName: String = "" // Virtual fragment
 
   private var thenBuilder: Option[() => Unit] = None
   private var elseBuilder: Option[() => Unit] = None
@@ -32,13 +32,13 @@ class Condition(val property: ReadOnlyProperty[Boolean]) extends Component {
       removeChild(c)
       c.dispose()
     }
-    host.clearChildren()
 
     // 2. Build new branch
     val builder = if (property.get) thenBuilder else elseBuilder
     builder.foreach { b =>
-      // We use an InsertionCursor at 0 to ensure we stay within our host
-      val cursor = jfx.core.render.RenderBackend.current.insertionCursor(host, 0)
+      // Start at our own calculated offset in the physical host
+      val offset = calculateDomOffset
+      val cursor = jfx.core.render.RenderBackend.current.insertionCursor(host, offset)
       DslRuntime.withCursor(cursor) {
         DslRuntime.withContext(ComponentContext(Some(this))) {
           b()

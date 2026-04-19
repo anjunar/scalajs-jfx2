@@ -9,7 +9,8 @@ import scala.collection.mutable
  * Context for DSL composition.
  */
 final case class ComponentContext(
-  parent: Option[jfx.core.component.Component]
+  parent: Option[jfx.core.component.Component],
+  insertionIndex: Option[Int] = None
 )
 
 object ComponentContext {
@@ -49,9 +50,6 @@ object DslRuntime {
     component
   }
 
-  /**
-   * Main entry point for DSL: Creates a component and binds it immediately.
-   */
   def build[C <: Component](factory: => C)(init: C ?=> Unit): C = {
     val component = factory
     val cursor = currentCursor
@@ -59,37 +57,42 @@ object DslRuntime {
     
     component.setParent(context.parent)
 
-    // Capture position BEFORE claim
-    val insertPos = cursor.position
-
     // 1. Physical bind (obtains _host)
     component.bind(cursor)
 
     // 2. Logical link via parent
     context.parent.foreach { p =>
-      insertPos match {
+      context.insertionIndex match {
         case Some(idx) => p.insertChild(idx, component)
         case None => p.addChild(component)
       }
     }
     
     // COMPOSITION Logic: Set as parent for children
-    component.hostNode match {
-      case h: jfx.core.render.HostElement =>
-        val sub = cursor.subCursor(h)
-        withCursor(sub) {
+    if (component.isVirtual) {
+      withContext(ComponentContext(Some(component))) {
+        given c: C = component
+        component.compose()
+        init
+      }
+    } else {
+      component.hostNode match {
+        case h: jfx.core.render.HostElement =>
+          val sub = cursor.subCursor(h)
+          withCursor(sub) {
+            withContext(ComponentContext(Some(component))) {
+              given c: C = component
+              component.compose()
+              init
+            }
+          }
+        case _ =>
           withContext(ComponentContext(Some(component))) {
             given c: C = component
             component.compose()
             init
           }
-        }
-      case _ =>
-        withContext(ComponentContext(Some(component))) {
-          given c: C = component
-          component.compose()
-          init
-        }
+      }
     }
     
     component
