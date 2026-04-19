@@ -17,4 +17,6 @@ trait HostElement extends HostNode {
   def setStyle(name: String, value: String): Unit
   def addEventListener(name: String, listener: dom.Event => Unit): Disposable
   def clearChildren(): Unit
+  def insertChild(index: Int, child: HostNode): Unit
+  def removeChild(child: HostNode): Unit
 }

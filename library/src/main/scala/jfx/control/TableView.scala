@@ -3,32 +3,44 @@ package jfx.control
 import jfx.core.component.{Box, Component}
 import jfx.core.state.ListProperty
 import jfx.dsl.DslRuntime
+import jfx.statement.ForEach.forEach
 
 class TableView[S] extends Component {
   override def tagName: String = "div"
   
   val items = new ListProperty[S]()
+  
+  // We can track columns as children of the TableView
+  def columns: Seq[TableColumn[S, ?]] = children.collect { case c: TableColumn[S, ?] => c }
 
-  // INTERNE STRUKTUR: Wird über compose() definiert
   override def compose(): Unit = {
-    import Box.*
-    
-    // Header Branch
-    box("div") { b ?=>
-       b.classes = Seq("jfx-table-header")
-       text("I am the header")
+    host.setClassNames(Seq("jfx-table-view"))
+
+    // 1. Header Area
+    Box.box("div") { h ?=>
+      h.host.setClassNames(Seq("jfx-table-header"))
+      columns.foreach { col =>
+        Box.box("div") { cell ?=>
+          cell.host.setClassNames(Seq("jfx-table-header-cell"))
+          Box.text(col.text)
+        }
+      }
     }
     
-    // Body Branch
-    box("div") { b ?=>
-       b.classes = Seq("jfx-table-body")
-       import jfx.statement.ForEach.forEach
-       forEach(items) { item =>
-          box("div") { row ?=>
-             row.classes = Seq("jfx-table-row")
-             text(item.toString)
+    // 2. Body Area
+    Box.box("div") { b ?=>
+      b.host.setClassNames(Seq("jfx-table-body"))
+      forEach(items) { item =>
+        Box.box("div") { row ?=>
+          row.host.setClassNames(Seq("jfx-table-row"))
+          columns.foreach { col =>
+            Box.box("div") { cell ?=>
+              cell.host.setClassNames(Seq("jfx-table-cell"))
+              col.cellFactory(item)
+            }
           }
-       }
+        }
+      }
     }
   }
 }

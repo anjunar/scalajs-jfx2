@@ -12,7 +12,7 @@ object Ssr {
     RenderBackend.withBackend(backend) {
       DslRuntime.withCursor(cursor) {
         val root = init
-        cursor.resultHtml
+        cursor.resultHtml(root)
       }
     }
   }

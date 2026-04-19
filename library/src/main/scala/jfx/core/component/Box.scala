@@ -13,7 +13,7 @@ object Box {
     DslRuntime.build(new Box(tagName))(init)
   }
   
-  def text(value: String)(using b: Box): Unit = {
-    b.host.setText(value)
+  def text(value: String): TextComponent = {
+    Text.text(value)
   }
 }

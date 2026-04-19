@@ -43,6 +43,16 @@ class HydrationCursor(val root: dom.Node) extends Cursor {
     if (index >= childNodes.length) throw new IllegalStateException(s"Hydration failed: expected text but no more nodes found")
     
     val t = childNodes.item(index)
+    if (t.nodeType != dom.Node.TEXT_NODE) {
+       // If we expect text but find an element, it might be due to whitespace trimming in SSR vs DOM
+       // Try skipping whitespaces if this is just a whitespace node
+       if (t.textContent.trim.isEmpty) {
+         index += 1
+         return claimText(initial)
+       }
+       throw new IllegalStateException(s"Hydration failed: expected text node but found type ${t.nodeType}")
+    }
+    
     index += 1
     new HostNode {
       def html = t.textContent

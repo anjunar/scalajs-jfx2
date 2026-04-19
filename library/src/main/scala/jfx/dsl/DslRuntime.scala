@@ -54,18 +54,42 @@ object DslRuntime {
    */
   def build[C <: Component](factory: => C)(init: C ?=> Unit): C = {
     val component = factory
+    val cursor = currentCursor
+    val context = currentContext
     
-    // ATTACHMENT Logic: Always through Cursor
-    component.bind(currentCursor)
+    component.setParent(context.parent)
+
+    // Capture position BEFORE claim
+    val insertPos = cursor.position
+
+    // 1. Physical bind (obtains _host)
+    component.bind(cursor)
+
+    // 2. Logical link via parent
+    context.parent.foreach { p =>
+      insertPos match {
+        case Some(idx) => p.insertChild(idx, component)
+        case None => p.addChild(component)
+      }
+    }
     
     // COMPOSITION Logic: Set as parent for children
-    // The children created in `init` must be attached to this component's host
-    val sub = currentCursor.subCursor(component.host)
-    withCursor(sub) {
-      withContext(ComponentContext(Some(component))) {
-        given c: C = component
-        init
-      }
+    component.hostNode match {
+      case h: jfx.core.render.HostElement =>
+        val sub = cursor.subCursor(h)
+        withCursor(sub) {
+          withContext(ComponentContext(Some(component))) {
+            given c: C = component
+            component.compose()
+            init
+          }
+        }
+      case _ =>
+        withContext(ComponentContext(Some(component))) {
+          given c: C = component
+          component.compose()
+          init
+        }
     }
     
     component

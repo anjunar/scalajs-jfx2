@@ -1,18 +1,22 @@
 package jfx.core.render
 
+import jfx.core.component.Component
 import scala.collection.mutable
 import scala.compiletime.uninitialized
 
-class SsrCursor(private val target: Option[SsrHostElement] = None) extends Cursor {
-  private val rootElements = mutable.ArrayBuffer.empty[SsrHostElement]
+class SsrCursor(
+  private val target: Option[SsrHostElement] = None,
+  private val index: Option[Int] = None
+) extends Cursor {
+  private var currentIndex = index.getOrElse(0)
+
+  override def position: Option[Int] = index.map(_ => currentIndex)
 
   override def claimElement(tagName: String): HostElement = {
     val el = new SsrHostElement(tagName)
-    target match {
-      case Some(parent) => parent.children += el
-      case None => rootElements += el
-    }
-    el
+    val res = el
+    if (index.isDefined) currentIndex += 1
+    res
   }
 
   override def claimText(initial: String): HostNode = {
@@ -20,7 +24,7 @@ class SsrCursor(private val target: Option[SsrHostElement] = None) extends Curso
       def html = HtmlEscaper.text(initial)
       def domNode = None
     }
-    target.foreach(_.children += t)
+    if (index.isDefined) currentIndex += 1
     t
   }
 
@@ -28,7 +32,7 @@ class SsrCursor(private val target: Option[SsrHostElement] = None) extends Curso
     new SsrCursor(Some(element.asInstanceOf[SsrHostElement]))
   }
 
-  def resultHtml: String = {
-    target.map(_.html).getOrElse(rootElements.map(_.html).mkString(""))
+  def resultHtml(root: Component): String = {
+    root.hostNode.html
   }
 }

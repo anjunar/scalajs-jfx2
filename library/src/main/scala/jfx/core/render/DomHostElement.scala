@@ -28,4 +28,17 @@ final class DomHostElement(val tagName: String, val element: dom.Element) extend
   override def clearChildren(): Unit = {
     while (element.firstChild != null) element.removeChild(element.firstChild)
   }
+
+  override def insertChild(index: Int, child: HostNode): Unit = {
+    val node = child.domNode.getOrElse(throw new IllegalArgumentException("Cannot insert HostNode without DOM node"))
+    if (index >= element.childNodes.length) {
+      element.appendChild(node)
+    } else {
+      element.insertBefore(node, element.childNodes.item(index))
+    }
+  }
+
+  override def removeChild(child: HostNode): Unit = {
+    child.domNode.foreach(element.removeChild)
+  }
 }

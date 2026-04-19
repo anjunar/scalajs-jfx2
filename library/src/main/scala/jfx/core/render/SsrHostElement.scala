@@ -36,4 +36,16 @@ final class SsrHostElement(val tagName: String) extends HostElement {
   override def addEventListener(name: String, listener: dom.Event => Unit): Disposable = () => ()
 
   override def clearChildren(): Unit = children.clear()
+
+  override def insertChild(index: Int, child: HostNode): Unit = {
+    if (index < 0 || index >= children.length) {
+      children += child
+    } else {
+      children.insert(index, child)
+    }
+  }
+
+  override def removeChild(child: HostNode): Unit = {
+    children -= child
+  }
 }
