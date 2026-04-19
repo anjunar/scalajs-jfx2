@@ -8,7 +8,7 @@ class ForEach[T](val items: ListProperty[T], val renderItem: T => Unit) extends 
   override def tagName: String = "" 
 
   override def compose(): Unit = {
-    items.foreach(appendItem)
+    items.foreach(renderItem)
 
     addDisposable(items.observeChanges {
       case ListProperty.Add(item, _) => appendItem(item)

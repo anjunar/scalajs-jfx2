@@ -169,7 +169,6 @@ object Main {
               books.setAll(buildShowcaseBooks(5))
               tableView[ShowcaseBook] {
                 val table = summon[TableView[ShowcaseBook]]
-                table.items.setAll(books.get)
                 style { height = "200px" }
 
                 column[ShowcaseBook, String]("Titel") { item =>
@@ -178,6 +177,8 @@ object Main {
                 column[ShowcaseBook, String]("Autor") { item =>
                    text = item.author
                 }
+
+                table.items.setAll(books.get)
               }
             }
           }

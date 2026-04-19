@@ -19,18 +19,24 @@ class Condition(val property: ReadOnlyProperty[Boolean]) extends Component {
 
   private[jfx] def render(): Unit = {
     DslRuntime.updateBranch(this) {
-      children.toSeq.foreach { c => removeChild(c); c.dispose() }
-      if (property.get) thenBuilder.foreach(_())
-      else elseBuilder.foreach(_())
+      renderInternal()
     }
+  }
+
+  private[jfx] def renderInternal(): Unit = {
+    children.toSeq.foreach { c => removeChild(c); c.dispose() }
+    if (property.get) thenBuilder.foreach(_())
+    else elseBuilder.foreach(_())
   }
 }
 
 object Condition {
   def condition(property: ReadOnlyProperty[Boolean])(init: Condition ?=> Unit): Condition = {
-    val c = DslRuntime.build(new Condition(property))(init)
-    c.render()
-    c
+    DslRuntime.build(new Condition(property)) {
+      init
+      val c = summon[Condition]
+      c.renderInternal()
+    }
   }
   def thenDo(builder: => Unit)(using c: Condition): Unit = c.registerThen(builder)
   def elseDo(builder: => Unit)(using c: Condition): Unit = c.registerElse(builder)
