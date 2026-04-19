@@ -17,13 +17,11 @@ class Input(val name: String) extends Component {
     super.bind(cursor)
     host.setAttribute("name", name)
     
-    // Sync DOM to Property
     addDisposable(host.addEventListener("input", _ => {
       val value = host.domNode.get.asInstanceOf[dom.html.Input].value
       stringValueProperty.set(value)
     }))
 
-    // Sync Property to DOM
     addDisposable(stringValueProperty.observe { v =>
        host.domNode.foreach(_.asInstanceOf[dom.html.Input].value = v)
     })

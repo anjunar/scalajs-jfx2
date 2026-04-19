@@ -1,8 +1,8 @@
 package jfx.layout
 
 import jfx.core.component.{Box, Component}
+import jfx.core.component.Component.*
 import jfx.core.state.Property
-import jfx.dsl.Dsl.*
 import jfx.dsl.{ComponentContext, DslRuntime}
 import org.scalajs.dom.{Event, KeyboardEvent, window}
 import scala.compiletime.uninitialized

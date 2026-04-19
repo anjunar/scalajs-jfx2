@@ -43,9 +43,27 @@ object Route {
 
 object RouteMatcher {
   def resolve(routes: Seq[Route], path: String): List[RouteMatch] = {
-    // Simple implementation for now
+    val normalized = normalize(path)
+    
+    // 1. Try exact match
     routes.collectFirst {
-      case r if r.path == path => List(RouteMatch(r, path, Map.empty))
+      case r if normalize(r.path) == normalized => List(RouteMatch(r, normalized, Map.empty))
+    }.orElse {
+      // 2. Try matching without base path if it doesn't match directly
+      // This is a bit hacky but works for many dev setups.
+      // Better would be to know the base path explicitly.
+      val withoutBase = if (normalized.startsWith("/scalajs-jfx2")) normalized.stripPrefix("/scalajs-jfx2") else normalized
+      val normalizedWithoutBase = if (withoutBase.isEmpty) "/" else withoutBase
+      
+      routes.collectFirst {
+        case r if normalize(r.path) == normalizedWithoutBase => List(RouteMatch(r, normalized, Map.empty))
+      }
     }.getOrElse(Nil)
+  }
+
+  private def normalize(path: String): String = {
+    val p = path.takeWhile(_ != '?').takeWhile(_ != '#')
+    if (p == "/") p
+    else p.stripSuffix("/")
   }
 }

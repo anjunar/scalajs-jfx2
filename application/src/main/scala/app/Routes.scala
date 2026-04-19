@@ -4,7 +4,7 @@ import jfx.router.Route
 import jfx.router.Route.route
 import jfx.layout.Div.div
 import jfx.layout.VBox.vbox
-import jfx.dsl.Dsl.*
+import jfx.core.component.Component.*
 import jfx.control.Heading.heading
 
 object Routes {

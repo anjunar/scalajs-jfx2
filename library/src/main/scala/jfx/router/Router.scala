@@ -96,8 +96,12 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component {
 }
 
 object Router {
-  def router(routes: Seq[Route], initial: String = "/"): Router = {
-    DslRuntime.build(new Router(routes, initial)) {
+  def router(routes: Seq[Route], initial: String = null): Router = {
+    val startUrl = if (initial != null) initial else {
+      if (jfx.core.render.RenderBackend.current.isServer) "/"
+      else s"${window.location.pathname}${window.location.search}"
+    }
+    DslRuntime.build(new Router(routes, startUrl)) {
     }
   }
   

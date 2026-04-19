@@ -1,7 +1,7 @@
 package jfx.layout
 
 import jfx.core.component.{Box, Component}
-import jfx.dsl.Dsl.*
+import jfx.core.component.Component.*
 import jfx.dsl.DslRuntime
 
 object Div {

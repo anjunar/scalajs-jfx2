@@ -1,8 +1,8 @@
 package jfx.control
 
 import jfx.core.component.{Box, Component}
+import jfx.core.component.Component.*
 import jfx.core.state.ListProperty
-import jfx.dsl.Dsl.*
 import jfx.dsl.DslRuntime
 import jfx.statement.ForEach.forEach
 
