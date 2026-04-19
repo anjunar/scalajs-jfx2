@@ -81,8 +81,6 @@ object Main {
     }
 
   private def demo(initialPath: String = "/") = {
-    val drawerOpen = Property(true)
-
     val routes = Seq(
       route("/") {
         showcasePage("Overview", "Willkommen zur JFX2 API Dokumentation.") {
@@ -187,13 +185,12 @@ object Main {
       }
     )
 
-    val root = div {
+    div {
       classes = "app-shell"
 
-      val component = drawer {
+      drawer {
         classes = "app-shell-drawer"
-        addDisposable(drawerOpen.observe(open = _))
-        open = drawerOpen.get
+        open = true
 
         drawerNavigation {
           div {
@@ -237,7 +234,7 @@ object Main {
               classes = "app-toolbar"
               button("menu") {
                 classes = Seq("app-toolbar__menu-toggle", "material-icons")
-                onClick { _ => drawerOpen.set(!drawerOpen.get) }
+                onClick { _ => toggle() }
               }
               div {
                 classes = "app-toolbar__title"
@@ -266,10 +263,7 @@ object Main {
           }
         }
       }
-
-      component.addDisposable(drawerOpen.observe(component.openProperty.set))
     }
-    root
   }
 
   private def showcasePage(title: String, subtitle: String)(content: => Unit) = {

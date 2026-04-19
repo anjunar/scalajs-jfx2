@@ -78,6 +78,39 @@ trait Component extends Disposable {
     performRemove(this, childDomNodes)
   }
 
+  private val _baseClasses = mutable.ArrayBuffer.empty[String]
+  private val _userClasses = mutable.ArrayBuffer.empty[String]
+
+  def baseClasses: Seq[String] = _baseClasses.toSeq
+  def userClasses: Seq[String] = _userClasses.toSeq
+
+  private[jfx] def addBaseClass(name: String): Unit = {
+    if (!_baseClasses.contains(name)) {
+      _baseClasses += name
+      syncClasses()
+    }
+  }
+
+  private[jfx] def removeBaseClass(name: String): Unit = {
+    if (_baseClasses.contains(name)) {
+      _baseClasses -= name
+      syncClasses()
+    }
+  }
+
+  private[jfx] def setUserClasses(names: Seq[String]): Unit = {
+    _userClasses.clear()
+    _userClasses ++= names
+    syncClasses()
+  }
+
+  private def syncClasses(): Unit = {
+    _host match {
+      case h: HostElement => h.setClassNames((_baseClasses ++ _userClasses).distinct.toSeq)
+      case _ =>
+    }
+  }
+
   private[jfx] def bind(cursor: Cursor): Unit = {
     _bindCursor = cursor
     if (isVirtual) {
@@ -88,6 +121,7 @@ trait Component extends Disposable {
       } else {
          cursor.claimElement(tagName)
       }
+      syncClasses() // Apply classes after bind
     }
   }
 
@@ -104,11 +138,10 @@ trait Component extends Disposable {
 }
 
 object Component {
-  def classes(using c: Component): Seq[String] = 
-    c.host.attribute("class").getOrElse("").split(" ").toSeq.filter(_.nonEmpty)
+  def classes(using c: Component): Seq[String] = c.userClasses
     
   def classes_=(names: Seq[String])(using c: Component): Unit = {
-    c.host.setClassNames(names.distinct)
+    c.setUserClasses(names)
   }
 
   def classes_=(name: String)(using c: Component): Unit = {
@@ -116,10 +149,7 @@ object Component {
   }
 
   def addClass(name: String)(using c: Component): Unit = {
-    val current = classes
-    if (!current.contains(name)) {
-      c.host.setClassNames((current :+ name).distinct)
-    }
+    c.addBaseClass(name)
   }
 
   def text(using c: Component): String = ""

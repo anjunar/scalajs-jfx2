@@ -9,7 +9,7 @@ import scala.compiletime.uninitialized
 
 class Drawer extends Box("div") {
   val openProperty = Property(false)
-  val widthProperty = Property("280px")
+  val drawerWidthProperty = Property("280px")
   val sideProperty = Property(Drawer.Side.Start)
   val closeOnScrimClickProperty = Property(true)
 
@@ -21,21 +21,21 @@ class Drawer extends Box("div") {
 
   override def compose(): Unit = {
     given Component = this
-    addClass("jfx-drawer")
-    style { 
-      display = "flex"
-      width = "100%"
-      height = "100%"
-      position = "relative"
-    }
+    addBaseClass("jfx-drawer")
+    
+    // Hardcode layout styles to prevent DSL collisions
+    host.setStyle("display", "flex")
+    host.setStyle("width", "100%")
+    host.setStyle("height", "100%")
+    host.setStyle("position", "relative")
 
     addDisposable(openProperty.observe(syncOpenState))
-    addDisposable(widthProperty.observe(_ => syncPanelWidth()))
+    addDisposable(drawerWidthProperty.observe(_ => syncPanelWidth()))
     addDisposable(sideProperty.observe(syncSideState))
 
-    // 1. Scrim (Overlay when open)
+    // 1. Scrim
     Box.box("div") {
-      classes = Seq("jfx-drawer__scrim")
+      addClass("jfx-drawer__scrim")
       addDisposable(host.addEventListener("click", _ => {
         if (closeOnScrimClickProperty.get && openProperty.get) openProperty.set(false)
       }))
@@ -43,27 +43,25 @@ class Drawer extends Box("div") {
 
     // 2. Navigation Panel
     Box.box("div") {
-      classes = Seq("jfx-drawer__panel-shell")
+      addClass("jfx-drawer__panel-shell")
       style { 
         height = "100%"
         position = "relative"
         zIndex = "100"
       }
       
-      addDisposable(widthProperty.observe(_ => syncPanelWidth()))
+      addDisposable(drawerWidthProperty.observe(_ => syncPanelWidth()))
       addDisposable(openProperty.observe(_ => syncPanelWidth()))
 
       Box.box("div") {
-        classes = Seq("jfx-drawer__panel")
+        addClass("jfx-drawer__panel")
         style { 
           height = "100%"
           overflow = "hidden"
         }
         
-        style { width = widthProperty.get }
-
         _navigationHost = Box.box("div") {
-          classes = Seq("jfx-drawer__navigation")
+          addClass("jfx-drawer__navigation")
           style { 
             height = "100%" 
             display = "flex"
@@ -75,14 +73,13 @@ class Drawer extends Box("div") {
 
     // 3. Main Content Area
     _contentHost = Box.box("div") {
-      classes = Seq("jfx-drawer__content")
+      addClass("jfx-drawer__content")
       style { 
         height = "100%"
         flex = "1"
         display = "flex"
         flexDirection = "column"
         minWidth = "0" 
-        // ENSURE NO FIXED WIDTH HERE
       }
     }
 
@@ -102,23 +99,29 @@ class Drawer extends Box("div") {
   }
 
   private def syncOpenState(open: Boolean): Unit = {
-    val current = classes.filterNot(_ == "jfx-drawer--open")
-    classes = if (open) current :+ "jfx-drawer--open" else current
+    if (open) addBaseClass("jfx-drawer--open")
+    else removeBaseClass("jfx-drawer--open")
   }
 
   private def syncSideState(side: Drawer.Side): Unit = {
-    val current = classes.filterNot(c => c == "jfx-drawer--start" || c == "jfx-drawer--end")
-    classes = side match {
-      case Drawer.Side.Start => current :+ "jfx-drawer--start"
-      case Drawer.Side.End => current :+ "jfx-drawer--end"
+    removeBaseClass("jfx-drawer--start")
+    removeBaseClass("jfx-drawer--end")
+    side match {
+      case Drawer.Side.Start => addBaseClass("jfx-drawer--start")
+      case Drawer.Side.End => addBaseClass("jfx-drawer--end")
     }
   }
 
   private def syncPanelWidth(): Unit = {
-    children.collectFirst { case b: Box if b.host.attribute("class").exists(_.contains("jfx-drawer__panel-shell")) => b }.foreach { shell =>
-      val widthValue = widthProperty.get
+    children.collectFirst { case b: Box if b.baseClasses.contains("jfx-drawer__panel-shell") => b }.foreach { shell =>
+      val widthValue = drawerWidthProperty.get
       val responsiveWidth = s"min(92vw, $widthValue)"
       shell.host.setStyle("width", if (openProperty.get) responsiveWidth else "0px")
+      
+      // Also sync the inner panel
+      shell.children.collectFirst { case b: Box if b.baseClasses.contains("jfx-drawer__panel") => b }.foreach { panel =>
+         panel.host.setStyle("width", widthValue)
+      }
     }
   }
 }
@@ -144,12 +147,13 @@ object Drawer {
 
   def open(using d: Drawer): Boolean = d.openProperty.get
   def open_=(v: Boolean)(using d: Drawer): Unit = d.openProperty.set(v)
+  def openProperty(using d: Drawer): Property[Boolean] = d.openProperty
   
   def side(using d: Drawer): Side = d.sideProperty.get
   def side_=(s: Side)(using d: Drawer): Unit = d.sideProperty.set(s)
 
-  def width(using d: Drawer): String = d.widthProperty.get
-  def width_=(w: String)(using d: Drawer): Unit = d.widthProperty.set(w)
+  def drawerWidth(using d: Drawer): String = d.drawerWidthProperty.get
+  def drawerWidth_=(w: String)(using d: Drawer): Unit = d.drawerWidthProperty.set(w)
 
   def toggle()(using d: Drawer): Unit = d.openProperty.set(!d.openProperty.get)
 }
