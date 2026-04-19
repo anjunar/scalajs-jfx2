@@ -1,8 +1,9 @@
 package jfx.dsl
 
+import jfx.control.{TableColumn, TableView}
 import jfx.core.component.ElementComponent
 import jfx.core.render.HostElement
-import jfx.core.state.ReadOnlyProperty
+import jfx.core.state.{ListProperty, ReadOnlyProperty}
 import org.scalajs.dom
 
 import scala.Conversion
@@ -179,3 +180,20 @@ def justifyContent(using target: StyleTarget): StyleProperty =
 
 def justifyContent_=(value: String)(using target: StyleTarget): Unit =
   justifyContent := value
+
+def columns[S](using tableView: TableView[S]): ListProperty[TableColumn[S, ?]] =
+  tableView.columnsProperty
+
+def columns_=[S](value: IterableOnce[TableColumn[S, ?]])(using tableView: TableView[S]): Unit = {
+  tableView.columnsProperty.clear()
+  value.iterator.foreach(column => tableView.columnsProperty += column)
+}
+
+def minWidth(using tableColumn: TableColumn[?, ?]): Double =
+  tableColumn.getMinWidth
+
+def minWidth_=(value: Double)(using tableColumn: TableColumn[?, ?]): Unit =
+  tableColumn.setMinWidth(value)
+
+def maxWidth_=(value: Double)(using tableColumn: TableColumn[?, ?]): Unit =
+  tableColumn.setMaxWidth(value)
