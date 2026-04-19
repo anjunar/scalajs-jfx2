@@ -6,10 +6,8 @@ import jfx.dsl.DslRuntime
 
 class ForEach[T](val items: ListProperty[T], val renderItem: T => Unit) extends Component {
   override def tagName: String = "" 
-  private var activeBackend: jfx.core.render.RenderBackend = _
 
   override def compose(): Unit = {
-    activeBackend = jfx.core.render.RenderBackend.current
     items.foreach(appendItem)
 
     addDisposable(items.observeChanges {
@@ -24,21 +22,19 @@ class ForEach[T](val items: ListProperty[T], val renderItem: T => Unit) extends 
   private def appendItem(item: T): Unit = insertItem(children.length, item)
 
   private def insertItem(index: Int, item: T): Unit = {
-    DslRuntime.updateBranch(this, activeBackend, Some(index)) {
+    DslRuntime.updateBranch(this, Some(index)) {
       renderItem(item)
     }
   }
 
   private def removeItem(index: Int): Unit = {
-    jfx.core.render.RenderBackend.withBackend(activeBackend) {
-      val child = children(index)
-      removeChild(child)
-      child.dispose()
-    }
+    val child = children(index)
+    removeChild(child)
+    child.dispose()
   }
 
   private def resetItems(): Unit = {
-    children.toSeq.foreach(c => removeItem(0))
+    while (children.nonEmpty) removeItem(0)
     items.foreach(appendItem)
   }
 }

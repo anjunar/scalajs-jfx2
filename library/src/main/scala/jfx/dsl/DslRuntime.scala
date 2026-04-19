@@ -1,7 +1,7 @@
 package jfx.dsl
 
 import jfx.core.component.Component
-import jfx.core.render.Cursor
+import jfx.core.render.{BrowserRenderBackend, Cursor, HydrationRenderBackend, RenderBackend}
 import org.scalajs.dom
 import scala.collection.mutable
 
@@ -63,18 +63,35 @@ object DslRuntime {
    * Helper for components that render branches dynamically (Router, Condition, ForEach).
    * Ensures the correct backend and cursor context are maintained.
    */
-  def updateBranch[C <: Component](component: C, backend: jfx.core.render.RenderBackend, index: Option[Int] = None)(block: => Unit): Unit = {
-    jfx.core.render.RenderBackend.withBackend(backend) {
+  def updateBranch[C <: Component](component: C, index: Option[Int] = None)(block: => Unit): Unit = {
+    val currentBackend = RenderBackend.current
+    
+    // Logic: If we are in the browser and currently in a hydration pass, 
+    // we continue with it. But for ALL subsequent reactive updates, 
+    // we MUST use the BrowserRenderBackend to actually modify the DOM.
+    val effectiveBackend = currentBackend match {
+      case _: HydrationRenderBackend if component.bindCursor != null && !component.bindCursor.isInstanceOf[jfx.core.render.HydrationCursor] =>
+        // We were bound with a normal cursor but someone started a global hydration? 
+        // This shouldn't happen, but safety first.
+        BrowserRenderBackend
+      case h: HydrationRenderBackend => 
+        // We are currently in the initial hydration pass.
+        h
+      case other => 
+        // Normal live mode or SSR.
+        other
+    }
+
+    RenderBackend.withBackend(effectiveBackend) {
       val cursor = if (component.parent.isEmpty) {
         component.bindCursor
       } else {
         val baseOffset = component.calculateDomOffset
         val offset = index.map { i =>
-           // If we have a specific logical index, calculate its physical offset
            baseOffset + component.children.take(i).map(_.domNodeCount).sum
         }.getOrElse(baseOffset)
         
-        jfx.core.render.RenderBackend.current.insertionCursor(component.host, offset)
+        RenderBackend.current.insertionCursor(component.host, offset)
       }
 
       withCursor(cursor) {
@@ -108,8 +125,7 @@ object DslRuntime {
     // 3. Physical sync with parent host (only for non-virtual children)
     if (!component.isVirtual) {
        context.parent.foreach { p =>
-         // Only sync if we are not in hydration mode (or if it's a dynamic addition)
-         if (!jfx.core.render.RenderBackend.current.isInstanceOf[jfx.core.render.HydrationRenderBackend]) {
+         if (!RenderBackend.current.isInstanceOf[HydrationRenderBackend]) {
            p.syncChildAddition(component)
          }
        }
@@ -117,8 +133,6 @@ object DslRuntime {
     
     // 4. COMPOSITION Logic: Set as parent for children
     if (component.isVirtual) {
-      // For virtual components, we STAY in the same cursor context
-      // but we need to ensure the cursor is available for compose()
       withCursor(cursor) {
         withContext(ComponentContext(Some(component))) {
           given c: C = component

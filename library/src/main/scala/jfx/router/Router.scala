@@ -10,12 +10,10 @@ import scala.scalajs.js
 
 class Router(val routes: Seq[Route], initialUrl: String) extends Component {
   override def tagName: String = "" 
-  private var activeBackend: jfx.core.render.RenderBackend = _
 
   val stateProperty = Property(resolve(initialUrl))
 
   override def compose(): Unit = {
-    activeBackend = jfx.core.render.RenderBackend.current
     if (!jfx.core.render.RenderBackend.current.isServer) {
       addDisposable({
         val listener: dom.Event => Unit = _ => navigate(currentBrowserUrl(), replace = true)
@@ -27,6 +25,7 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component {
     addDisposable(stateProperty.observe(_ => render()))
   }
 
+  // ... (navigate remains same)
   def navigate(path: String, replace: Boolean = false): Unit = {
     val nextState = resolve(path)
     if (!jfx.core.render.RenderBackend.current.isServer) {
@@ -37,7 +36,7 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component {
   }
 
   private def render(): Unit = {
-    DslRuntime.updateBranch(this, activeBackend) {
+    DslRuntime.updateBranch(this) {
       children.toSeq.foreach { c => removeChild(c); c.dispose() }
       
       val state = stateProperty.get
