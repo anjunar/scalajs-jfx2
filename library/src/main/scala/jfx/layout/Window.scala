@@ -3,6 +3,7 @@ package jfx.layout
 import jfx.action.Button.*
 import jfx.core.component.{Box, Component, Text}
 import jfx.core.component.Component.*
+import jfx.core.render.DomHostElement
 import jfx.core.state.Property
 import jfx.dsl.DslRuntime
 import jfx.layout.Div.div
@@ -34,8 +35,8 @@ final class Window extends Box("div") {
   private var closeHandler: Option[Window => Unit] = None
   private var clickHandler: Option[Window => Unit] = None
 
-  private var headerHost: HTMLElement = uninitialized
-  private var actionsHost: HTMLElement = uninitialized
+  private var headerHost: Box = uninitialized
+  private var actionsHost: Box = uninitialized
   private var containerHost: Box = uninitialized
 
   private var didRunOpenSequence = false
@@ -46,6 +47,9 @@ final class Window extends Box("div") {
   override def compose(): Unit = {
     given Window = this
     addClass("jfx-window")
+    if (resizeable) {
+      addClass("jfx-window--resizable")
+    }
 
     addDisposable(zIndexProperty.observe { value =>
       host.setStyle("z-index", value.toString)
@@ -61,17 +65,15 @@ final class Window extends Box("div") {
     div {
       addClass("jfx-window__surface")
       
-      div {
-        headerHost = host.asInstanceOf[jfx.core.render.DomHostElement].element.asInstanceOf[HTMLElement]
+      headerHost = div {
         addClass("jfx-window__header")
         
         span {
           addClass("jfx-window__title")
           text = titleProperty
         }
-        
-        div {
-          actionsHost = host.asInstanceOf[jfx.core.render.DomHostElement].element.asInstanceOf[HTMLElement]
+
+        actionsHost = div {
           addClass("jfx-window__actions")
           
           button("stat_minus_1") {
@@ -245,10 +247,10 @@ final class Window extends Box("div") {
   private def configureHeaderDrag(): Unit = {
     val pointerDownListener: js.Function1[Event, Unit] = {
       case event: PointerEvent if shouldStartDrag(event) =>
-        startDrag(event, headerHost)
+        startDrag(event, headerHost.host.asInstanceOf[DomHostElement].element.asInstanceOf[HTMLElement])
       case _ =>
     }
-    headerHost.addEventListener("pointerdown", pointerDownListener)
+    headerHost.host.addEventListener("pointerdown", pointerDownListener)
   }
 
   private def configureResizeHandles(): Unit = {
@@ -261,7 +263,7 @@ final class Window extends Box("div") {
         div {
           addClass("jfx-window__handle")
           addClass(s"jfx-window__handle--$name")
-          val handleEl = host.asInstanceOf[jfx.core.render.DomHostElement].element.asInstanceOf[HTMLElement]
+          val handleEl = summon[Box].host.asInstanceOf[jfx.core.render.DomHostElement].element.asInstanceOf[HTMLElement]
           val pointerDownListener: js.Function1[Event, Unit] = {
             case event: PointerEvent if isPrimaryPointerButton(event) =>
               startResize(event, handleEl, horizontal = horizontal, vertical = vertical)
