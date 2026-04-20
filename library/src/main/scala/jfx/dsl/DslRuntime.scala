@@ -33,7 +33,9 @@ object DslRuntime {
   private val contextStack = mutable.ArrayBuffer(ComponentContext.root)
 
   def currentCursor: Cursor = cursorStack.lastOption.getOrElse(
-    throw IllegalStateException("No active DSL cursor found")
+    throw IllegalStateException(
+      s"No active DSL cursor found. This usually happens when trying to build a component (context: ${currentContext.parent.map(_.tagName).getOrElse("root")}) outside of a build/compose block or in an asynchronous callback without providing a component scope."
+    )
   )
 
   def currentContext: ComponentContext = contextStack.last

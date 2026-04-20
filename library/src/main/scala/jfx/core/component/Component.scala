@@ -21,8 +21,16 @@ trait Component extends Disposable {
   
   def host: HostElement = {
     if (isVirtual) _parent.map(_.host).getOrElse(
-       throw new IllegalStateException(s"Virtual component $tagName has no physical parent to delegate 'host' to.")
+       throw new IllegalStateException(s"Virtual component [${getClass.getName}] (tagName: '$tagName') has no physical parent to delegate 'host' to. Parent: ${_parent.map(_.getClass.getName).getOrElse("None")}. Did you try to access 'host' before the component was attached to the tree?")
     )
+    else if (_host == null) {
+       throw new IllegalStateException(
+         s"Component [${getClass.getName}] (tagName: '$tagName') has no host yet. " +
+         s"BindCursor present: ${_bindCursor != null}. " +
+         s"Parent: ${_parent.map(_.getClass.getName).getOrElse("None")}. " +
+         "Access 'host' only inside or after 'compose'."
+       )
+    }
     else _host.asInstanceOf[HostElement]
   }
 
@@ -122,6 +130,9 @@ trait Component extends Disposable {
   }
 
   private[jfx] def bind(cursor: Cursor): Unit = {
+    if (cursor == null) {
+      throw new IllegalArgumentException(s"Cannot bind component (tagName: '$tagName') to a null cursor.")
+    }
     _bindCursor = cursor
     if (isVirtual) {
       _host = null
@@ -166,12 +177,23 @@ object Component {
     c.addBaseClass(name)
   }
 
+  def removeClass(name: String)(using c: Component): Unit = {
+    c.removeBaseClass(name)
+  }
+
   def text(using c: Component): String = ""
   def text_=(value: String)(using c: Component): Unit = {
     Text.text(value)
   }
   def text_=(value: jfx.core.state.ReadOnlyProperty[String])(using c: Component): Unit = {
     Text.text(value)
+  }
+
+  def visible(using c: Component): Boolean = true // Default state, primarily needed for property assignment syntax
+  def visible_=(value: jfx.core.state.ReadOnlyProperty[Boolean])(using c: Component): Unit = {
+    c.addDisposable(value.observe { v =>
+      if (v) c.removeBaseClass("is-hidden") else c.addBaseClass("is-hidden")
+    })
   }
 
   def addDisposable(d: Disposable)(using c: Component): Unit = 

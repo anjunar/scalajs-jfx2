@@ -8,7 +8,9 @@ class ForEach[T](val items: ListProperty[T], val renderItem: T => Unit) extends 
   override def tagName: String = "" 
 
   override def compose(): Unit = {
-    items.foreach(renderItem)
+    items.zipWithIndex.foreach { (item, index) => 
+      insertItem(index, item)
+    }
 
     addDisposable(items.observeChanges {
       case ListProperty.Add(item, _) => appendItem(item)
@@ -28,9 +30,11 @@ class ForEach[T](val items: ListProperty[T], val renderItem: T => Unit) extends 
   }
 
   private def removeItem(index: Int): Unit = {
-    val child = children(index)
-    removeChild(child)
-    child.dispose()
+    if (index >= 0 && index < _children.length) {
+      val child = _children(index)
+      removeChild(child)
+      child.dispose()
+    }
   }
 
   private def resetItems(): Unit = {

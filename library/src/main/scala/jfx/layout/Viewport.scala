@@ -10,74 +10,69 @@ import org.scalajs.dom.{Event, HTMLDivElement, HTMLElement, window}
 
 import scala.scalajs.js
 import scala.scalajs.js.timers.setTimeout
+import scala.compiletime.uninitialized
 
 final class Viewport extends Box("div") {
 
   override def compose(): Unit = {
-    addBaseClass("jfx-viewport")
-
+    given Component = this
+    addClass("jfx-viewport")
+    
     ForEach.forEach(Viewport.windows) { conf =>
       buildWindow(conf)
     }
 
     ForEach.forEach(Viewport.overlays) { conf =>
-      new Viewport.Overlay(conf)
+      Viewport.overlay(conf) {}
     }
 
     ForEach.forEach(Viewport.notifications) { conf =>
-      new Viewport.Notification(conf)
+      Viewport.notification(conf) {}
     }
   }
 
-  private def buildWindow(conf: Viewport.WindowConf): Window = {
-    val component = new Window()
-
-    DslRuntime.withComponentScope(component) {
-      import jfx.dsl.StyleDsl.*
-      given Component = component
+  private def buildWindow(conf: Viewport.WindowConf): Unit = {
+    import Window.window
+    window { w ?=>
       style {
         if (conf.width > 0) width = conf.width.toString + "px"
         if (conf.height > 0) height = conf.height.toString + "px"
       }
-    }
 
-    component.title = conf.title
-    component.draggable = conf.draggable
-    component.resizeable = conf.resizable
-    component.centerOnOpen = conf.centerOnOpen
-    component.rememberPosition = conf.rememberPosition
-    component.positionStorageKey = conf.positionStorageKey
-    component.rememberSize = conf.rememberSize
-    component.active = Viewport.isActive(conf)
+      w.title = conf.title
+      w.draggable = conf.draggable
+      w.resizeable = conf.resizable
+      w.centerOnOpen = conf.centerOnOpen
+      w.rememberPosition = conf.rememberPosition
+      w.positionStorageKey = conf.positionStorageKey
+      w.rememberSize = conf.rememberSize
+      w.active = Viewport.isActive(conf)
 
-    component.onCloseWindow { window =>
-      conf.onClose.foreach(_(window))
-      Viewport.closeWindow(conf)
-    }
-
-    component.onClickWindow { window =>
-      conf.onClick.foreach(_(window))
-      Viewport.touchWindow(conf)
-    }
-
-    // Bind zIndex and maximized
-    addDisposable(Property.subscribeBidirectional(component.zIndex, conf.zIndex))
-    addDisposable(Property.subscribeBidirectional(component.maximized, conf.maximized))
-
-    addDisposable(conf.zIndex.observe(_ => component.active = Viewport.isActive(conf)))
-
-    component.setContentFactory(() => {
-      val contentComponent = conf.component()
-      contentComponent match {
-        case closeAware: Viewport.CloseAware =>
-          closeAware.close_=(() => Viewport.closeWindowById(conf.id))
-        case _ =>
-          ()
+      w.onCloseWindow { window =>
+        conf.onClose.foreach(_(window))
+        Viewport.closeWindow(conf)
       }
-      contentComponent
-    })
 
-    component
+      w.onClickWindow { window =>
+        conf.onClick.foreach(_(window))
+        Viewport.touchWindow(conf)
+      }
+
+      addDisposable(Property.subscribeBidirectional(w.zIndex, conf.zIndex))
+      addDisposable(Property.subscribeBidirectional(w.maximized, conf.maximized))
+      addDisposable(conf.zIndex.observe(_ => w.active = Viewport.isActive(conf)))
+
+      w.setContentFactory(() => {
+        val contentComponent = conf.component()
+        contentComponent match {
+          case closeAware: Viewport.CloseAware if contentComponent != null =>
+            closeAware.close_=(() => Viewport.closeWindowById(conf.id))
+          case _ =>
+            ()
+        }
+        contentComponent
+      })
+    }
   }
 }
 
@@ -85,6 +80,14 @@ object Viewport {
 
   def viewport(init: Viewport ?=> Unit = {}): Viewport = {
     DslRuntime.build(new Viewport())(init)
+  }
+
+  def overlay(conf: OverlayConf)(init: Overlay ?=> Unit = {}): Overlay = {
+    DslRuntime.build(new Overlay(conf))(init)
+  }
+
+  def notification(conf: NotificationConf)(init: Notification ?=> Unit = {}): Notification = {
+    DslRuntime.build(new Notification(conf))(init)
   }
 
   val windows: ListProperty[WindowConf] = ListProperty()
@@ -218,10 +221,11 @@ object Viewport {
   def closeWindowById(id: String): Unit =
     windows.find(_.id == id).foreach(windows -= _)
 
-  private final class Overlay(conf: Viewport.OverlayConf) extends Box("div") {
+  final class Overlay(conf: Viewport.OverlayConf) extends Box("div") {
 
     override def compose(): Unit = {
-      addBaseClass("jfx-viewport-overlay")
+      given Component = this
+      addClass("jfx-viewport-overlay")
       host.setStyle("z-index", conf.zIndex.toString)
 
       val stopClickListener: Event => Unit = _.stopPropagation()
@@ -241,25 +245,20 @@ object Viewport {
         )
       )
 
-      val contentComponent = conf.content()
-      if (contentComponent != null) {
-        addChild(contentComponent)
+      if (conf.content != null) {
+        conf.content()
       }
     }
   }
 
-  private final class Notification(conf: Viewport.NotificationConf) extends Box("div") {
+  final class Notification(conf: Viewport.NotificationConf) extends Box("div") {
 
     override def compose(): Unit = {
-      addBaseClass("jfx-viewport-notification")
-      addBaseClass(s"jfx-viewport-notification--${conf.kind.cssClass}")
+      given Component = this
+      addClass("jfx-viewport-notification")
+      addClass(s"jfx-viewport-notification--${conf.kind.cssClass}")
       
-      // We don't have textContent directly on Box in jfx2 easily without Dsl, 
-      // but we can use host.setAttribute or similar, or just a Text component.
-      // Component.text(using this) = conf.message
-      
-      val textComp = new jfx.core.component.TextComponent(conf.message)
-      addChild(textComp)
+      text = conf.message
 
       addDisposable(conf.visible.observe(syncVisibleState))
 
@@ -267,12 +266,14 @@ object Viewport {
       addDisposable(host.addEventListener("click", clickListener))
     }
 
-    private def syncVisibleState(visible: Boolean): Unit =
+    private def syncVisibleState(visible: Boolean): Unit = {
+      given Component = this
       if (visible) {
-        removeBaseClass("is-hidden")
+        removeClass("is-hidden")
       } else {
-        addBaseClass("is-hidden")
+        addClass("is-hidden")
       }
+    }
   }
 
   private def followAnchorFixed(

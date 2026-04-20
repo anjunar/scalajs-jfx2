@@ -18,4 +18,9 @@ object Button {
       init
     }
   }
+
+  def buttonType(using b: Button): String = b.host.attribute("type").getOrElse("")
+  def buttonType_=(value: String)(using b: Button): Unit = {
+    b.host.setAttribute("type", value)
+  }
 }
