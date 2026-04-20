@@ -28,12 +28,18 @@ trait Control[V] extends Component with Editable {
   def setDirty(value: Boolean): Unit = dirtyProperty.set(value)
   def setErrors(values: IterableOnce[String]): Unit = errorsProperty.setAll(values)
   
-  def validate(): Seq[String] = {
+  def validate(forceVisible: Boolean = false): Seq[String] = {
     val errors =
       if (!editableProperty.get) Seq.empty
       else validators.iterator.flatMap(_.validate(valueProperty.get)).toSeq
 
-    errorsProperty.setAll(errors)
+    if (forceVisible || dirtyProperty.get) {
+      if (forceVisible) setDirty(true)
+      errorsProperty.setAll(errors)
+    } else {
+      errorsProperty.setAll(Nil)
+    }
+    
     errors
   }
 }
