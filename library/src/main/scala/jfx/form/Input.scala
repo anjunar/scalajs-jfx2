@@ -22,11 +22,21 @@ class Input(override val name: String, override val standalone: Boolean = false)
     }))
 
     addDisposable(host.addEventListener("focus", _ => setFocused(true)))
-    addDisposable(host.addEventListener("blur", _ => setFocused(false)))
+    addDisposable(host.addEventListener("blur", _ => {
+      setFocused(false)
+      validate()
+    }))
 
     addDisposable(valueProperty.observe { v =>
        host.domNode.foreach(_.asInstanceOf[dom.html.Input].value = v)
+       if (dirtyProperty.get) validate()
     })
+
+    addDisposable(placeholderProperty.observe { p =>
+       host.domNode.foreach(_.asInstanceOf[dom.html.Input].placeholder = if (p == null) "" else p)
+    })
+
+    addDisposable(validators.observe(_ => validate()))
 
     // Register with FormContext if available and not standalone
     if (!standalone) {
@@ -54,4 +64,6 @@ object Input {
   def placeholder(using i: Input): String = i.placeholder
   def placeholder_=(value: String)(using i: Input): Unit = i.placeholder = value
   def stringValueProperty(using i: Input): Property[String] = i.stringValueProperty
+  def validators(using i: Input): jfx.core.state.ListProperty[jfx.form.validators.Validator[String]] = i.validators
+  def errorsProperty(using i: Input): jfx.core.state.ListProperty[String] = i.errorsProperty
 }

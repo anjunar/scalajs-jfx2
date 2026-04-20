@@ -11,7 +11,7 @@
 @import "./form/Editor.css";
 @import "./form/ImageCropper.css";
 @import "./form/InputContainer.css";
-@import "./form/SubForm.css";
+@import "./form/InputContainer.css";
 
 @import "./layout/Drawer.css";
 @import "./layout/HBox.css";

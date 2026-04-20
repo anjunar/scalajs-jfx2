@@ -2,6 +2,7 @@ package jfx.form
 
 import jfx.core.component.Component
 import jfx.core.state.{ListProperty, Property, ReadOnlyProperty}
+import jfx.form.validators.Validator
 import org.scalajs.dom.HTMLElement
 
 trait Control[V] extends Component with Editable {
@@ -12,6 +13,7 @@ trait Control[V] extends Component with Editable {
   val focusedProperty: Property[Boolean] = Property(false)
   val dirtyProperty: Property[Boolean] = Property(false)
 
+  val validators: ListProperty[Validator[V]] = new ListProperty[Validator[V]]()
   val errorsProperty: ListProperty[String] = new ListProperty[String]()
 
   val invalidProperty: ReadOnlyProperty[Boolean] =
@@ -26,5 +28,12 @@ trait Control[V] extends Component with Editable {
   def setDirty(value: Boolean): Unit = dirtyProperty.set(value)
   def setErrors(values: IterableOnce[String]): Unit = errorsProperty.setAll(values)
   
-  // Validation could be added here
+  def validate(): Seq[String] = {
+    val errors =
+      if (!editableProperty.get) Seq.empty
+      else validators.iterator.flatMap(_.validate(valueProperty.get)).toSeq
+
+    errorsProperty.setAll(errors)
+    errors
+  }
 }

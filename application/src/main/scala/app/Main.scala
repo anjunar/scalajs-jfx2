@@ -211,10 +211,12 @@ object Main {
             style { gap = "24px" }
             componentShowcase("Standalone Text Input") {
               val name = Property("")
+              import jfx.form.InputContainer.inputContainer
               vbox {
-                standaloneInput("name") {
-                  placeholder = "Name eingeben..."
-                  addDisposable(stringValueProperty.observe(name.set))
+                inputContainer("Name eingeben...") {
+                  standaloneInput("name") {
+                    addDisposable(stringValueProperty.observe(name.set))
+                  }
                 }
                 div {
                   classes = "showcase-result"
@@ -225,24 +227,43 @@ object Main {
             }
             componentShowcase("DI-Bound Form") {
               import jfx.form.Form.form
+              import jfx.form.validators.*
+              import jfx.form.InputContainer.inputContainer
               form {
                 val myForm = summon[jfx.form.Form]
                 
                 vbox {
                   style { gap = "10px" }
-                  input("firstName") { placeholder = "Vorname" }
-                  input("lastName") { placeholder = "Nachname" }
+                  
+                  inputContainer("Vorname") {
+                    input("firstName") { 
+                      validators += NotBlankValidator("Vorname darf nicht leer sein")
+                    }
+                  }
+
+                  inputContainer("E-Mail") {
+                    input("email") { 
+                      validators += EmailValidator()
+                    }
+                  }
                   
                   button("Submit (Siehe Konsole)") {
                     onClick { _ => 
-                      val data = myForm.controls.get.map(c => s"${c.name}: ${c.valueProperty.get}").mkString(", ")
-                      dom.window.alert(s"Form Data: $data")
+                      // Validate all controls before submit
+                      val hasErrors = myForm.controls.get.map(_.validate()).exists(_.nonEmpty)
+                      if (hasErrors) {
+                         dom.window.alert("Formular enthält Fehler!")
+                      } else {
+                         val data = myForm.controls.get.map(c => s"${c.name}: ${c.valueProperty.get}").mkString(", ")
+                         dom.window.alert(s"Form Data: $data")
+                      }
                     }
                   }
                   
                   button("Clear") {
                     onClick { _ =>
                       myForm.controls.foreach(_.valueProperty.asInstanceOf[Property[String]].set(""))
+                      myForm.clearErrors()
                     }
                   }
                 }
