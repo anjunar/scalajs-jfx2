@@ -212,7 +212,22 @@ object Component {
 
   def host(using c: Component): jfx.core.render.HostElement = c.host
 
+  def tabIndex(using c: Component): Int = c.host.attribute("tabindex").flatMap(_.toIntOption).getOrElse(-1)
+  def tabIndex_=(value: Int)(using c: Component): Unit = c.host.setAttribute("tabindex", value.toString)
+
+  def role(using c: Component): String = c.host.attribute("role").getOrElse("")
+  def role_=(value: String)(using c: Component): Unit = c.host.setAttribute("role", value)
+
+  def attribute(name: String, value: String)(using c: Component): Unit = c.host.setAttribute(name, value)
+  def attribute(name: String, value: jfx.core.state.ReadOnlyProperty[String])(using c: Component): Unit = {
+    c.addDisposable(value.observe(v => c.host.setAttribute(name, v)))
+  }
+
   def onClick(handler: dom.MouseEvent => Unit)(using c: Component): Unit = c.onClickHandler(handler)
+
+  def onKeyDown(handler: dom.KeyboardEvent => Unit)(using c: Component): Unit = {
+    c.addDisposable(c.host.addEventListener("keydown", e => handler(e.asInstanceOf[dom.KeyboardEvent])))
+  }
 
   export jfx.dsl.StyleDsl.*
 }

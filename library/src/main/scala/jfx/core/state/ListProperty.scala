@@ -158,6 +158,8 @@ class ListProperty[V](val underlying: js.Array[V] = js.Array[V]())
   def remotePropertyOrNull: RemoteListProperty[V, ?] | Null =
     null
 
+  def asProperty: ReadOnlyProperty[js.Array[V]] = this
+
 }
 
 object ListProperty {
