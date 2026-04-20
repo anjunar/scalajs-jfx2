@@ -86,20 +86,20 @@ object Main {
 
             div {
               classes = "app-sidebar__nav"
-              sidebarSection("General")
-              navLink("/", "Overview", "Introduction")
+              sidebarSection("Willkommen")
+              navLink("/", "Entdecken", "Die JFX2 Vision")
               
-              sidebarSection("Actions")
-              navLink("/button", "Button", "Trigger actions")
+              sidebarSection("Interaktion")
+              navLink("/button", "Aktion", "Der Puls der App")
               
-              sidebarSection("Forms")
-              navLink("/input", "Input", "Text fields")
+              sidebarSection("Gespräch")
+              navLink("/input", "Formulare", "Natürlicher Dialog")
               
-              sidebarSection("Layout")
-              navLink("/layout", "Layouts", "HBox, VBox, Div")
+              sidebarSection("Architektur")
+              navLink("/layout", "Struktur", "Raum für Design")
 
-              sidebarSection("Data")
-              navLink("/table-view", "TableView", "Listen & Spalten")
+              sidebarSection("Wissen")
+              navLink("/table-view", "Daten", "Atmen und Fließen")
             }
             
             div {

@@ -75,6 +75,9 @@ object StyleDsl {
   def fontSize(using s: StyleProxy): String = ""
   def fontSize_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("font-size", v)
 
+  def opacity(using s: StyleProxy): String = ""
+  def opacity_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("opacity", v)
+
   def position(using s: StyleProxy): String = ""
   def position_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("position", v)
 

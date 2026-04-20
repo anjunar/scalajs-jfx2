@@ -8,17 +8,17 @@ import app.components.Showcase.*
 
 object OverviewPage {
   def render() = {
-    showcasePage("Overview", "Willkommen zur JFX2 API Dokumentation.") {
+    showcasePage("Willkommen bei JFX2", "Deinem neuen Zuhause für reaktive UIs in Scala.js.") {
       vbox {
         classes = "showcase-intro"
         div {
           classes = "showcase-intro__text"
-          text = "JFX2 ist ein reaktives UI-Framework für Scala.js mit Fokus auf SSR-Kompatibilität, Typisierung und architektonische Klarheit."
+          text = "JFX2 verbindet die Eleganz einer JavaFX-inspirierten DSL mit der Power moderner Web-Technologien. Unser Herz schlägt für kompromisslose SSR-Kompatibilität, starke Typisierung und architektonische Klarheit. Lass die Magie expliziter Komposition wirken und entdecke, wie fließend, lebendig und intuitiv UI-Entwicklung wirklich sein kann."
         }
         horizontalLine()
         div {
           classes = "showcase-intro__links"
-          text = "Wähle eine Komponente aus der Sidebar, um Details und Live-Beispiele zu sehen."
+          text = "Tauche ein: Wähle eine Komponente aus der Sidebar und erlebe unsere Live-Beispiele in Aktion."
         }
       }
     }

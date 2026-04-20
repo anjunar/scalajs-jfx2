@@ -5,6 +5,7 @@ import jfx.control.TableView.tableView
 import jfx.control.{TableColumn, TableView}
 import jfx.core.component.Component.*
 import jfx.core.state.ListProperty
+import jfx.layout.Div.div
 import jfx.layout.VBox.vbox
 import app.components.Showcase.*
 
@@ -122,10 +123,14 @@ object TableViewPage {
   }
 
   def render() = {
-    showcasePage("TableView", "Einfache Tabellen-Struktur.") {
+    showcasePage("TableView", "Datenmengen, die atmen und fließen.") {
       vbox {
         style { gap = "24px" }
-        componentShowcase("Bücher (virtuelle Liste mit 1000 Einträgen)") {
+        div {
+          style { opacity = "0.8"; fontSize = "14px"; marginBottom = "8px" }
+          text = "Selbst massive Datensätze fühlen sich bei JFX2 wunderbar leicht an. Genieße reibungsloses Virtual Scrolling und volle Reaktivität, während deine Tabellen elegant und performant bleiben – egal wie tief die Daten ragen."
+        }
+        componentShowcase("Virtuelle Bibliothek (1000 Meisterwerke)") {
           val books = new ListProperty[ShowcaseBook]()
           books.setAll(buildShowcaseBooks(1000))
           tableView[ShowcaseBook] {
@@ -142,6 +147,26 @@ object TableViewPage {
 
             table.items.setAll(books.get)
           }
+        }
+        apiSection("Virtual Scrolling TableView Usage") {
+          codeBlock("scala", """val books = new ListProperty[Book]()
+books.setAll(myLargeDataset)
+
+tableView[Book] {
+  val table = summon[TableView[Book]]
+  style { height = "400px" } // Container must have a height
+  table.rowHeightProperty.set(40.0) // Needed for virtual scroll calculation
+
+  column[Book, String]("Titel") { item =>
+     text = item.title
+  }
+  
+  column[Book, String]("Autor") { item =>
+     text = item.author
+  }
+
+  table.items.setAll(books.get)
+}""")
         }
       }
     }

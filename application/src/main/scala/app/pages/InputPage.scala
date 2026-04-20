@@ -14,10 +14,14 @@ import app.components.Showcase.*
 
 object InputPage {
   def render() = {
-    showcasePage("Form & Input", "Texteingabe-Felder und Formulare.") {
+    showcasePage("Formulare & Input", "Der fließende Dialog mit deinen Nutzern.") {
       vbox {
         style { gap = "24px" }
-        componentShowcase("Standalone Text Input") {
+        div {
+          style { opacity = "0.8"; fontSize = "14px"; marginBottom = "8px" }
+          text = "Dateneingabe sollte sich wie ein natürliches Gespräch anfühlen. Erlebe die perfekte Symbiose aus typsicherem Binding, automatischer Dependency Injection und reaktiver Validierung – so macht Fehlerbehandlung sogar Spaß."
+        }
+        componentShowcase("Einfache Texteingabe") {
           val name = Property("")
           vbox {
             inputContainer("Name eingeben...") {
@@ -31,6 +35,14 @@ object InputPage {
               text = labelText
             }
           }
+        }
+        apiSection("Standalone Usage") {
+          codeBlock("scala", """val name = Property("")
+inputContainer("Name eingeben...") {
+  standaloneInput("name") {
+    addDisposable(stringValueProperty.observe(name.set))
+  }
+}""")
         }
         componentShowcase("DI-Bound Form") {
           import jfx.form.Form.form
@@ -73,6 +85,25 @@ object InputPage {
               }
             }
           }
+        }
+        apiSection("Form & DI Usage") {
+          codeBlock("scala", """form {
+  val myForm = summon[Form]
+  
+  inputContainer("E-Mail") {
+    input("email") { 
+      validators += EmailValidator()
+    }
+  }
+  
+  button("Submit") {
+    onClick { _ => 
+      if (!myForm.controls.get.exists(_.validate(true).nonEmpty)) {
+         println("Success!")
+      }
+    }
+  }
+}""")
         }
       }
     }
