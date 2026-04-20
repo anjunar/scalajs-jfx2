@@ -69,6 +69,21 @@ object StyleDsl {
   def padding(using s: StyleProxy): String = ""
   def padding_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("padding", v)
 
+  def background(using s: StyleProxy): String = ""
+  def background_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("background", v)
+
+  def backgroundColor(using s: StyleProxy): String = ""
+  def backgroundColor_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("background-color", v)
+
+  def borderRadius(using s: StyleProxy): String = ""
+  def borderRadius_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("border-radius", v)
+
+  def border(using s: StyleProxy): String = ""
+  def border_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("border", v)
+
+  def fontWeight(using s: StyleProxy): String = ""
+  def fontWeight_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("font-weight", v)
+
   def textAlign(using s: StyleProxy): String = ""
   def textAlign_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("text-align", v)
 

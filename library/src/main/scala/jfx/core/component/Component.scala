@@ -201,9 +201,12 @@ object Component {
   }
 
   def visible(using c: Component): Boolean = true // Default state, primarily needed for property assignment syntax
+  def visible_=(value: Boolean)(using c: Component): Unit = {
+    if (value) c.host.setStyle("display", "") else c.host.setStyle("display", "none")
+  }
   def visible_=(value: jfx.core.state.ReadOnlyProperty[Boolean])(using c: Component): Unit = {
     c.addDisposable(value.observe { v =>
-      if (v) c.removeBaseClass("is-hidden") else c.addBaseClass("is-hidden")
+      if (v) c.host.setStyle("display", "") else c.host.setStyle("display", "none")
     })
   }
 
