@@ -126,7 +126,7 @@ object Viewport {
     val onClose: Option[Window => Unit] = None,
     val onClick: Option[Window => Unit] = None,
     val maximized: Property[Boolean] = Property(false),
-    val resizable: Boolean = false,
+    val resizable: Boolean = true,
     val draggable: Boolean = true,
     val centerOnOpen: Boolean = true,
     val rememberPosition: Boolean = true,
