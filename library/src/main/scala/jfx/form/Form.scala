@@ -49,4 +49,8 @@ object Form {
       }
     }
   }
+
+  def controls(using f: Form): ListProperty[Control[?]] = f.controls
+
+  def clearErrors()(using f: Form): Unit = f.clearErrors()
 }

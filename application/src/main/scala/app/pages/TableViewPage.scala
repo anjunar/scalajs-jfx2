@@ -133,10 +133,10 @@ object TableViewPage {
         componentShowcase("Virtuelle Bibliothek (1000 Meisterwerke)") {
           val books = new ListProperty[ShowcaseBook]()
           books.setAll(buildShowcaseBooks(1000))
+          import jfx.control.TableView.{tableView, rowHeight, items}
           tableView[ShowcaseBook] {
-            val table = summon[TableView[ShowcaseBook]]
             style { height = "400px" }
-            table.rowHeightProperty.set(40.0)
+            rowHeight = 40.0
 
             column[ShowcaseBook, String]("Titel") { item =>
                text = item.title
@@ -145,17 +145,17 @@ object TableViewPage {
                text = item.author
             }
 
-            table.items.setAll(books.get)
+            items = books.get
           }
         }
         apiSection("Virtual Scrolling TableView Usage") {
-          codeBlock("scala", """val books = new ListProperty[Book]()
+          codeBlock("scala", """import jfx.control.TableView.{tableView, rowHeight, items}
+val books = new ListProperty[Book]()
 books.setAll(myLargeDataset)
 
 tableView[Book] {
-  val table = summon[TableView[Book]]
   style { height = "400px" } // Container must have a height
-  table.rowHeightProperty.set(40.0) // Needed for virtual scroll calculation
+  rowHeight = 40.0 // Needed for virtual scroll calculation
 
   column[Book, String]("Titel") { item =>
      text = item.title
@@ -165,7 +165,7 @@ tableView[Book] {
      text = item.author
   }
 
-  table.items.setAll(books.get)
+  items = books.get
 }""")
         }
       }

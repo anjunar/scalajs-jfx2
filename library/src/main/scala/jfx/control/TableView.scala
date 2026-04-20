@@ -214,6 +214,15 @@ object TableView {
   def items[S](using t: TableView[S]): ListProperty[S] =
     t.items
 
+  def items_=[S](v: scala.collection.IterableOnce[S])(using t: TableView[S]): Unit =
+    t.items.setAll(v)
+
+  def items_=[S](v: scala.scalajs.js.Array[S])(using t: TableView[S]): Unit =
+    t.items.setAll(v)
+
+  def rowHeight(using t: TableView[?]): Double = t.rowHeightProperty.get
+  def rowHeight_=(v: Double)(using t: TableView[?]): Unit = t.rowHeightProperty.set(v)
+
   def columns[S](using t: TableView[S]): ListProperty[TableColumn[S, ?]] =
     t.columns
 }

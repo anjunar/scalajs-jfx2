@@ -45,10 +45,8 @@ inputContainer("Name eingeben...") {
 }""")
         }
         componentShowcase("DI-Bound Form") {
-          import jfx.form.Form.form
+          import jfx.form.Form.{form, controls, clearErrors}
           form {
-            val myForm = summon[jfx.form.Form]
-            
             vbox {
               style { gap = "10px" }
               
@@ -67,11 +65,11 @@ inputContainer("Name eingeben...") {
               button("Submit (Siehe Konsole)") {
                 onClick { _ => 
                   // Validate all controls before submit
-                  val hasErrors = myForm.controls.get.map(_.validate(forceVisible = true)).exists(_.nonEmpty)
+                  val hasErrors = controls.get.map(_.validate(forceVisible = true)).exists(_.nonEmpty)
                   if (hasErrors) {
                      dom.window.alert("Formular enthält Fehler!")
                   } else {
-                     val data = myForm.controls.get.map(c => s"${c.name}: ${c.valueProperty.get}").mkString(", ")
+                     val data = controls.get.map(c => s"${c.name}: ${c.valueProperty.get}").mkString(", ")
                      dom.window.alert(s"Form Data: $data")
                   }
                 }
@@ -79,17 +77,16 @@ inputContainer("Name eingeben...") {
               
               button("Clear") {
                 onClick { _ =>
-                  myForm.controls.foreach(_.valueProperty.asInstanceOf[Property[String]].set(""))
-                  myForm.clearErrors()
+                  controls.foreach(_.valueProperty.asInstanceOf[Property[String]].set(""))
+                  clearErrors()
                 }
               }
             }
           }
         }
         apiSection("Form & DI Usage") {
-          codeBlock("scala", """form {
-  val myForm = summon[Form]
-  
+          codeBlock("scala", """import jfx.form.Form.{form, controls}
+form {
   inputContainer("E-Mail") {
     input("email") { 
       validators += EmailValidator()
@@ -98,7 +95,7 @@ inputContainer("Name eingeben...") {
   
   button("Submit") {
     onClick { _ => 
-      if (!myForm.controls.get.exists(_.validate(true).nonEmpty)) {
+      if (!controls.get.exists(_.validate(true).nonEmpty)) {
          println("Success!")
       }
     }
