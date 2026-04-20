@@ -13,6 +13,7 @@ import jfx.layout.Overlay.*
 import jfx.layout.Overlay
 import jfx.statement.Condition
 import jfx.statement.Condition.*
+import jfx.statement.ForEach
 import org.scalajs.dom
 import scala.scalajs.js
 
@@ -87,13 +88,11 @@ class ComboBox[T](override val name: String, override val standalone: Boolean = 
       
       condition(valueRendererProperty.map(_.isDefined)) {
         thenDo {
-          val cond = summon[Condition]
-          addDisposable(selectionProperty.observe { list =>
-            DslRuntime.updateBranch(cond) {
-               val selected = list.headOption.getOrElse(null.asInstanceOf[T])
-               if (selected != null) valueRendererProperty.get.foreach(_(selected))
-            }
-          })
+          // Wir nutzen ForEach für die selektierten Elemente.
+          // Das ist viel sauberer und handhabt das Entfernen alter Komponenten automatisch.
+          ForEach.forEach(selectionProperty) { item =>
+            valueRendererProperty.get.foreach(_(item))
+          }
         }
         elseDo {
           div {
@@ -176,8 +175,8 @@ class ComboBox[T](override val name: String, override val standalone: Boolean = 
 
   def selectItem(item: T): Unit = {
     if (multipleSelectionProperty.get) {
-      val existing = selectionProperty.toSeq.find(isSame(_, item))
-      if (existing.isDefined) selectionProperty -= existing.get
+      val idx = selectionProperty.toSeq.indexWhere(isSame(_, item))
+      if (idx >= 0) selectionProperty.remove(idx)
       else selectionProperty += item
     } else {
       selectionProperty.setAll(Seq(item))
