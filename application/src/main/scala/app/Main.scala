@@ -250,7 +250,7 @@ object Main {
                   button("Submit (Siehe Konsole)") {
                     onClick { _ => 
                       // Validate all controls before submit
-                      val hasErrors = myForm.controls.get.map(_.validate()).exists(_.nonEmpty)
+                      val hasErrors = myForm.controls.get.map(_.validate(forceVisible = true)).exists(_.nonEmpty)
                       if (hasErrors) {
                          dom.window.alert("Formular enthält Fehler!")
                       } else {

@@ -29,7 +29,7 @@ class Input(override val name: String, override val standalone: Boolean = false)
 
     addDisposable(valueProperty.observe { v =>
        host.domNode.foreach(_.asInstanceOf[dom.html.Input].value = v)
-       if (dirtyProperty.get) validate()
+       validate()
     })
 
     addDisposable(placeholderProperty.observe { p =>
@@ -37,6 +37,7 @@ class Input(override val name: String, override val standalone: Boolean = false)
     })
 
     addDisposable(validators.observe(_ => validate()))
+    addDisposable(dirtyProperty.observe(_ => validate()))
 
     // Register with FormContext if available and not standalone
     if (!standalone) {
