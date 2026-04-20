@@ -39,10 +39,10 @@ object ComboBoxPage {
               rowHeight = 60.0
               dropdownHeight = 300.0
               
-              ComboBox.converter_=[Member](_.name)
-              ComboBox.identityBy_=[Member](_.name)
+              converter = _.name
+              identityBy = _.name
 
-              ComboBox.itemRenderer[Member] { (member, isSelected) =>
+              itemRenderer { (member, isSelected) =>
                 hbox {
                   style { 
                     width = "100%"
@@ -83,7 +83,7 @@ object ComboBoxPage {
                 }
               }
 
-              ComboBox.valueRenderer[Member] { member =>
+              valueRenderer { member =>
                 hbox {
                   style { alignItems = "center"; gap = "8px" }
                   div {

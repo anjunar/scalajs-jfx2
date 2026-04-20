@@ -31,7 +31,7 @@ class ComboBox[T](override val name: String, override val standalone: Boolean = 
   val rowHeightProperty: Property[Double] = Property(36.0)
   
   val converterProperty: Property[T => String] = Property((v: T) => if (v == null) "" else v.toString)
-  val identityProperty: Property[T => Any] = Property(identity)
+  val identityProperty: Property[T => Any] = Property((v: T) => v.asInstanceOf[Any])
   
   type Renderer = (T, ReadOnlyProperty[Boolean]) => Unit
   val itemRendererProperty: Property[Option[Renderer]] = Property(None)
@@ -40,13 +40,15 @@ class ComboBox[T](override val name: String, override val standalone: Boolean = 
 
   // -- Identity Logic --
   private def isSame(a: T, b: T): Boolean = {
-    if (a.asInstanceOf[Any] == null || b.asInstanceOf[Any] == null) a.asInstanceOf[Any] == b.asInstanceOf[Any]
+    val aAny = a.asInstanceOf[Any]
+    val bAny = b.asInstanceOf[Any]
+    if (aAny == null || bAny == null) aAny == bAny
     else identityProperty.get(a) == identityProperty.get(b)
   }
 
   // -- Reactive Helpers --
   private val displayText = selectionProperty.asProperty.flatMap { list =>
-    val first = list.toSeq.headOption.getOrElse(null.asInstanceOf[T])
+    val first = list.headOption.getOrElse(null.asInstanceOf[T])
     if (first == null) placeholderProperty else Property(converterProperty.get(first))
   }
 
@@ -80,7 +82,6 @@ class ComboBox[T](override val name: String, override val standalone: Boolean = 
       }
     }
 
-    // -- Visual Structure --
     div {
       addClass("jfx-combo-box__value")
       
@@ -89,7 +90,7 @@ class ComboBox[T](override val name: String, override val standalone: Boolean = 
           val cond = summon[Condition]
           addDisposable(selectionProperty.observe { list =>
             DslRuntime.updateBranch(cond) {
-               val selected = list.toSeq.headOption.getOrElse(null.asInstanceOf[T])
+               val selected = list.headOption.getOrElse(null.asInstanceOf[T])
                if (selected != null) valueRendererProperty.get.foreach(_(selected))
             }
           })
@@ -167,7 +168,7 @@ class ComboBox[T](override val name: String, override val standalone: Boolean = 
     }
     
     addDisposable(selectionProperty.observe { list =>
-       valueProperty.set(list.toSeq.headOption.getOrElse(null.asInstanceOf[T]))
+       valueProperty.set(list.headOption.getOrElse(null.asInstanceOf[T]))
     })
   }
 
@@ -192,35 +193,32 @@ object ComboBox {
   }
 
   def items[T](using c: ComboBox[T]): ListProperty[T] = c.itemsProperty
-  def items_=[T](v: scala.collection.IterableOnce[T])(using c: ComboBox[T]): Unit = c.itemsProperty.setAll(v)
+  def items_=[T](using c: ComboBox[T])(v: scala.collection.IterableOnce[T]): Unit = c.itemsProperty.setAll(v)
 
-  def placeholder[T](using c: ComboBox[T]): String = c.placeholder
-  def placeholder_=[T](value: String)(using c: ComboBox[T]): Unit = c.placeholder = value
-
-  def selection[T](using c: ComboBox[T]): ListProperty[T] = c.selectionProperty
-  def valueProperty[T](using c: ComboBox[T]): Property[T] = c.valueProperty
-
-  def multiSelect(using c: ComboBox[?]): Boolean = c.multipleSelectionProperty.get
-  def multiSelect_=(v: Boolean)(using c: ComboBox[?]): Unit = c.multipleSelectionProperty.set(v)
-
-  def rowHeight[T](using c: ComboBox[?]): Double = c.rowHeightProperty.get
-  def rowHeight_=(v: Double)(using c: ComboBox[?]): Unit = c.rowHeightProperty.set(v)
-
-  def dropdownHeight[T](using c: ComboBox[?]): Double = c.dropdownHeightProperty.get
-  def dropdownHeight_=(v: Double)(using c: ComboBox[?]): Unit = c.dropdownHeightProperty.set(v)
-
-  def itemRenderer[T](renderer: (T, ReadOnlyProperty[Boolean]) => Unit)(using c: ComboBox[T]): Unit = 
-    c.itemRendererProperty.set(Some(renderer))
-    
-  def valueRenderer[T](renderer: T => Unit)(using c: ComboBox[T]): Unit = 
-    c.valueRendererProperty.set(Some(renderer))
-    
-  def footerRenderer(renderer: => Unit)(using c: ComboBox[?]): Unit = 
-    c.footerRendererProperty.set(Some(() => renderer))
+  def placeholder(using c: ComboBox[?]): String = c.placeholderProperty.get
+  def placeholder_=(using c: ComboBox[?])(v: String): Unit = c.placeholderProperty.set(v)
 
   def converter[T](using c: ComboBox[T]): T => String = c.converterProperty.get
-  def converter_=[T](v: T => String)(using c: ComboBox[T]): Unit = c.converterProperty.set(v)
+  def converter_=[T](using c: ComboBox[T])(v: T => String): Unit = c.converterProperty.set(v)
 
   def identityBy[T](using c: ComboBox[T]): T => Any = c.identityProperty.get
-  def identityBy_=[T](v: T => Any)(using c: ComboBox[T]): Unit = c.identityProperty.set(v)
+  def identityBy_=[T](using c: ComboBox[T])(v: T => Any): Unit = c.identityProperty.set(v)
+
+  def rowHeight(using c: ComboBox[?]): Double = c.rowHeightProperty.get
+  def rowHeight_=(using c: ComboBox[?])(v: Double): Unit = c.rowHeightProperty.set(v)
+
+  def dropdownHeight(using c: ComboBox[?]): Double = c.dropdownHeightProperty.get
+  def dropdownHeight_=(using c: ComboBox[?])(v: Double): Unit = c.dropdownHeightProperty.set(v)
+
+  def multiSelect(using c: ComboBox[?]): Boolean = c.multipleSelectionProperty.get
+  def multiSelect_=(using c: ComboBox[?])(v: Boolean): Unit = c.multipleSelectionProperty.set(v)
+
+  def itemRenderer[T](using c: ComboBox[T])(v: (T, ReadOnlyProperty[Boolean]) => Unit): Unit = 
+    c.itemRendererProperty.set(Some(v))
+    
+  def valueRenderer[T](using c: ComboBox[T])(v: T => Unit): Unit = 
+    c.valueRendererProperty.set(Some(v))
+    
+  def footerRenderer(using c: ComboBox[?])(v: => Unit): Unit = 
+    c.footerRendererProperty.set(Some(() => v))
 }
