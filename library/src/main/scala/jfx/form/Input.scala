@@ -5,13 +5,11 @@ import jfx.core.state.Property
 import jfx.dsl.DslRuntime
 import org.scalajs.dom
 
-class Input(val name: String) extends Component {
+class Input(override val name: String) extends Component with Control[String] {
   override def tagName: String = "input"
 
-  val stringValueProperty = Property("")
-
-  def placeholder: String = host.attribute("placeholder").getOrElse("")
-  def placeholder_=(value: String): Unit = host.setAttribute("placeholder", value)
+  override val valueProperty: Property[String] = Property("")
+  def stringValueProperty: Property[String] = valueProperty
 
   override def bind(cursor: jfx.core.render.Cursor): Unit = {
     super.bind(cursor)
@@ -19,12 +17,25 @@ class Input(val name: String) extends Component {
     
     addDisposable(host.addEventListener("input", _ => {
       val value = host.domNode.get.asInstanceOf[dom.html.Input].value
-      stringValueProperty.set(value)
+      setDirty(true)
+      valueProperty.set(value)
     }))
 
-    addDisposable(stringValueProperty.observe { v =>
+    addDisposable(host.addEventListener("focus", _ => setFocused(true)))
+    addDisposable(host.addEventListener("blur", _ => setFocused(false)))
+
+    addDisposable(valueProperty.observe { v =>
        host.domNode.foreach(_.asInstanceOf[dom.html.Input].value = v)
     })
+
+    // Register with FormContext if available
+    try {
+      val formContext = DslRuntime.service[FormContext]
+      formContext.registerControl(this)
+      addDisposable(() => formContext.unregisterControl(this))
+    } catch {
+      case _: Exception => // Not inside a FormContext, standalone
+    }
   }
 }
 

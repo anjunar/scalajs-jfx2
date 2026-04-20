@@ -2,15 +2,18 @@ package jfx.dsl
 
 import jfx.core.component.Component
 import jfx.core.render.{BrowserRenderBackend, Cursor, HydrationRenderBackend, RenderBackend}
+import jfx.di.{ServiceRegistry, HierarchicalRegistry}
 import org.scalajs.dom
 import scala.collection.mutable
+import scala.reflect.ClassTag
 
 /**
  * Context for DSL composition.
  */
 final case class ComponentContext(
   parent: Option[jfx.core.component.Component],
-  insertionIndex: Option[Int] = None
+  insertionIndex: Option[Int] = None,
+  registry: ServiceRegistry = new HierarchicalRegistry(None)
 )
 
 object ComponentContext {
@@ -34,6 +37,20 @@ object DslRuntime {
   )
 
   def currentContext: ComponentContext = contextStack.last
+
+  def service[T](using manifest: ClassTag[T]): T = {
+    currentContext.registry.get[T]
+  }
+
+  def provide[T](service: T)(init: => Unit)(using manifest: ClassTag[T]): Unit = {
+    val currentCtx = currentContext
+    val newRegistry = new HierarchicalRegistry(Some(currentCtx.registry))
+    newRegistry.register(service)
+    
+    withContext(currentCtx.copy(registry = newRegistry)) {
+      init
+    }
+  }
 
   def withCursor[A](cursor: Cursor)(block: => A): A = {
     cursorStack += cursor

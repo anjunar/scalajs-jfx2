@@ -206,10 +206,10 @@ object Main {
         }
       },
       route("/input") {
-        showcasePage("Input", "Texteingabe-Felder f\u00fcr Formulare.") {
+        showcasePage("Form & Input", "Texteingabe-Felder und Formulare.") {
           vbox {
             style { gap = "24px" }
-            componentShowcase("Text Input") {
+            componentShowcase("Standalone Text Input") {
               val name = Property("")
               vbox {
                 input("name") {
@@ -224,8 +224,30 @@ object Main {
                 }
               }
             }
-            apiSection("Usage") {
-              codeBlock("scala", "input(\"username\") {\n  placeholder = \"Benutzername\"\n  addDisposable(stringValueProperty.observe(v => println(v)))\n}")
+            componentShowcase("DI-Bound Form") {
+              import jfx.form.Form.form
+              form {
+                val myForm = summon[jfx.form.Form]
+                
+                vbox {
+                  style { gap = "10px" }
+                  input("firstName") { placeholder = "Vorname" }
+                  input("lastName") { placeholder = "Nachname" }
+                  
+                  button("Submit (Siehe Konsole)") {
+                    onClick { _ => 
+                      val data = myForm.controls.get.map(c => s"${c.name}: ${c.valueProperty.get}").mkString(", ")
+                      dom.window.alert(s"Form Data: $data")
+                    }
+                  }
+                  
+                  button("Clear") {
+                    onClick { _ =>
+                      myForm.controls.foreach(_.valueProperty.asInstanceOf[Property[String]].set(""))
+                    }
+                  }
+                }
+              }
             }
           }
         }
