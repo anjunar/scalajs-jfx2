@@ -351,10 +351,26 @@ final class Window extends Box("div") {
   }
 
   private def isPrimaryPointerButton(event: PointerEvent): Boolean = event.button == 0
-  private def shouldStartDrag(event: PointerEvent): Boolean = isPrimaryPointerButton(event) && !isChromeActionTarget(event.target)
-  private def isChromeActionTarget(target: org.scalajs.dom.EventTarget | Null): Boolean = target match {
-    case node: Node => headerHost != null && headerHost.contains(node) && (actionsHost == null || !actionsHost.contains(node))
-    case _ => false
+  private def shouldStartDrag(event: PointerEvent): Boolean = {
+    val target = event.target.asInstanceOf[Node]
+    val isAction = isActionButton(target)
+    val res = isPrimaryPointerButton(event) && !isAction
+    
+    val targetDesc = target match {
+      case el: org.scalajs.dom.HTMLElement => s"${el.tagName}.${el.className}"
+      case _ => target.nodeName
+    }
+    println(s"[Window] shouldStartDrag: $res (target: $targetDesc, isPrimary: ${isPrimaryPointerButton(event)}, isAction: $isAction)")
+    res
+  }
+
+  private def isActionButton(target: Node): Boolean = {
+    var curr: Node | Null = target
+    while (curr != null && curr != headerHost) {
+      if (curr.nodeName == "BUTTON") return true
+      curr = curr.parentNode
+    }
+    false
   }
 
   private def stopActivePointerInteraction(persistState: Boolean): Unit = {

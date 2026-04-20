@@ -148,10 +148,15 @@ trait Component extends Disposable {
 
   def tagName: String
   def compose(): Unit = {}
-  
+
   def onClickHandler(handler: dom.MouseEvent => Unit): Unit = {
-    addDisposable(host.addEventListener("click", e => handler(e.asInstanceOf[dom.MouseEvent])))
+    println(s"Adding click handler to ${host.tagName} with class ${host.attribute("class").getOrElse("")}")
+    addDisposable(host.addEventListener("click", e => {
+      println(s"Click on ${host.tagName} with class ${host.attribute("class").getOrElse("")}")
+      handler(e.asInstanceOf[dom.MouseEvent])
+    }))
   }
+
 
   def addDisposable(d: Disposable): Unit = disposable.add(d)
 
