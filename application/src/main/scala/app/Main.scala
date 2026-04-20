@@ -66,6 +66,7 @@ object Main {
       route("/") { OverviewPage.render() },
       route("/button") { ButtonPage.render() },
       route("/input") { InputPage.render() },
+      route("/combo-box") { ComboBoxPage.render() },
       route("/layout") { LayoutPage.render() },
       route("/table-view") { TableViewPage.render() },
       route("/window") { WindowPage.render() }
@@ -97,6 +98,7 @@ object Main {
               
               sidebarSection("Gespräch")
               navLink("/input", "Formulare", "Natürlicher Dialog")
+              navLink("/combo-box", "ComboBox", "Elegante Auswahl")
               
               sidebarSection("Architektur")
               navLink("/layout", "Struktur", "Raum für Design")

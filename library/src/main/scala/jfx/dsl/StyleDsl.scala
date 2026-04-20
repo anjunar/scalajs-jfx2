@@ -69,6 +69,9 @@ object StyleDsl {
   def padding(using s: StyleProxy): String = ""
   def padding_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("padding", v)
 
+  def textAlign(using s: StyleProxy): String = ""
+  def textAlign_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("text-align", v)
+
   def color(using s: StyleProxy): String = ""
   def color_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("color", v)
 

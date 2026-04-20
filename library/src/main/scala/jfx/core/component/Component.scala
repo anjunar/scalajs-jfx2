@@ -186,6 +186,12 @@ object Component {
     c.removeBaseClass(name)
   }
 
+  def classIf(name: String, condition: jfx.core.state.ReadOnlyProperty[Boolean])(using c: Component): Unit = {
+    c.addDisposable(condition.observe { v =>
+      if (v) c.addBaseClass(name) else c.removeBaseClass(name)
+    })
+  }
+
   def text(using c: Component): String = ""
   def text_=(value: String)(using c: Component): Unit = {
     Text.text(value)

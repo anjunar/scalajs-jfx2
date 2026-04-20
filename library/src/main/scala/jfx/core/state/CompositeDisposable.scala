@@ -9,6 +9,9 @@ final class CompositeDisposable extends Disposable {
   def add(item: Disposable): Unit =
     items += item
 
+  def remove(item: Disposable): Unit =
+    items -= item
+
   override def dispose(): Unit = {
     val snapshot = items.toVector
     items.clear()
