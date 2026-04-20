@@ -149,7 +149,7 @@ trait Component extends Disposable {
   def tagName: String
   def compose(): Unit = {}
   
-  def onClick(handler: dom.MouseEvent => Unit): Unit = {
+  def onClickHandler(handler: dom.MouseEvent => Unit): Unit = {
     addDisposable(host.addEventListener("click", e => handler(e.asInstanceOf[dom.MouseEvent])))
   }
 
@@ -201,7 +201,7 @@ object Component {
 
   def host(using c: Component): jfx.core.render.HostElement = c.host
 
-  def onClick(handler: dom.MouseEvent => Unit)(using c: Component): Unit = c.onClick(handler)
+  def onClick(handler: dom.MouseEvent => Unit)(using c: Component): Unit = c.onClickHandler(handler)
 
   export jfx.dsl.StyleDsl.*
 }
