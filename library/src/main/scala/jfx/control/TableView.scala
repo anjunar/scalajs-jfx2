@@ -16,6 +16,7 @@ final class TableView[S] extends Box("div") {
   val showHeaderProperty = Property(true)
 
   val rowHeightProperty = Property(32.0)
+  val prefWidthProperty = Property[Option[Double]](None)
   val scrollTopProperty = Property(0.0)
   val viewportHeightProperty = Property(400.0)
 
@@ -60,6 +61,7 @@ final class TableView[S] extends Box("div") {
       display = "flex"
       flexDirection = "column"
       width = "100%"
+      prefWidthProperty.get.foreach(w => width = s"${w}px")
       height = "100%"
       overflow = "hidden"
     }
@@ -222,6 +224,15 @@ object TableView {
 
   def rowHeight(using t: TableView[?]): Double = t.rowHeightProperty.get
   def rowHeight_=(v: Double)(using t: TableView[?]): Unit = t.rowHeightProperty.set(v)
+
+  def showHeader(using t: TableView[?]): Boolean = t.showHeaderProperty.get
+  def showHeader_=(v: Boolean)(using t: TableView[?]): Unit = t.showHeaderProperty.set(v)
+
+  def prefWidth(using t: TableView[?]): Option[Double] = t.prefWidthProperty.get
+  def prefWidth_=(v: Double)(using t: TableView[?]): Unit = t.prefWidthProperty.set(Some(v))
+  def prefWidth_=(v: Option[Double])(using t: TableView[?]): Unit = t.prefWidthProperty.set(v)
+  def prefWidth_=(v: jfx.core.state.ReadOnlyProperty[Double])(using t: TableView[?]): Unit =
+    t.addDisposable(v.observe(w => t.prefWidthProperty.set(Some(w))))
 
   def columns[S](using t: TableView[S]): ListProperty[TableColumn[S, ?]] =
     t.columns

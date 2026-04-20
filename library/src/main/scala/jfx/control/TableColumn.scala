@@ -46,6 +46,13 @@ object TableColumn {
     col
   }
 
+  def prefWidth[S, T](using c: TableColumn[S, T]): Double = c.prefWidthProperty.get
+  def prefWidth_=[S, T](value: Double)(using c: TableColumn[S, T]): Unit = c.prefWidthProperty.set(value)
+  def prefWidth_=[S, T](value: jfx.core.state.ReadOnlyProperty[Double])(using c: TableColumn[S, T]): Unit =
+    c.addDisposable(value.observe(c.prefWidthProperty.set))
+
+  def cellRenderer_=[S](renderer: S => Unit)(using c: TableColumn[S, ?]): Unit = c.setCellRenderer(renderer)
+
   def cellValueFactory[S, T](using c: TableColumn[S, T]): TableColumn.CellDataFeatures[S, T] => ReadOnlyProperty[T] | Null =
     throw new UnsupportedOperationException("Not implemented in JFX2 yet")
   

@@ -1,11 +1,16 @@
 package jfx.form
 
+import jfx.control.TableView.*
+import jfx.control.TableColumn.*
+import jfx.control.TableColumn
+import jfx.control.TableView
 import jfx.core.component.Component.*
 import jfx.core.component.Component
-import jfx.core.state.Property
+import jfx.core.state.{ListProperty, Property}
 import jfx.dsl.DslRuntime
 import jfx.layout.Div.div
-import jfx.layout.Overlay.overlay
+import jfx.layout.Overlay.*
+import jfx.layout.Overlay
 import jfx.statement.Condition.*
 
 class ComboBox[T](override val name: String, override val standalone: Boolean = false) extends Component with Control[T] {
@@ -13,6 +18,8 @@ class ComboBox[T](override val name: String, override val standalone: Boolean = 
 
   override val valueProperty: Property[T] = Property(null.asInstanceOf[T])
   val openProperty: Property[Boolean] = Property(false)
+  val itemsProperty: ListProperty[T] = new ListProperty[T]()
+  val dropdownWidthProperty: Property[Option[Double]] = Property(None)
   
   private val displayText = valueProperty.flatMap { v =>
     if (v == null) placeholderProperty else Property(v.toString)
@@ -45,16 +52,35 @@ class ComboBox[T](override val name: String, override val standalone: Boolean = 
     
     condition(openProperty) {
       thenDo {
-        overlay {
+        overlay(dropdownWidthProperty.get) {
           addClass("jfx-combo-box__dropdown")
-          div {
-            style { 
-              padding = "12px"
-              color = "var(--aj-ink-muted)"
-              fontSize = "13px"
-              textAlign = "center"
+          
+          tableView[T] {
+            addClass("jfx-combo-box__table")
+            showHeader = false
+            rowHeight = 36.0
+            TableView.prefWidth = Overlay.effectiveWidth
+            
+            TableView.items = ComboBox.this.itemsProperty
+            
+            column[T, Any]("") { (col: TableColumn[T, Any]) ?=>
+              TableColumn.prefWidth = Overlay.effectiveWidth
+              
+              col.setCellRenderer { item =>
+                div {
+                  addClass("jfx-combo-box__item")
+                  div {
+                    addClass("jfx-combo-box__item-text")
+                    text = item.toString
+                  }
+                  
+                  onClick { _ =>
+                    valueProperty.set(item)
+                    openProperty.set(false)
+                  }
+                }
+              }
             }
-            text = "Liste wird in Kürze implementiert..."
           }
         }
       }
@@ -74,4 +100,11 @@ object ComboBox {
   
   def open[T](using c: ComboBox[T]): Boolean = c.openProperty.get
   def open_=[T](value: Boolean)(using c: ComboBox[T]): Unit = c.openProperty.set(value)
+
+  def items[T](using c: ComboBox[T]): ListProperty[T] = c.itemsProperty
+  def items_=[T](v: scala.collection.IterableOnce[T])(using c: ComboBox[T]): Unit = c.itemsProperty.setAll(v)
+
+  def dropdownWidth[T](using c: ComboBox[T]): Option[Double] = c.dropdownWidthProperty.get
+  def dropdownWidth_=[T](value: Double)(using c: ComboBox[T]): Unit = c.dropdownWidthProperty.set(Some(value))
+  def dropdownWidth_=[T](value: Option[Double])(using c: ComboBox[T]): Unit = c.dropdownWidthProperty.set(value)
 }
