@@ -14,6 +14,8 @@ import jfx.layout.Drawer.*
 import jfx.layout.Drawer
 import jfx.layout.HBox.hbox
 import jfx.layout.VBox.vbox
+import jfx.layout.Viewport.*
+import jfx.layout.Viewport
 import jfx.layout.HorizontalLine.horizontalLine
 import jfx.router.Route
 import jfx.router.Route.route
@@ -65,7 +67,8 @@ object Main {
       route("/button") { ButtonPage.render() },
       route("/input") { InputPage.render() },
       route("/layout") { LayoutPage.render() },
-      route("/table-view") { TableViewPage.render() }
+      route("/table-view") { TableViewPage.render() },
+      route("/window") { WindowPage.render() }
     )
 
     div {
@@ -97,6 +100,7 @@ object Main {
               
               sidebarSection("Architektur")
               navLink("/layout", "Struktur", "Raum für Design")
+              navLink("/window", "Fenster", "Raum für Fokus")
 
               sidebarSection("Wissen")
               navLink("/table-view", "Daten", "Atmen und Fließen")
@@ -130,10 +134,12 @@ object Main {
               }
             }
 
-            div {
-              classes = "app-content-viewport"
+            viewport {
               style { flex = "1"; overflow = "auto" }
-              router(routes, initialPath)
+              div {
+                classes = "app-content-viewport"
+                router(routes, initialPath)
+              }
             }
 
             div {
