@@ -170,6 +170,9 @@ object Component {
   def text_=(value: String)(using c: Component): Unit = {
     Text.text(value)
   }
+  def text_=(value: jfx.core.state.ReadOnlyProperty[String])(using c: Component): Unit = {
+    Text.text(value)
+  }
 
   def addDisposable(d: Disposable)(using c: Component): Unit = 
     c.addDisposable(d)

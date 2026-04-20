@@ -219,8 +219,7 @@ object Main {
                 div {
                   classes = "showcase-result"
                   val labelText = name.map(v => s"Eingabe: $v")
-                  addDisposable(labelText.observe(text = _))
-                  text = labelText.get
+                  text = labelText
                 }
               }
             }
