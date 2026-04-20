@@ -17,8 +17,8 @@ import scala.compiletime.uninitialized
 final class Window extends Box("div") {
 
   val titleProperty: Property[String] = Property.owned(disposable, "")
-  val maximized: Property[Boolean] = Property.owned(disposable, false)
-  val zIndex: Property[Int] = Property.owned(disposable, 0)
+  val maximizedProperty: Property[Boolean] = Property.owned(disposable, false)
+  val zIndexProperty: Property[Int] = Property.owned(disposable, 0)
   val activeProperty: Property[Boolean] = Property.owned(disposable, false)
   
   private val hasCloseHandler = Property.owned(disposable, false)
@@ -47,11 +47,11 @@ final class Window extends Box("div") {
     given Window = this
     addClass("jfx-window")
 
-    addDisposable(zIndex.observe { value =>
+    addDisposable(zIndexProperty.observe { value =>
       host.setStyle("z-index", value.toString)
     })
 
-    addDisposable(maximized.observe(syncMaximizedState))
+    addDisposable(maximizedProperty.observe(syncMaximizedState))
     addDisposable(activeProperty.observe(syncActiveState))
     addDisposable(() => stopActivePointerInteraction(persistState = false))
     addDisposable(() => openAnimationHandle.foreach(clearTimeout))
@@ -79,7 +79,7 @@ final class Window extends Box("div") {
             buttonType = "button"
             onClick { event =>
               event.stopPropagation()
-              maximized.set(false)
+              maximizedProperty.set(false)
             }
           }
           
@@ -106,7 +106,7 @@ final class Window extends Box("div") {
     if (!didRunOpenSequence) {
       didRunOpenSequence = true
       openAnimationHandle = Some(setTimeout(300) {
-        maximized.set(true)
+        maximizedProperty.set(true)
       })
 
       restoreSizeFromStorage()
@@ -410,4 +410,45 @@ object Window {
   def window(init: Window ?=> Unit): Window = {
     DslRuntime.build(new Window())(init)
   }
+  
+  def title(using w: Window): String = w.title
+  def title_=(v: String)(using w: Window): Unit = w.title = v
+  
+  def draggable(using w: Window): Boolean = w.draggable
+  def draggable_=(v: Boolean)(using w: Window): Unit = w.draggable = v
+
+  def resizeable(using w: Window): Boolean = w.resizeable
+  def resizeable_=(v: Boolean)(using w: Window): Unit = w.resizeable = v
+
+  def centerOnOpen(using w: Window): Boolean = w.centerOnOpen
+  def centerOnOpen_=(v: Boolean)(using w: Window): Unit = w.centerOnOpen = v
+
+  def rememberPosition(using w: Window): Boolean = w.rememberPosition
+  def rememberPosition_=(v: Boolean)(using w: Window): Unit = w.rememberPosition = v
+
+  def positionStorageKey(using w: Window): String | Null = w.positionStorageKey
+  def positionStorageKey_=(v: String | Null)(using w: Window): Unit = w.positionStorageKey = v
+
+  def rememberSize(using w: Window): Boolean = w.rememberSize
+  def rememberSize_=(v: Boolean)(using w: Window): Unit = w.rememberSize = v
+
+  def active(using w: Window): Boolean = w.active
+  def active_=(v: Boolean | jfx.core.state.ReadOnlyProperty[Boolean])(using w: Window): Unit = v match {
+    case b: Boolean => w.active = b
+    case p: jfx.core.state.ReadOnlyProperty[Boolean] => 
+       w.addDisposable(p.observe(w.active = _))
+  }
+
+  def zIndex(using w: Window): Property[Int] = w.zIndexProperty
+  def zIndex_=(p: Property[Int])(using w: Window): Unit = 
+     w.addDisposable(jfx.core.state.Property.subscribeBidirectional(w.zIndexProperty, p))
+
+  def maximized(using w: Window): Property[Boolean] = w.maximizedProperty
+  def maximized_=(p: Property[Boolean])(using w: Window): Unit = 
+     w.addDisposable(jfx.core.state.Property.subscribeBidirectional(w.maximizedProperty, p))
+
+  def onCloseWindow(handler: Window => Unit)(using w: Window): Unit = w.onCloseWindow(handler)
+  def onClickWindow(handler: Window => Unit)(using w: Window): Unit = w.onClickWindow(handler)
+  
+  def content(factory: () => Component | Null)(using w: Window): Unit = w.setContentFactory(factory)
 }

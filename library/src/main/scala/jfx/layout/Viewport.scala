@@ -6,7 +6,7 @@ import jfx.core.component.Component.*
 import jfx.core.state.{Disposable, ListProperty, Property}
 import jfx.dsl.{DslRuntime, StyleDsl}
 import jfx.statement.ForEach
-import org.scalajs.dom.{Event, HTMLDivElement, HTMLElement, window}
+import org.scalajs.dom.{Event, HTMLDivElement, HTMLElement, window as browserWindow}
 
 import scala.scalajs.js
 import scala.scalajs.js.timers.setTimeout
@@ -32,37 +32,38 @@ final class Viewport extends Box("div") {
   }
 
   private def buildWindow(conf: Viewport.WindowConf): Unit = {
-    import Window.window
-    window { w ?=>
+    import Window.*
+    window {
       style {
         if (conf.width > 0) width = conf.width.toString + "px"
         if (conf.height > 0) height = conf.height.toString + "px"
       }
 
-      w.title = conf.title
-      w.draggable = conf.draggable
-      w.resizeable = conf.resizable
-      w.centerOnOpen = conf.centerOnOpen
-      w.rememberPosition = conf.rememberPosition
-      w.positionStorageKey = conf.positionStorageKey
-      w.rememberSize = conf.rememberSize
-      w.active = Viewport.isActive(conf)
+      title = conf.title
+      draggable = conf.draggable
+      resizeable = conf.resizable
+      centerOnOpen = conf.centerOnOpen
+      rememberPosition = conf.rememberPosition
+      positionStorageKey = conf.positionStorageKey
+      rememberSize = conf.rememberSize
+      active = Viewport.isActive(conf)
 
-      w.onCloseWindow { window =>
+      onCloseWindow { window =>
         conf.onClose.foreach(_(window))
         Viewport.closeWindow(conf)
       }
 
-      w.onClickWindow { window =>
+      onClickWindow { window =>
         conf.onClick.foreach(_(window))
         Viewport.touchWindow(conf)
       }
 
-      addDisposable(Property.subscribeBidirectional(w.zIndex, conf.zIndex))
-      addDisposable(Property.subscribeBidirectional(w.maximized, conf.maximized))
-      addDisposable(conf.zIndex.observe(_ => w.active = Viewport.isActive(conf)))
+      zIndex = conf.zIndex
+      maximized = conf.maximized
+      
+      addDisposable(conf.zIndex.observe(_ => active = Viewport.isActive(conf)))
 
-      w.setContentFactory(() => {
+      content { () =>
         val contentComponent = conf.component()
         contentComponent match {
           case closeAware: Viewport.CloseAware if contentComponent != null =>
@@ -71,7 +72,7 @@ final class Viewport extends Box("div") {
             ()
         }
         contentComponent
-      })
+      }
     }
   }
 }
@@ -206,7 +207,7 @@ object Viewport {
       index += 1
     }
 
-    window.setTimeout(() => {
+    browserWindow.setTimeout(() => {
       conf.zIndex.set(index)
     }, 100)
   }
@@ -294,8 +295,8 @@ object Viewport {
       if (disposed) return
 
       val anchorRect = anchorElement.getBoundingClientRect()
-      val viewportWidth = window.innerWidth.toDouble
-      val viewportHeight = window.innerHeight.toDouble
+      val viewportWidth = browserWindow.innerWidth.toDouble
+      val viewportHeight = browserWindow.innerHeight.toDouble
 
       val resolvedWidth = widthPx.getOrElse(anchorRect.width)
 
@@ -353,14 +354,14 @@ object Viewport {
         case None => overlayElement.style.removeProperty("max-height")
       }
 
-      rafId = Some(window.requestAnimationFrame(_ => applyPosition()))
+      rafId = Some(browserWindow.requestAnimationFrame(_ => applyPosition()))
     }
 
-    rafId = Some(window.requestAnimationFrame(_ => applyPosition()))
+    rafId = Some(browserWindow.requestAnimationFrame(_ => applyPosition()))
 
     () => {
       disposed = true
-      rafId.foreach(window.cancelAnimationFrame)
+      rafId.foreach(browserWindow.cancelAnimationFrame)
     }
   }
 }
