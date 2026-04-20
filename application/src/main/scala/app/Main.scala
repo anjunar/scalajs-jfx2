@@ -212,7 +212,7 @@ object Main {
             componentShowcase("Standalone Text Input") {
               val name = Property("")
               vbox {
-                input("name") {
+                standaloneInput("name") {
                   placeholder = "Name eingeben..."
                   addDisposable(stringValueProperty.observe(name.set))
                 }

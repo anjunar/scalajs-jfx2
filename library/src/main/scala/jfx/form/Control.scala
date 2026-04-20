@@ -6,6 +6,7 @@ import org.scalajs.dom.HTMLElement
 
 trait Control[V] extends Component with Editable {
   val name: String
+  val standalone: Boolean = false
 
   val placeholderProperty: Property[String] = Property("")
   val focusedProperty: Property[Boolean] = Property(false)

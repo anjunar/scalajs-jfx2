@@ -5,7 +5,7 @@ import jfx.core.state.Property
 import jfx.dsl.DslRuntime
 import org.scalajs.dom
 
-class Input(override val name: String) extends Component with Control[String] {
+class Input(override val name: String, override val standalone: Boolean = false) extends Component with Control[String] {
   override def tagName: String = "input"
 
   override val valueProperty: Property[String] = Property("")
@@ -28,13 +28,16 @@ class Input(override val name: String) extends Component with Control[String] {
        host.domNode.foreach(_.asInstanceOf[dom.html.Input].value = v)
     })
 
-    // Register with FormContext if available
-    try {
-      val formContext = DslRuntime.service[FormContext]
-      formContext.registerControl(this)
-      addDisposable(() => formContext.unregisterControl(this))
-    } catch {
-      case _: Exception => // Not inside a FormContext, standalone
+    // Register with FormContext if available and not standalone
+    if (!standalone) {
+      try {
+        val formContext = DslRuntime.service[FormContext]
+        formContext.registerControl(this)
+        addDisposable(() => formContext.unregisterControl(this))
+      } catch {
+        case e: Exception => 
+          dom.console.warn(s"Input $name could not resolve FormContext", e.getMessage)
+      }
     }
   }
 }
@@ -42,6 +45,10 @@ class Input(override val name: String) extends Component with Control[String] {
 object Input {
   def input(name: String)(init: Input ?=> Unit): Input = {
     DslRuntime.build(new Input(name))(init)
+  }
+
+  def standaloneInput(name: String)(init: Input ?=> Unit): Input = {
+    DslRuntime.build(new Input(name, true))(init)
   }
 
   def placeholder(using i: Input): String = i.placeholder

@@ -70,7 +70,7 @@ object DslRuntime {
   def withComponentScope[A](component: Component)(block: => A): A = {
     val cursor = jfx.core.render.RenderBackend.current.nextCursor(Some(component.host))
     withCursor(cursor) {
-      withContext(ComponentContext(Some(component))) {
+      withContext(ComponentContext(Some(component), registry = currentContext.registry)) {
         block
       }
     }
@@ -112,7 +112,7 @@ object DslRuntime {
       }
 
       withCursor(cursor) {
-        withContext(ComponentContext(Some(component), index)) {
+        withContext(ComponentContext(Some(component), index, currentContext.registry)) {
           block
         }
       }
@@ -151,7 +151,7 @@ object DslRuntime {
     // 4. COMPOSITION Logic: Set as parent for children
     if (component.isVirtual) {
       withCursor(cursor) {
-        withContext(ComponentContext(Some(component))) {
+        withContext(ComponentContext(Some(component), registry = currentContext.registry)) {
           given c: C = component
           component.compose()
           init
@@ -162,14 +162,14 @@ object DslRuntime {
         case h: jfx.core.render.HostElement =>
           val sub = cursor.subCursor(h)
           withCursor(sub) {
-            withContext(ComponentContext(Some(component))) {
+            withContext(ComponentContext(Some(component), registry = currentContext.registry)) {
               given c: C = component
               component.compose()
               init
             }
           }
         case _ =>
-          withContext(ComponentContext(Some(component))) {
+          withContext(ComponentContext(Some(component), registry = currentContext.registry)) {
             given c: C = component
             component.compose()
             init
