@@ -1,6 +1,6 @@
 package jfx.browser
 
-import jfx.core.component.Component
+import jfx.core.component.{ClientSideComponent, Component}
 import jfx.core.render.{BrowserRenderBackend, DomHostElement, RenderBackend}
 import jfx.dsl.DslRuntime
 import org.scalajs.dom
@@ -10,10 +10,13 @@ object Browser {
     val backend = BrowserRenderBackend
     val cursor = backend.nextCursor(Some(new DomHostElement("div", element)))
     
-    RenderBackend.withBackend(backend) {
+    val root = RenderBackend.withBackend(backend) {
       DslRuntime.withCursor(cursor) {
         factory
       }
     }
+
+    ClientSideComponent.activateTree(root)
+    root
   }
 }

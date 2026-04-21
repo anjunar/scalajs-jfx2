@@ -1,6 +1,6 @@
 package jfx.hydration
 
-import jfx.core.component.Component
+import jfx.core.component.{ClientSideComponent, Component}
 import jfx.core.render.{AsyncRenderPending, BrowserRenderBackend, HydrationRenderBackend, RenderBackend}
 import jfx.dsl.DslRuntime
 import org.scalajs.dom
@@ -40,6 +40,8 @@ object Hydration {
       RenderBackend.withBackend(hydrationBackend) {
         DslRuntime.rehydrate(root, cursor)
       }
+
+      ClientSideComponent.activateTree(root)
       
       root
     }.toJSPromise

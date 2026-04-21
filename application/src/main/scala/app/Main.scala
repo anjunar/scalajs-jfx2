@@ -88,7 +88,8 @@ object Main {
       asyncRoute("/layout") { page { LayoutPage.render() } },
       asyncRoute("/window") { page { WindowPage.render() } },
       asyncRoute("/domain") { page { DomainPage.render() } },
-      asyncRoute("/image") { page { ImagePage.render() } }
+      asyncRoute("/image") { page { ImagePage.render() } },
+      asyncRoute("/editor") { page { EditorPage.render() } }
     )
 
     div {
@@ -119,6 +120,7 @@ object Main {
               sidebarSection("Gespräch")
               navLink("/input", "Formulare", "Natürlicher Dialog")
               navLink("/combo-box", "ComboBox", "Elegante Auswahl")
+              navLink("/editor", "Editor", "Lexical Playground")
               
               sidebarSection("Architektur")
               navLink("/layout", "Struktur", "Raum für Design")
