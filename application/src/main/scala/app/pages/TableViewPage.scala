@@ -197,12 +197,24 @@ object TableViewPage {
   def render(books: RemoteListProperty[ShowcaseBook, ShowcaseBookQuery]) = {
     showcasePage("TableView", "Datenmengen, die atmen und fließen.") {
       vbox {
-        style { gap = "24px" }
-        div {
-          style { opacity = "0.8"; fontSize = "14px"; marginBottom = "8px" }
-          text = "Die JFX2 TableView vereint reaktive Virtualisierung mit voller SEO-Tauglichkeit. Im Browser genießen Benutzer flüssiges Scrolling, während Crawler durch echte HTML-Links die gesamte Datenmenge indexieren können."
-        }
-        componentShowcase("Crawlbarer Bücher-Katalog") {
+        style { gap = "34px" }
+
+        sectionIntro(
+          "Datenansicht",
+          "Eine Tabelle ist erst gut, wenn sie große Daten ruhig macht.",
+          "Die JFX2 TableView vereint reaktive Virtualisierung mit voller SEO-Tauglichkeit. Im Browser scrollt der Benutzer flüssig, während Crawler über echte HTML-Links die gesamte Datenmenge erreichen."
+        )
+
+        metricStrip(
+          "1000" -> "Remote geladene Buchzeilen im Beispiel.",
+          "50" -> "Zeilen pro initialer Remote-Page.",
+          "3" -> "Sortierbare Spalten mit stabilen Sort-Keys."
+        )
+
+        componentShowcase(
+          "Crawlbarer Bücher-Katalog",
+          "Remote-Daten, virtuelle Zeilen, sortierbare Spalten und crawlbare Navigation in einem Beispiel."
+        ) {
           tableView[ShowcaseBook] {
             style { height = "500px" }
             rowHeight = 40.0
@@ -229,7 +241,17 @@ object TableViewPage {
             TableView.items = books
           }
         }
-        apiSection("Remote TableView Route Usage") {
+
+        insightGrid(
+          ("Remote", "Die Query ist explizit", "Index, Limit und Sorting bilden zusammen den wiederholbaren Zustand der Datenanfrage."),
+          ("Cursor", "Virtuelle Zeilen brauchen stabile DOM-Pfade", "SSR, Hydration und ForEach müssen dieselben physischen Knoten meinen."),
+          ("SEO", "Crawlable bleibt eine fachliche Option", "Die Tabelle kann echte Links anbieten, ohne die Browser-Performance aufzugeben.")
+        )
+
+        apiSection(
+          "Remote TableView Route Usage",
+          "Die Route lädt die erste Page vor dem Rendern, damit SSR und Hydration denselben Anfangszustand teilen."
+        ) {
           codeBlock("scala", """asyncRoute("/table-view") {
   val books = TableViewPage.createRemoteBooks(pageSize = 50)
   

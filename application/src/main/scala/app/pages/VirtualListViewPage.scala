@@ -15,13 +15,24 @@ object VirtualListViewPage {
   def render() = {
     showcasePage("VirtualListView", "Variable Höhen, stabile Performance.") {
       vbox {
-        style { gap = "24px" }
-        div {
-          style { opacity = "0.8"; fontSize = "14px"; marginBottom = "8px" }
-          text = "Diese Demo zeigt die VirtualListView mit Elementen unterschiedlicher Höhe. Das System muss die Scroll-Position präzise berechnen, auch wenn die exakten Höhen erst beim Rendern bekannt werden."
-        }
+        style { gap = "34px" }
 
-        componentShowcase("Variable Zeilenhöhen") {
+        sectionIntro(
+          "Virtualisierung",
+          "Viele Zeilen dürfen sich leicht anfühlen.",
+          "Diese Demo zeigt Elemente unterschiedlicher Höhe. Die Liste muss Scroll-Position, sichtbaren Bereich und Platzhalter sauber führen, obwohl nur ein Ausschnitt wirklich gerendert wird."
+        )
+
+        metricStrip(
+          "1000" -> "Datensätze im Showcase.",
+          "44-120px" -> "Variable Zeilenhöhen für echte Layoutspannung.",
+          "Viewport" -> "Gerendert wird nur, was der Benutzer gerade braucht."
+        )
+
+        componentShowcase(
+          "Variable Zeilenhöhen",
+          "Kurze, mittlere und hohe Zeilen prüfen, ob die Scrollbar stabil bleibt."
+        ) {
           val items = new ListProperty[ShowcaseItem]()
           val data = (1 to 1000).map { i =>
             val h = if (i % 5 == 0) 120.0 else if (i % 3 == 0) 80.0 else 44.0
@@ -31,7 +42,7 @@ object VirtualListViewPage {
           items.setAll(data)
 
           vbox {
-            style { height = "500px"; border = "1px solid var(--aj-surface-border)"; borderRadius = "8px"; overflow = "hidden" }
+            style { height = "500px"; border = "1px solid var(--aj-line)"; borderRadius = "8px"; overflow = "hidden" }
             
             virtualList(items) { (item, index) =>
               val itm = if (item == null) ShowcaseItem("Lädt...", 44.0, "transparent") else item
@@ -41,7 +52,7 @@ object VirtualListViewPage {
                   padding = "0 16px"
                   display = "flex"; alignItems = "center"
                   background = itm.color
-                  borderBottom = "1px solid var(--aj-surface-subtle)"
+                  borderBottom = "1px solid var(--aj-line-soft)"
                   boxSizing = "border-box"
                 }
                 div {
@@ -59,6 +70,26 @@ object VirtualListViewPage {
               }
             }
           }
+        }
+
+        insightGrid(
+          ("Cursor", "Nur sichtbare Kinder zählen", "Virtuelle Container müssen physische DOM-Knoten kontrolliert einfügen und entfernen."),
+          ("Höhen", "Schätzung und Messung müssen zusammenpassen", "Variable Zeilenhöhen dürfen die Scrollposition nicht springen lassen."),
+          ("Daten", "Listen bleiben Properties", "Wenn sich die Daten ändern, reagiert die Ansicht ohne manuelle DOM-Synchronisation im Template.")
+        )
+
+        apiSection(
+          "VirtualList Usage",
+          "Die Zeilenfunktion beschreibt nur den sichtbaren Inhalt. Die Virtualisierung bleibt Aufgabe der Komponente."
+        ) {
+          codeBlock("scala", """val items = new ListProperty[ShowcaseItem]()
+
+virtualList(items) { (item, index) =>
+  div {
+    style { height = s"${item.height}px" }
+    text = s"$index - ${item.title}"
+  }
+}""")
         }
       }
     }

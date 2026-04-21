@@ -14,9 +14,24 @@ object WindowPage {
   def render() = {
     showcasePage("Window & Viewport", "Architektur des Raums.") {
       vbox {
-        style { gap = "24px" }
+        style { gap = "34px" }
+
+        sectionIntro(
+          "Raumverwaltung",
+          "Der Viewport ist die Bühne für Dinge, die über der Seite liegen.",
+          "Benachrichtigungen, Fenster und Overlays brauchen eine zentrale Ordnung. JFX2 sammelt diese Aufgaben im Viewport, damit einzelne Seiten nicht selbst globale UI-Schichten verwalten müssen."
+        )
+
+        metricStrip(
+          "Notify" -> "Kurze Rückmeldungen ohne Kontextverlust.",
+          "Window" -> "Fokussierte Arbeitsflächen über der Seite.",
+          "Overlay" -> "Ankergebundene Flächen für Auswahl und Details."
+        )
         
-        componentShowcase("Viewport") {
+        componentShowcase(
+          "Viewport",
+          "Vier Benachrichtigungstypen zeigen, wie globale Rückmeldung aus einer Seite heraus ausgelöst wird."
+        ) {
           div {
             style { marginBottom = "12px"; opacity = "0.8" }
             text = "Der Viewport ist das stille Zentrum, das Fenster, Benachrichtigungen und Overlays trägt. Er ordnet das Chaos und gibt ihm eine Bühne."
@@ -51,7 +66,10 @@ object WindowPage {
           }
         }
 
-        componentShowcase("Fenster") {
+        componentShowcase(
+          "Fenster",
+          "Ein Fenster bleibt im globalen Viewport, während die Seite darunter ihren Zustand behält."
+        ) {
           div {
             style { marginBottom = "12px"; opacity = "0.8" }
             text = "Fenster sind bewegliche Inseln im Viewport. Sie erlauben Fokus, ohne den Kontext zu verlieren."
@@ -67,11 +85,9 @@ object WindowPage {
                   vbox {
                     style { padding = "20px"; gap = "12px" }
                     div { text = "Hier ist Platz für deine Ideen." }
-                    button("Schließen") {
-                       // Note: In a real app, we might use CloseAware trait
-                       onClick { _ => 
-                         // We need a way to close this specific window.
-                         // WindowConf has an ID, we can use that.
+                    button("Notiz bestätigen") {
+                       onClick { _ =>
+                         Viewport.notify("Die Notiz im Fenster wurde bestätigt.", NotificationKind.Success)
                        }
                     }
                   }
@@ -81,7 +97,16 @@ object WindowPage {
           }
         }
 
-        apiSection("Nutzung") {
+        insightGrid(
+          ("Zentrum", "Globale UI gehört an einen Ort", "Viewport.windows und Viewport.notifications bilden den Zustand der obersten UI-Schicht."),
+          ("Fokus", "Fenster erhalten Z-Index und Aktivität", "Der Viewport kann Fenster berühren, ordnen und schließen, ohne Seitenlogik zu duplizieren."),
+          ("Lesbarkeit", "Seiten lösen nur Absichten aus", "Die Seite sagt notify oder addWindow, der Viewport kümmert sich um Darstellung und Lebenszyklus.")
+        )
+
+        apiSection(
+          "Nutzung",
+          "Die Seite bindet den Viewport einmal ein und sendet danach nur noch klare Absichten."
+        ) {
           codeBlock("scala", """// Viewport in der App-Shell platzieren
 viewport {
   router(routes)

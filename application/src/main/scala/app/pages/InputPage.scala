@@ -16,14 +16,27 @@ object InputPage {
   def render() = {
     showcasePage("Formulare & Input", "Der fließende Dialog mit deinen Nutzern.") {
       vbox {
-        style { gap = "24px" }
-        div {
-          style { opacity = "0.8"; fontSize = "14px"; marginBottom = "8px" }
-          text = "Dateneingabe sollte sich wie ein natürliches Gespräch anfühlen. Erlebe die perfekte Symbiose aus typsicherem Binding, automatischer Dependency Injection und reaktiver Validierung – so macht Fehlerbehandlung sogar Spaß."
-        }
-        componentShowcase("Einfache Texteingabe") {
+        style { gap = "34px" }
+
+        sectionIntro(
+          "Formfluss",
+          "Dateneingabe soll sich wie ein geordnetes Gespräch anfühlen.",
+          "InputContainer, Input und Properties trennen Darstellung, Wert und Validierung, bleiben im Template aber direkt zusammen lesbar. So sieht man sofort, welche Felder existieren und wie sie reagieren."
+        )
+
+        metricStrip(
+          "Property" -> "Der sichtbare Wert kann reaktiv weitergegeben werden.",
+          "Validator" -> "Fehlerregeln bleiben nah am Feld.",
+          "Form" -> "Mehrere Controls teilen einen Kontext für Submit und Reset."
+        )
+
+        componentShowcase(
+          "Einfache Texteingabe",
+          "Standalone-Inputs sind ideal für Suchfelder, kurze Filter oder kleine Dialoge ohne kompletten Form-Kontext."
+        ) {
           val name = Property("")
           vbox {
+            style { maxWidth = "420px" }
             inputContainer("Name eingeben...") {
               standaloneInput("name") {
                 addDisposable(stringValueProperty.observe(name.set))
@@ -36,7 +49,10 @@ object InputPage {
             }
           }
         }
-        apiSection("Standalone Usage") {
+        apiSection(
+          "Standalone Usage",
+          "Das Property bleibt explizit. Dadurch ist sofort klar, wohin der Wert fliesst."
+        ) {
           codeBlock("scala", """val name = Property("")
 inputContainer("Name eingeben...") {
   standaloneInput("name") {
@@ -44,7 +60,10 @@ inputContainer("Name eingeben...") {
   }
 }""")
         }
-        componentShowcase("DI-Bound Form") {
+        componentShowcase(
+          "DI-Bound Form",
+          "Im Form-Kontext melden sich Controls selbst an. Submit-Logik kann dadurch alle Felder gemeinsam validieren."
+        ) {
           import jfx.form.Form.{form, controls, clearErrors}
           form {
             vbox {
@@ -84,7 +103,17 @@ inputContainer("Name eingeben...") {
             }
           }
         }
-        apiSection("Form & DI Usage") {
+
+        insightGrid(
+          ("Binding", "Wertfluss bleibt sichtbar", "Das Feld schreibt in ein Property oder registriert sich im Form-Kontext."),
+          ("Validierung", "Fehler gehören ans Feld", "Regeln sitzen dort, wo ein Leser sie erwartet, statt in einer entfernten Submit-Methode."),
+          ("Submit", "Formen sammeln Verhalten", "Der Formular-Kontext macht Validieren, Leeren und Auslesen als gemeinsame Operation lesbar.")
+        )
+
+        apiSection(
+          "Form & DI Usage",
+          "Für größere Formulare ist der Form-Kontext die ruhigere Struktur."
+        ) {
           codeBlock("scala", """import jfx.form.Form.{form, controls}
 form {
   inputContainer("E-Mail") {

@@ -15,9 +15,24 @@ object ComboBoxPage {
   def render() = {
     showcasePage("ComboBox", "Die elegante Auswahl aus einer Menge von Möglichkeiten.") {
       vbox {
-        style { gap = "48px" }
+        style { gap = "34px" }
 
-        componentShowcase("Team-Mitglieder Selektor") {
+        sectionIntro(
+          "Auswahl",
+          "Eine ComboBox muss Orientierung geben, nicht nur Optionen verstecken.",
+          "Der Showcase nutzt echte Daten, eigene Renderer und eine Footer-Aktion. So wird sichtbar, wie Wertdarstellung, Listenzeile und Identität zusammenspielen."
+        )
+
+        metricStrip(
+          "items" -> "Die verfügbare Menge bleibt eine klar übergebene Sequenz.",
+          "converter" -> "Der Textwert kann unabhängig vom Objektmodell entstehen.",
+          "identityBy" -> "Selektion bleibt stabil, auch wenn Objekte neu geliefert werden."
+        )
+
+        componentShowcase(
+          "Team-Mitglieder Selektor",
+          "Ein realistischer Renderer mit Avatar, Rolle, Auswahlzustand und Footer-Link."
+        ) {
           val members = Seq(
             Member("Alice Scala", "Software Architect", "#6366f1"),
             Member("Bob Kotlin", "Product Owner", "#ec4899"),
@@ -109,7 +124,16 @@ object ComboBoxPage {
           }
         }
 
-        apiSection("Usage") {
+        insightGrid(
+          ("Renderer", "Zeile und Wert dürfen verschieden sein", "Die Dropdown-Zeile kann reich sein, während der geschlossene Wert kompakt bleibt."),
+          ("Cursor", "Stabile Identität schützt die Auswahl", "identityBy beschreibt, wann ein Eintrag derselbe fachliche Eintrag bleibt."),
+          ("Lesbarkeit", "Konfiguration bleibt im Block", "Placeholder, Daten, Höhen und Renderer liegen in einer Komponente zusammen.")
+        )
+
+        apiSection(
+          "Usage",
+          "Die wichtigsten Entscheidungen stehen direkt im comboBox-Block."
+        ) {
           codeBlock("scala", """|comboBox[Member]("team-selector") {
                                 |  placeholder = "Mitglied wählen..."
                                 |  items = myMemberList

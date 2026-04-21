@@ -39,7 +39,7 @@
     font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
     font-size: 1.35rem;
     line-height: 1.1;
-    letter-spacing: -0.03em;
+    letter-spacing: 0;
 }
 
 .app-nav-intro__copy {
@@ -192,6 +192,28 @@
 }
 
 @media (max-width: 720px) {
+    div.jfx-drawer.app-shell-drawer {
+        display: block !important;
+    }
+
+    div.jfx-drawer.app-shell-drawer > .jfx-drawer__panel-shell,
+    div.jfx-drawer.app-shell-drawer.jfx-drawer--open > .jfx-drawer__panel-shell {
+        position: absolute !important;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: min(92vw, 280px) !important;
+        max-width: 100%;
+        height: 100% !important;
+        overflow: visible;
+        pointer-events: none;
+        z-index: 20;
+    }
+
+    div.jfx-drawer.app-shell-drawer.jfx-drawer--open > .jfx-drawer__panel-shell {
+        pointer-events: auto;
+    }
+
     .app-shell .jfx-drawer__navigation {
         padding: 18px 14px 22px;
     }
