@@ -1,7 +1,6 @@
 package jfx.core.render
 
 import org.scalajs.dom
-import scala.collection.mutable
 
 /**
  * Traverses and binds existing DOM during hydration.
@@ -57,7 +56,11 @@ class HydrationCursor(val root: dom.Node, startIndex: Int = 0) extends Cursor {
 
     matched match {
       case Some(t) =>
-        val display = if (t.textContent.length > 20) t.textContent.substring(0, 20) + "..." else t.textContent
+        if (t.textContent != initial) {
+          dom.console.warn(s"Hydration Text Mismatch: Expected '$initial' but found '${t.textContent}'. $ctx")
+          t.textContent = initial
+        }
+        val display = if (initial.length > 20) initial.substring(0, 20) + "..." else initial
         dom.console.log(s"Hydrated text('$display') at $ctx")
         index += 1
         new HostNode {

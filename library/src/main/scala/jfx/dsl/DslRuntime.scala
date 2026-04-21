@@ -1,9 +1,8 @@
 package jfx.dsl
 
 import jfx.core.component.Component
-import jfx.core.render.{BrowserRenderBackend, Cursor, HydrationCursor, HydrationRenderBackend, RenderBackend}
+import jfx.core.render.{BrowserRenderBackend, Cursor, HostElement, HydrationCursor, HydrationRenderBackend, RenderBackend}
 import jfx.di.{ServiceRegistry, HierarchicalRegistry}
-import org.scalajs.dom
 import scala.collection.mutable
 import scala.reflect.ClassTag
 
@@ -136,32 +135,31 @@ object DslRuntime {
     component.bind(cursor)
     
     if (component.isVirtual) {
-      component.children.foreach(child => rehydrate(child, cursor))
-      if (component.parent.isEmpty) {
-        cursor match {
-          case h: HydrationCursor => h.pruneRemaining()
-          case _                  =>
-        }
-      }
+      rehydrateChildren(component, cursor)
     } else {
       component.hostNode match {
-        case h: jfx.core.render.HostElement =>
-          val sub = cursor.subCursor(h)
-          component.children.foreach(child => rehydrate(child, sub))
-          sub match {
-            case h: HydrationCursor => h.pruneRemaining()
-            case _                  =>
-          }
+        case h: HostElement =>
+          val childCursor = cursor.subCursor(h)
+          rehydrateChildren(component, childCursor)
+          pruneHydratedRemainder(childCursor)
         case _ =>
           // Non-element hosts (like text nodes) cannot have children in the DOM
       }
+    }
 
-      if (component.parent.isEmpty) {
-        cursor match {
-          case h: HydrationCursor => h.pruneRemaining()
-          case _                  =>
-        }
-      }
+    if (component.parent.isEmpty) {
+      pruneHydratedRemainder(cursor)
+    }
+  }
+
+  private def rehydrateChildren(component: Component, cursor: Cursor): Unit = {
+    component.children.foreach(child => rehydrate(child, cursor))
+  }
+
+  private def pruneHydratedRemainder(cursor: Cursor): Unit = {
+    cursor match {
+      case h: HydrationCursor => h.pruneRemaining()
+      case _                  =>
     }
   }
 

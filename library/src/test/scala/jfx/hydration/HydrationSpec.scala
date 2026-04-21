@@ -1,47 +1,58 @@
 package jfx.hydration
 
-import jfx.control.TableView
-import jfx.ssr.Ssr
-import jfx.core.state.ListProperty
+import jfx.core.component.Component.*
+import jfx.core.render.{BrowserRenderBackend, HydrationCursor, HydrationRenderBackend, RenderBackend}
 import jfx.dsl.DslRuntime
-import jfx.core.render.BrowserRenderBackend
+import jfx.layout.Div.div
+import jfx.layout.Span.span
+import org.scalajs.dom
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalajs.dom
 
 class HydrationSpec extends AnyFlatSpec with Matchers {
 
-  "Hydration" should "bind components to existing DOM nodes" ignore {
-    // 1. Simulate SSR
-    val items = new ListProperty[String]()
-    items += "A"
-    
-    val ssrHtml = Ssr.renderToString {
-      val tv = new TableView[String]()
-      tv.items.setAll(items)
-      DslRuntime.attach(tv)
-      tv
-    }
-    
-    // 2. Mock Browser DOM
+  "HydrationCursor" should "prune unclaimed DOM nodes" ignore {
     val container = dom.document.createElement("div")
-    container.innerHTML = ssrHtml
-    
-    // 3. Perform Hydration
-    val hydratedTv = Hydration.hydrate(container) {
-      val tv = new TableView[String]()
-      // Data MUST be the same for successful hydration of dynamic branches
-      tv.items.setAll(items) 
-      DslRuntime.attach(tv)
-      tv
-    }.asInstanceOf[TableView[String]]
-    
-    // 4. Verify
-    hydratedTv.host.domNode shouldBe Some(container.firstChild)
-    
-    // Verify it finds children
-    val body = container.querySelector(".jfx-table-body")
-    body should not be null
-    body.innerHTML should include("A")
+    container.innerHTML = "<span>A</span><span>B</span>"
+
+    val cursor = new HydrationCursor(container)
+    cursor.claimElement("span")
+    cursor.pruneRemaining()
+
+    container.innerHTML shouldBe "<span>A</span>"
+  }
+
+  it should "apply the expected client text on mismatch" ignore {
+    val container = dom.document.createElement("div")
+    container.innerHTML = "server"
+
+    val cursor = new HydrationCursor(container)
+    val textNode = cursor.claimText("client")
+
+    container.textContent shouldBe "client"
+    textNode.renderHtml(0) shouldBe "client"
+  }
+
+  "DslRuntime.rehydrate" should "prune server children outside the client tree" ignore {
+    val container = dom.document.createElement("div")
+    container.innerHTML = "<div><span>A</span><span>B</span></div>"
+
+    val root = RenderBackend.withBackend(BrowserRenderBackend) {
+      DslRuntime.withCursor(BrowserRenderBackend.nextCursor(None)) {
+        div {
+          span {
+            text = "A"
+          }
+        }
+      }
+    }
+
+    val backend = HydrationRenderBackend.root(container)
+    RenderBackend.withBackend(backend) {
+      DslRuntime.rehydrate(root, backend.nextCursor(None))
+    }
+
+    root.host.domNode shouldBe Some(container.firstChild)
+    container.innerHTML shouldBe "<div><span>A</span></div>"
   }
 }

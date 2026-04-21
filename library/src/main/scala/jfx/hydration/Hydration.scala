@@ -20,7 +20,6 @@ object Hydration {
     // We build the tree using the standard BrowserRenderBackend.
     // This triggers all asynchronous loading (like Router route loading).
     // We do this "silently" on a detached DOM node.
-    val silentContainer = dom.document.createElement("div")
     val dryBackend = BrowserRenderBackend 
     
     val root = RenderBackend.withBackend(dryBackend) {

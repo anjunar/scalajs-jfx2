@@ -45,11 +45,12 @@ trait ComponentCore extends Disposable {
   def parent: Option[Component] = _parent
   def children: Seq[Component] = _children.toSeq
 
-  def domNodeCount: Int = {
-    if (isVirtual) _children.map(_.domNodeCount).sum
-    else if (_host != null) 1
-    else 0
-  }
+  private[jfx] def physicalHostNodes: Seq[HostNode] =
+    if (isVirtual) _children.flatMap(_.physicalHostNodes).toSeq
+    else Option(_host).toSeq
+
+  def domNodeCount: Int =
+    physicalHostNodes.length
 
   def calculateDomOffset: Int = {
     _parent.map { p =>
@@ -74,7 +75,11 @@ trait ComponentCore extends Disposable {
 
   private[jfx] def syncChildAddition(child: Component): Unit = {
     _host match {
-      case h: HostElement => h.insertChild(child.calculateDomOffset, child.hostNode)
+      case h: HostElement =>
+        val offset = child.calculateDomOffset
+        child.physicalHostNodes.zipWithIndex.foreach { case (node, index) =>
+          h.insertChild(offset + index, node)
+        }
       case _              => if (isVirtual) _parent.foreach(_.syncChildAddition(child))
     }
   }
@@ -84,7 +89,7 @@ trait ComponentCore extends Disposable {
   }
 
   private[jfx] def removeChild(child: Component): Unit = {
-    val childDomNodes = if (child.isVirtual) child._children.map(_.hostNode).toSeq else Seq(child.hostNode)
+    val childDomNodes = child.physicalHostNodes
     _children -= child
 
     def performRemove(target: Component, nodes: Seq[HostNode]): Unit = {

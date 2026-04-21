@@ -143,4 +143,39 @@ class ComplexTreeSpec extends AnyFlatSpec with Matchers {
 
     html shouldBe "<div><div>X</div></div>"
   }
+
+  it should "remove physical nodes below nested virtual fragments" in {
+    import jfx.core.render.{RenderBackend, SsrRenderBackend}
+
+    val outer = Property(true)
+    val inner = Property(true)
+    val items = new ListProperty[String](js.Array("A", "B"))
+    var root: jfx.core.component.Box = null
+    val backend = new SsrRenderBackend()
+
+    RenderBackend.withBackend(backend) {
+      Ssr.renderToString {
+        root = div {
+          condition(outer) {
+            thenDo {
+              condition(inner) {
+                thenDo {
+                  forEach(items) { item =>
+                    div { text = item }
+                  }
+                }
+              }
+            }
+          }
+          div { text = "After" }
+        }
+        root
+      }
+
+      root.hostNode.renderHtml(0) shouldBe "<div><div>A</div><div>B</div><div>After</div></div>"
+      outer.set(false)
+    }
+
+    root.hostNode.renderHtml(0) shouldBe "<div><div>After</div></div>"
+  }
 }
