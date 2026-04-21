@@ -1,6 +1,5 @@
 package jfx.router
 
-import jfx.core.component.Component
 import scala.scalajs.js
 
 case class RouteContext(
@@ -31,24 +30,42 @@ case class RouterState(
 
 case class Route(
   path: String,
-  factory: RouteContext => Unit,
-  asyncFactory: Option[RouteContext => js.Promise[Route.Factory]] = None,
+  load: RouteContext => Route.Load,
   children: Seq[Route] = Nil
 )
 
 object Route {
-  type Factory = RouteContext ?=> Unit
+  type LoaderResult = Load | js.Promise[Factory]
 
-  def route(path: String)(factory: RouteContext ?=> Unit): Route = {
-    Route(path, ctx => factory(using ctx))
+  final class Factory(render: RouteContext ?=> Unit) {
+    def apply(context: RouteContext): Unit =
+      render(using context)
   }
 
-  def asyncRoute(path: String)(factory: RouteContext ?=> js.Promise[Factory]): Route =
+  final case class Load(promise: js.Promise[Factory], immediate: Option[Factory] = None)
+
+  def asyncRoute(path: String)(factory: RouteContext ?=> LoaderResult): Route =
     Route(
       path = path,
-      factory = _ => (),
-      asyncFactory = Some(ctx => factory(using ctx))
+      load = ctx => normalize(factory(using ctx))
     )
+
+  def page(render: RouteContext ?=> Unit): Load = {
+    val routeFactory: Factory = new Factory(render)
+    Load(js.Promise.resolve(routeFactory), immediate = Some(routeFactory))
+  }
+
+  def factory(render: RouteContext ?=> Unit): Factory =
+    new Factory(render)
+
+  def load(promise: js.Promise[Factory]): Load =
+    Load(promise)
+
+  private def normalize(result: LoaderResult): Load =
+    result match {
+      case routeLoad: Load => routeLoad
+      case promise         => Load(promise.asInstanceOf[js.Promise[Factory]])
+    }
 }
 
 object RouteMatcher {

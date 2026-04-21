@@ -40,9 +40,13 @@ app.get('/', (_request, response) => {
   response.redirect(302, `${basePath}/`)
 })
 
-app.get(`${basePath}/__ssr`, (request, response) => {
-  const path = normalizeRenderPath(request.query.path)
-  response.type('html').send(renderSsr(path))
+app.get(`${basePath}/__ssr`, async (request, response, next) => {
+  try {
+    const path = normalizeRenderPath(request.query.path)
+    response.type('html').send(await renderSsr(path))
+  } catch (error) {
+    next(error)
+  }
 })
 
 app.get(`${basePath}/*`, (request, response, next) => {
@@ -51,12 +55,12 @@ app.get(`${basePath}/*`, (request, response, next) => {
     return
   }
 
-  renderPage(request, response)
+  renderPage(request, response, next)
 })
 
-app.use((request, response) => {
+app.use((request, response, next) => {
   if (request.method === 'GET' && !isAssetRequest(request.path)) {
-    renderPage(request, response)
+    renderPage(request, response, next)
     return
   }
 
@@ -68,16 +72,20 @@ app.listen(port, () => {
   console.log(`Raw SSR fragment: http://localhost:${port}${basePath}/__ssr?path=/`)
 })
 
-function renderPage(request, response) {
-  const renderPath = normalizeRenderPath(request.originalUrl)
-  const ssrHtml = renderSsr(renderPath)
-  const html = injectRoot(template, ssrHtml)
+async function renderPage(request, response, next) {
+  try {
+    const renderPath = normalizeRenderPath(request.originalUrl)
+    const ssrHtml = await renderSsr(renderPath)
+    const html = injectRoot(template, ssrHtml)
 
-  response
-    .status(200)
-    .set('Cache-Control', 'no-store')
-    .type('html')
-    .send(html)
+    response
+      .status(200)
+      .set('Cache-Control', 'no-store')
+      .type('html')
+      .send(html)
+  } catch (error) {
+    next(error)
+  }
 }
 
 function injectRoot(html, ssrHtml) {

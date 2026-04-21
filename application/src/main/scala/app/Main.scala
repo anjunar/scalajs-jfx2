@@ -18,8 +18,7 @@ import jfx.layout.Viewport.*
 import jfx.layout.Viewport
 import jfx.layout.HorizontalLine.horizontalLine
 import jfx.router.Route
-import jfx.router.Route.route
-import jfx.router.RouteContext
+import jfx.router.Route.{asyncRoute, page}
 import jfx.router.Router.router
 import jfx.router.RouterConfig
 import jfx.ssr.Ssr
@@ -27,7 +26,6 @@ import org.scalajs.dom
 import org.scalajs.dom.HTMLElement
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 import scala.scalajs.js.annotation.JSExportTopLevel
@@ -62,29 +60,28 @@ object Main {
   }
 
   @JSExportTopLevel("renderSsr")
-  def renderSsr(path: String): String = {
-    // Only set here if we want a default for SSR, otherwise it stays empty/logic-driven
-    Ssr.renderToString {
+  def renderSsr(path: String): js.Promise[String] = {
+    Ssr.renderToStringAsync {
       demo(path)
     }
   }
 
   private def demo(initialPath: String = "/") = {
     val routes = Seq(
-      route("/") { OverviewPage.render() },
-      route("/button") { ButtonPage.render() },
-      route("/input") { InputPage.render() },
-      route("/combo-box") { ComboBoxPage.render() },
+      asyncRoute("/") { page { OverviewPage.render() } },
+      asyncRoute("/button") { page { ButtonPage.render() } },
+      asyncRoute("/input") { page { InputPage.render() } },
+      asyncRoute("/combo-box") { page { ComboBoxPage.render() } },
       asyncRoute("/table-view") {
         val books = TableViewPage.createRemoteBooks(pageSize = 50)
 
         books.reload(TableViewPage.ShowcaseBookQuery.first(50)).toFuture.map { _ =>
           tableViewPage(books)
-        }
+        }.toJSPromise
       },
-      route("/virtual-list") { VirtualListViewPage.render() },
-      route("/layout") { LayoutPage.render() },
-      route("/window") { WindowPage.render() }
+      asyncRoute("/virtual-list") { page { VirtualListViewPage.render() } },
+      asyncRoute("/layout") { page { LayoutPage.render() } },
+      asyncRoute("/window") { page { WindowPage.render() } }
     )
 
     div {
@@ -173,15 +170,12 @@ object Main {
     }
   }
 
-  private def asyncRoute(path: String)(factory: RouteContext ?=> Future[Route.Factory]): Route =
-    Route.asyncRoute(path) {
-      factory.toJSPromise
-    }
-
   private def tableViewPage(
     books: RemoteListProperty[TableViewPage.ShowcaseBook, TableViewPage.ShowcaseBookQuery]
   ): Route.Factory =
-    (ctx: RouteContext) ?=> TableViewPage.render(books)
+    Route.factory {
+      TableViewPage.render(books)
+    }
 
   private def sidebarSection(title: String) = {
     div {

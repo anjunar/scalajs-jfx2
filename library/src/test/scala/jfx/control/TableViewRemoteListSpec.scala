@@ -4,7 +4,7 @@ import jfx.control.TableColumn.*
 import jfx.control.TableView.*
 import jfx.core.component.Component.*
 import jfx.core.state.ListProperty
-import jfx.router.Route.route
+import jfx.router.Route.{asyncRoute, page}
 import jfx.router.Router.router
 import jfx.ssr.Ssr
 import org.scalatest.flatspec.AnyFlatSpec
@@ -58,12 +58,14 @@ class TableViewRemoteListSpec extends AnyFlatSpec with Matchers {
 
     val html = Ssr.renderToString {
       router(Seq(
-        route("/") {
-          tableView[String] {
-            crawlable = true
-            items = remote
-            column[String, String]("Name") { item =>
-              text = item
+        asyncRoute("/") {
+          page {
+            tableView[String] {
+              crawlable = true
+              items = remote
+              column[String, String]("Name") { item =>
+                text = item
+              }
             }
           }
         }

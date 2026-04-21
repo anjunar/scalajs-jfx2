@@ -2,6 +2,7 @@ package jfx.router
 
 import jfx.core.component.Component
 import jfx.core.component.Component.*
+import jfx.core.render.{AsyncRenderPending, RenderBackend}
 import jfx.core.state.Property
 import jfx.dsl.DslRuntime
 import jfx.layout.Div.div
@@ -12,24 +13,29 @@ import org.scalajs.dom.window
 import scala.concurrent.ExecutionContext
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
+import scala.util.{Failure, Success}
 
-class Router(val routes: Seq[Route], initialUrl: String) extends Component {
+class Router(val routes: Seq[Route], initialUrl: String) extends Component with AsyncRenderPending {
   override def tagName: String = "" 
 
   private sealed trait RenderState
   private case object RoutePending extends RenderState
   private case object RouteLoading extends RenderState
-  private final case class RouteReady(context: RouteContext, render: RouteContext => Unit) extends RenderState
+  private final case class RouteReady(context: RouteContext, render: Route.Factory) extends RenderState
   private final case class RouteFailure(error: Throwable) extends RenderState
   private final case class RouteNotFound(path: String) extends RenderState
 
   private given ExecutionContext = ExecutionContext.global
   private var renderToken = 0
+  private var pendingRouteLoad: Option[js.Promise[Unit]] = None
 
   val stateProperty = Property(resolve(initialUrl))
   private val renderStateProperty: Property[RenderState] = Property(RoutePending)
   val loadingProperty: Property[Boolean] = Property(false)
   val errorProperty: Property[Option[Throwable]] = Property(None)
+
+  override def pendingRenderPromises: Seq[js.Promise[Unit]] =
+    pendingRouteLoad.toSeq
 
   override def initialize(): Unit = {
     given Component = this
@@ -64,7 +70,7 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component {
 
   def navigate(path: String, replace: Boolean = false): Unit = {
     val nextState = resolve(path)
-    if (!jfx.core.render.RenderBackend.current.isServer) {
+    if (!RenderBackend.current.isServer) {
       if (replace) window.history.replaceState(null, "", nextState.url)
       else window.history.pushState(null, "", nextState.url)
     }
@@ -75,32 +81,49 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component {
     renderToken += 1
     val token = renderToken
     val state = stateProperty.get
+    pendingRouteLoad = None
     errorProperty.set(None)
     loadingProperty.set(false)
 
     state.currentMatchOption match {
       case Some(m) =>
         val ctx = RouteContext(state.path, state.url, m.fullPath, m.params, state.queryParams, state, m)
-        m.route.asyncFactory match {
-          case Some(asyncFactory) =>
-            loadingProperty.set(true)
-            renderStateProperty.set(RouteLoading)
-            val future = asyncFactory(ctx).toFuture
-            future.foreach { factory =>
-              if (token == renderToken) {
-                loadingProperty.set(false)
-                renderStateProperty.set(RouteReady(ctx, currentContext => factory(using currentContext)))
+        val backend = RenderBackend.current
+
+        try {
+          val routeLoad = m.route.load(ctx)
+          routeLoad.immediate match {
+            case Some(factory) =>
+              renderStateProperty.set(RouteReady(ctx, factory))
+
+            case None =>
+              loadingProperty.set(true)
+              renderStateProperty.set(RouteLoading)
+
+              val loaded = routeLoad.promise.toFuture
+              val rendered = loaded.transform { result =>
+                RenderBackend.withBackend(backend) {
+                  if (token == renderToken) {
+                    pendingRouteLoad = None
+                    loadingProperty.set(false)
+                    result match {
+                      case Success(factory) =>
+                        renderStateProperty.set(RouteReady(ctx, factory))
+                      case Failure(error) =>
+                        errorProperty.set(Some(error))
+                        renderStateProperty.set(RouteFailure(error))
+                    }
+                  }
+                }
+                Success(())
               }
-            }
-            future.failed.foreach { error =>
-              if (token == renderToken) {
-                loadingProperty.set(false)
-                errorProperty.set(Some(error))
-                renderStateProperty.set(RouteFailure(error))
-              }
-            }
-          case None =>
-            renderStateProperty.set(RouteReady(ctx, m.route.factory))
+
+              pendingRouteLoad = Some(rendered.toJSPromise)
+          }
+        } catch {
+          case error: Throwable =>
+            errorProperty.set(Some(error))
+            renderStateProperty.set(RouteFailure(error))
         }
       case None =>
         renderStateProperty.set(RouteNotFound(state.path))
@@ -131,7 +154,7 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component {
 object Router {
   def router(routes: Seq[Route], initial: String = null): Router = {
     val startUrl = if (initial != null) initial else {
-      if (jfx.core.render.RenderBackend.current.isServer) "/"
+      if (RenderBackend.current.isServer) "/"
       else s"${window.location.pathname}${window.location.search}"
     }
     DslRuntime.build(new Router(routes, startUrl)) {}

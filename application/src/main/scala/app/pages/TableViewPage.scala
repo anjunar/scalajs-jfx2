@@ -234,8 +234,10 @@ object TableViewPage {
   val books = TableViewPage.createRemoteBooks(pageSize = 50)
   
   books.reload(TableViewPage.ShowcaseBookQuery.first(50)).toFuture.map { _ =>
-    (ctx: RouteContext) ?=> TableViewPage.render(books)
-  }
+    Route.factory {
+      TableViewPage.render(books)
+    }
+  }.toJSPromise
 }""")
         }
       }

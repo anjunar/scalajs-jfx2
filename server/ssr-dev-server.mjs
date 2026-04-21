@@ -30,7 +30,7 @@ app.get(`${basePath}/__ssr`, async (request, response, next) => {
   try {
     const { renderSsr } = await vite.ssrLoadModule('/src/main.js')
     const path = normalizeRenderPath(request.query.path)
-    response.type('html').send(renderSsr(path))
+    response.type('html').send(await renderSsr(path))
   } catch (error) {
     vite.ssrFixStacktrace(error)
     next(error)
@@ -49,7 +49,7 @@ app.use(async (request, response, next) => {
     const sourceTemplate = await readFile(templatePath, 'utf8')
     const transformedTemplate = await vite.transformIndexHtml(requestUrl, sourceTemplate)
     const { renderSsr } = await vite.ssrLoadModule('/src/main.js')
-    const appHtml = renderSsr(renderPath)
+    const appHtml = await renderSsr(renderPath)
     const html = injectRoot(transformedTemplate, appHtml)
 
     response

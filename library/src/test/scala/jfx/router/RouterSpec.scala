@@ -2,7 +2,7 @@ package jfx.router
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import jfx.router.Route.route
+import jfx.router.Route.{asyncRoute, page}
 import jfx.layout.Div.div
 import jfx.core.component.Component.*
 import jfx.ssr.Ssr
@@ -11,8 +11,8 @@ class RouterSpec extends AnyFlatSpec with Matchers {
 
   "RouteMatcher" should "resolve basic routes" in {
     val routes = Seq(
-      route("/") { div { text = "Root" } },
-      route("/test") { div { text = "Test" } }
+      asyncRoute("/") { page { div { text = "Root" } } },
+      asyncRoute("/test") { page { div { text = "Test" } } }
     )
     
     val match1 = RouteMatcher.resolve(routes, "/")
@@ -26,7 +26,7 @@ class RouterSpec extends AnyFlatSpec with Matchers {
 
   it should "handle base paths correctly" in {
     val routes = Seq(
-      route("/") { div { text = "Root" } }
+      asyncRoute("/") { page { div { text = "Root" } } }
     )
     
     val match1 = RouteMatcher.resolve(routes, "/scalajs-jfx2/")
@@ -39,8 +39,8 @@ class RouterSpec extends AnyFlatSpec with Matchers {
 
   "Router" should "render correctly in SSR" in {
     val routes = Seq(
-      route("/") { div { text = "Home" } },
-      route("/about") { div { text = "About" } }
+      asyncRoute("/") { page { div { text = "Home" } } },
+      asyncRoute("/about") { page { div { text = "About" } } }
     )
     
     val htmlHome = Ssr.renderToString {

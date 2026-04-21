@@ -3,7 +3,7 @@ package jfx.control
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import jfx.ssr.Ssr
-import jfx.router.Route.route
+import jfx.router.Route.{asyncRoute, page}
 import jfx.router.Router.router
 import jfx.control.TableView.*
 import jfx.control.TableColumn.*
@@ -16,12 +16,14 @@ class TableViewSsrSpec extends AnyFlatSpec with Matchers {
     
     val html = Ssr.renderToString {
       router(Seq(
-        route("/") {
-          tableView[String] {
-            crawlable = true
-            items = members
-            column[String, String]("Name") { item =>
-              text = item
+        asyncRoute("/") {
+          page {
+            tableView[String] {
+              crawlable = true
+              items = members
+              column[String, String]("Name") { item =>
+                text = item
+              }
             }
           }
         }

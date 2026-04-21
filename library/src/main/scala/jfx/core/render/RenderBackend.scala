@@ -2,6 +2,7 @@ package jfx.core.render
 
 import org.scalajs.dom
 import scala.collection.mutable
+import scala.scalajs.js
 import jfx.core.state.Disposable
 
 trait RenderBackend {
@@ -24,6 +25,10 @@ trait Cursor {
   def claimText(initial: String): HostNode
   def subCursor(element: HostElement): Cursor
   def position: Option[Int] = None
+}
+
+private[jfx] trait AsyncRenderPending {
+  def pendingRenderPromises: Seq[js.Promise[Unit]]
 }
 
 object BrowserRenderBackend extends RenderBackend {
