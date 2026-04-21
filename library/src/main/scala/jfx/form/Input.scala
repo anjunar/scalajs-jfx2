@@ -1,6 +1,7 @@
 package jfx.form
 
 import jfx.core.component.Component
+import jfx.core.component.Component.*
 import jfx.core.state.Property
 import jfx.dsl.DslRuntime
 import org.scalajs.dom
@@ -11,35 +12,28 @@ class Input(override val name: String, override val standalone: Boolean = false)
   override val valueProperty: Property[String] = Property("")
   def stringValueProperty: Property[String] = valueProperty
 
-  override def bind(cursor: jfx.core.render.Cursor): Unit = {
-    super.bind(cursor)
-    host.setAttribute("name", name)
-    
-    addDisposable(host.addEventListener("input", _ => {
-      val value = host.domNode.get.asInstanceOf[dom.html.Input].value
-      setDirty(true)
-      valueProperty.set(value)
-    }))
+  override def compose(): Unit = {
+    given Component = this
 
-    addDisposable(host.addEventListener("focus", _ => setFocused(true)))
-    addDisposable(host.addEventListener("blur", _ => {
+    attribute("name", name)
+    
+    onInput { _ =>
+      setDirty(true)
+      valueProperty.set(nativeValue)
+    }
+
+    onFocus(_ => setFocused(true))
+    onBlur { _ =>
       setFocused(false)
       validate()
-    }))
+    }
 
-    addDisposable(valueProperty.observe { v =>
-       host.domNode.foreach(_.asInstanceOf[dom.html.Input].value = v)
-       validate()
-    })
-
-    addDisposable(placeholderProperty.observe { p =>
-       host.domNode.foreach(_.asInstanceOf[dom.html.Input].placeholder = if (p == null) "" else p)
-    })
+    bindNativeValue()
+    bindNativePlaceholder()
 
     addDisposable(validators.observe(_ => validate()))
     addDisposable(dirtyProperty.observe(_ => validate()))
 
-    // Register with FormContext if available and not standalone
     if (!standalone) {
       try {
         val formContext = DslRuntime.service[FormContext]
@@ -50,6 +44,25 @@ class Input(override val name: String, override val standalone: Boolean = false)
           dom.console.warn(s"Input $name could not resolve FormContext", e.getMessage)
       }
     }
+  }
+
+  private def nativeInput: Option[dom.html.Input] =
+    host.domNode.collect { case input: dom.html.Input => input }
+
+  private def nativeValue: String =
+    nativeInput.map(_.value).getOrElse("")
+
+  private def bindNativeValue(): Unit = {
+    addDisposable(valueProperty.observe { value =>
+      nativeInput.foreach(_.value = value)
+      validate()
+    })
+  }
+
+  private def bindNativePlaceholder(): Unit = {
+    addDisposable(placeholderProperty.observe { placeholder =>
+      nativeInput.foreach(_.placeholder = if (placeholder == null) "" else placeholder)
+    })
   }
 }
 

@@ -16,12 +16,13 @@ class Link(initialHref: String) extends Box("a") {
     val resolved = RouterConfig.resolve(initialHref)
     attribute("href", resolved)
     
-    onClick { e =>
-      e.preventDefault()
-      val currentHref = host.attribute("href").getOrElse("")
-      window.history.pushState(null, "", currentHref)
-      window.dispatchEvent(new dom.Event("popstate"))
-    }
+    onClick(activate)
+  }
+
+  private def activate(event: dom.MouseEvent): Unit = {
+    event.preventDefault()
+    window.history.pushState(null, "", href)
+    window.dispatchEvent(new dom.Event("popstate"))
   }
 
   def href: String = host.attribute("href").getOrElse("")

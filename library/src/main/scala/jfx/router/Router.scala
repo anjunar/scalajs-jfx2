@@ -4,6 +4,8 @@ import jfx.core.component.Component
 import jfx.core.component.Component.*
 import jfx.core.state.Property
 import jfx.dsl.DslRuntime
+import jfx.layout.Div.div
+import jfx.statement.ObserveRender.observeRender
 import org.scalajs.dom
 import org.scalajs.dom.window
 
@@ -14,24 +16,52 @@ import scala.scalajs.js.JSConverters.*
 class Router(val routes: Seq[Route], initialUrl: String) extends Component {
   override def tagName: String = "" 
 
+  private sealed trait RenderState
+  private case object RoutePending extends RenderState
+  private case object RouteLoading extends RenderState
+  private final case class RouteReady(context: RouteContext, render: RouteContext => Unit) extends RenderState
+  private final case class RouteFailure(error: Throwable) extends RenderState
+  private final case class RouteNotFound(path: String) extends RenderState
+
   private given ExecutionContext = ExecutionContext.global
   private var renderToken = 0
 
   val stateProperty = Property(resolve(initialUrl))
+  private val renderStateProperty: Property[RenderState] = Property(RoutePending)
+  val loadingProperty: Property[Boolean] = Property(false)
+  val errorProperty: Property[Option[Throwable]] = Property(None)
 
-  override def compose(): Unit = {
-    if (!jfx.core.render.RenderBackend.current.isServer) {
-      addDisposable({
-        val listener: dom.Event => Unit = _ => navigate(currentBrowserUrl(), replace = true)
-        window.addEventListener("popstate", listener)
-        () => window.removeEventListener("popstate", listener)
-      })
-    }
-
-    addDisposable(stateProperty.observe(_ => render()))
+  override def initialize(): Unit = {
+    given Component = this
+    onWindowPopState(_ => navigate(currentBrowserUrl(), replace = true))
+    addDisposable(stateProperty.observe(_ => resolveRenderState()))
   }
 
-  // ... (navigate remains same)
+  override def compose(): Unit = {
+    observeRender(renderStateProperty) {
+      case RoutePending =>
+        ()
+      case RouteLoading =>
+        div {
+          classes = "jfx-router-loading"
+          text = "Loading..."
+        }
+      case RouteReady(context, factory) =>
+        DslRuntime.provide(context) {
+          factory(context)
+        }
+      case RouteFailure(error) =>
+        div {
+          classes = "jfx-router-error"
+          text = Option(error.getMessage).filter(_.nonEmpty).getOrElse("Route could not be loaded")
+        }
+      case RouteNotFound(path) =>
+        div {
+          text = s"No route matched for: $path"
+        }
+    }
+  }
+
   def navigate(path: String, replace: Boolean = false): Unit = {
     val nextState = resolve(path)
     if (!jfx.core.render.RenderBackend.current.isServer) {
@@ -41,69 +71,39 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component {
     stateProperty.set(nextState)
   }
 
-  private def render(): Unit = {
+  private def resolveRenderState(): Unit = {
     renderToken += 1
     val token = renderToken
     val state = stateProperty.get
+    errorProperty.set(None)
+    loadingProperty.set(false)
 
     state.currentMatchOption match {
       case Some(m) =>
         val ctx = RouteContext(state.path, state.url, m.fullPath, m.params, state.queryParams, state, m)
         m.route.asyncFactory match {
           case Some(asyncFactory) =>
-            renderLoading()
+            loadingProperty.set(true)
+            renderStateProperty.set(RouteLoading)
             val future = asyncFactory(ctx).toFuture
             future.foreach { factory =>
               if (token == renderToken) {
-                renderFactory(ctx, factory)
+                loadingProperty.set(false)
+                renderStateProperty.set(RouteReady(ctx, currentContext => factory(using currentContext)))
               }
             }
             future.failed.foreach { error =>
               if (token == renderToken) {
-                renderError(error)
+                loadingProperty.set(false)
+                errorProperty.set(Some(error))
+                renderStateProperty.set(RouteFailure(error))
               }
             }
           case None =>
-            replaceContent {
-              DslRuntime.provide(ctx) {
-                m.route.factory(ctx)
-              }
-            }
+            renderStateProperty.set(RouteReady(ctx, m.route.factory))
         }
       case None =>
-        replaceContent {
-          jfx.core.component.Box.box("div") { text = s"No route matched for: ${state.path}" }
-        }
-    }
-  }
-
-  private def renderFactory(ctx: RouteContext, factory: Route.Factory): Unit =
-    replaceContent {
-      DslRuntime.provide(ctx) {
-        factory(using ctx)
-      }
-    }
-
-  private def renderLoading(): Unit =
-    replaceContent {
-      jfx.core.component.Box.box("div") {
-        classes = "jfx-router-loading"
-        text = "Loading..."
-      }
-    }
-
-  private def renderError(error: Throwable): Unit =
-    replaceContent {
-      jfx.core.component.Box.box("div") {
-        classes = "jfx-router-error"
-        text = Option(error.getMessage).filter(_.nonEmpty).getOrElse("Route could not be loaded")
-      }
-    }
-
-  private def replaceContent(renderContent: => Unit): Unit = {
-    DslRuntime.updateBranch(this) {
-      children.toSeq.foreach { c => removeChild(c); c.dispose() }
-      renderContent
+        renderStateProperty.set(RouteNotFound(state.path))
     }
   }
 

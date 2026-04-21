@@ -10,6 +10,7 @@ import jfx.layout.Div.div
 import jfx.router.RouteContext
 import jfx.statement.Condition.*
 import jfx.statement.ForEach.forEach
+import jfx.control.TableRow.tableRow
 import org.scalajs.dom
 
 import scala.concurrent.ExecutionContext
@@ -383,8 +384,8 @@ final class TableView[S] extends Box("div") {
                     display = "flex"
                   }
 
-                  val row = new TableRow[S]()
-                  DslRuntime.build(row) {
+                  tableRow[S] {
+                    val row = summon[TableRow[S]]
                     rowDef.item match {
                       case Some(value) =>
                         row.bind(rowDef.index, value, TableView.this, columns.get.toSeq, rowHeightProperty.get)

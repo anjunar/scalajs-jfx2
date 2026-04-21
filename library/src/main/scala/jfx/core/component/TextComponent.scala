@@ -24,12 +24,15 @@ class ReactiveTextComponent(val property: ReadOnlyProperty[String]) extends Comp
   }
 
   override def compose(): Unit = {
-    addDisposable(property.observe { v =>
+    bindReactiveText()
+  }
+
+  private def bindReactiveText(): Unit =
+    addDisposable(property.observe { value =>
       if (_host != null && !jfx.core.render.RenderBackend.current.isServer) {
-         _host.domNode.foreach(_.textContent = v)
+        _host.domNode.foreach(_.textContent = value)
       }
     })
-  }
 }
 
 object Text {

@@ -58,6 +58,8 @@ object StyleDsl {
 
   def marginTop(using s: StyleProxy): String = ""
   def marginTop_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("margin-top", v)
+  def marginTop_=(v: ReadOnlyProperty[String])(using s: StyleProxy, c: Component): Unit =
+    c.addDisposable(v.observe(s.host.setStyle("margin-top", _)))
 
   def marginRight(using s: StyleProxy): String = ""
   def marginRight_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("margin-right", v)
@@ -70,6 +72,8 @@ object StyleDsl {
 
   def display(using s: StyleProxy): String = ""
   def display_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("display", v)
+  def display_=(v: ReadOnlyProperty[String])(using s: StyleProxy, c: Component): Unit =
+    c.addDisposable(v.observe(s.host.setStyle("display", _)))
 
   def flexDirection(using s: StyleProxy): String = ""
   def flexDirection_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("flex-direction", v)
@@ -142,6 +146,8 @@ object StyleDsl {
 
   def zIndex(using s: StyleProxy): String = ""
   def zIndex_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("z-index", v)
+  def zIndex_=(v: ReadOnlyProperty[String])(using s: StyleProxy, c: Component): Unit =
+    c.addDisposable(v.observe(s.host.setStyle("z-index", _)))
 
   def overflow(using s: StyleProxy): String = ""
   def overflow_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("overflow", v)

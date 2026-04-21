@@ -2,6 +2,7 @@ package jfx.core.component
 
 import jfx.core.render.{Cursor, HostElement, HostNode}
 import jfx.core.state.{CompositeDisposable, Disposable}
+import jfx.di.{HierarchicalRegistry, ServiceRegistry}
 import jfx.dsl.DslRuntime
 import org.scalajs.dom
 import scala.compiletime.uninitialized
@@ -13,8 +14,10 @@ trait Component extends Disposable {
   private[jfx] val _children = mutable.ArrayBuffer.empty[Component]
   protected val disposable = new CompositeDisposable()
   private var _bindCursor: Cursor = uninitialized
+  private var _registry: ServiceRegistry = new HierarchicalRegistry(None)
 
   def bindCursor: Cursor = _bindCursor
+  private[jfx] def registry: ServiceRegistry = _registry
   def isVirtual: Boolean = tagName == ""
 
   def hostNode: HostNode = _host
@@ -56,6 +59,10 @@ trait Component extends Disposable {
 
   private[jfx] def setParent(newParent: Option[Component]): Unit = {
     _parent = newParent
+  }
+
+  private[jfx] def setRegistry(registry: ServiceRegistry): Unit = {
+    _registry = registry
   }
 
   private[jfx] def addChild(child: Component): Unit = {
@@ -147,12 +154,12 @@ trait Component extends Disposable {
   }
 
   def tagName: String
+  def initialize(): Unit = {}
   def compose(): Unit = {}
+  def afterCompose(): Unit = {}
 
   def onClickHandler(handler: dom.MouseEvent => Unit): Unit = {
-    println(s"Adding click handler to ${host.tagName} with class ${host.attribute("class").getOrElse("")}")
     addDisposable(host.addEventListener("click", e => {
-      println(s"Click on ${host.tagName} with class ${host.attribute("class").getOrElse("")}")
       handler(e.asInstanceOf[dom.MouseEvent])
     }))
   }
@@ -228,12 +235,48 @@ object Component {
 
   def onClick(handler: dom.MouseEvent => Unit)(using c: Component): Unit = c.onClickHandler(handler)
 
+  def onInput(handler: dom.Event => Unit)(using c: Component): Unit = {
+    c.addDisposable(c.host.addEventListener("input", handler))
+  }
+
+  def onFocus(handler: dom.FocusEvent => Unit)(using c: Component): Unit = {
+    c.addDisposable(c.host.addEventListener("focus", e => handler(e.asInstanceOf[dom.FocusEvent])))
+  }
+
+  def onBlur(handler: dom.FocusEvent => Unit)(using c: Component): Unit = {
+    c.addDisposable(c.host.addEventListener("blur", e => handler(e.asInstanceOf[dom.FocusEvent])))
+  }
+
+  def onSubmit(handler: dom.Event => Unit)(using c: Component): Unit = {
+    c.addDisposable(c.host.addEventListener("submit", handler))
+  }
+
   def onKeyDown(handler: dom.KeyboardEvent => Unit)(using c: Component): Unit = {
     c.addDisposable(c.host.addEventListener("keydown", e => handler(e.asInstanceOf[dom.KeyboardEvent])))
   }
 
+  def onPointerDown(handler: dom.PointerEvent => Unit)(using c: Component): Unit = {
+    c.addDisposable(c.host.addEventListener("pointerdown", e => handler(e.asInstanceOf[dom.PointerEvent])))
+  }
+
   def onScroll(handler: dom.UIEvent => Unit)(using c: Component): Unit = {
     c.addDisposable(c.host.addEventListener("scroll", e => handler(e.asInstanceOf[dom.UIEvent])))
+  }
+
+  def onWindowKeyDown(handler: dom.KeyboardEvent => Unit)(using c: Component): Unit = {
+    if (!jfx.core.render.RenderBackend.current.isServer) {
+      val listener: dom.KeyboardEvent => Unit = handler
+      dom.window.addEventListener("keydown", listener)
+      c.addDisposable(() => dom.window.removeEventListener("keydown", listener))
+    }
+  }
+
+  def onWindowPopState(handler: dom.Event => Unit)(using c: Component): Unit = {
+    if (!jfx.core.render.RenderBackend.current.isServer) {
+      val listener: dom.Event => Unit = handler
+      dom.window.addEventListener("popstate", listener)
+      c.addDisposable(() => dom.window.removeEventListener("popstate", listener))
+    }
   }
 
   export jfx.dsl.StyleDsl.*

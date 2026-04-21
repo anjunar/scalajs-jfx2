@@ -72,7 +72,7 @@ object DslRuntime {
   def withComponentScope[A](component: Component)(block: => A): A = {
     val cursor = jfx.core.render.RenderBackend.current.nextCursor(Some(component.host))
     withCursor(cursor) {
-      withContext(ComponentContext(Some(component), registry = currentContext.registry)) {
+      withContext(ComponentContext(Some(component), registry = component.registry)) {
         block
       }
     }
@@ -102,7 +102,7 @@ object DslRuntime {
     }
 
     RenderBackend.withBackend(effectiveBackend) {
-      val cursor = if (component.parent.isEmpty) {
+      val cursor = if (component.parent.isEmpty || nearestPhysicalParent(component).isEmpty) {
         component.bindCursor
       } else {
         val baseOffset = component.calculateDomOffset
@@ -114,12 +114,19 @@ object DslRuntime {
       }
 
       withCursor(cursor) {
-        withContext(ComponentContext(Some(component), index, currentContext.registry)) {
+        withContext(ComponentContext(Some(component), index, component.registry)) {
           block
         }
       }
     }
   }
+
+  private def nearestPhysicalParent(component: Component): Option[Component] =
+    component.parent match {
+      case Some(parent) if parent.isVirtual => nearestPhysicalParent(parent)
+      case Some(parent)                    => Some(parent)
+      case None                            => None
+    }
 
   /**
    * Main entry point for DSL: Creates a component and binds it immediately.
@@ -131,6 +138,7 @@ object DslRuntime {
     
     // 1. Establish logical parent immediately
     component.setParent(context.parent)
+    component.setRegistry(context.registry)
     context.parent.foreach { p =>
       context.insertionIndex match {
         case Some(idx) => p._children.insert(idx, component)
@@ -153,10 +161,12 @@ object DslRuntime {
     // 4. COMPOSITION Logic: Set as parent for children
     if (component.isVirtual) {
       withCursor(cursor) {
-        withContext(ComponentContext(Some(component), registry = currentContext.registry)) {
+        withContext(ComponentContext(Some(component), registry = context.registry)) {
           given c: C = component
+          component.initialize()
           component.compose()
           init
+          component.afterCompose()
         }
       }
     } else {
@@ -164,17 +174,21 @@ object DslRuntime {
         case h: jfx.core.render.HostElement =>
           val sub = cursor.subCursor(h)
           withCursor(sub) {
-            withContext(ComponentContext(Some(component), registry = currentContext.registry)) {
+            withContext(ComponentContext(Some(component), registry = context.registry)) {
               given c: C = component
+              component.initialize()
               component.compose()
               init
+              component.afterCompose()
             }
           }
         case _ =>
-          withContext(ComponentContext(Some(component), registry = currentContext.registry)) {
+          withContext(ComponentContext(Some(component), registry = context.registry)) {
             given c: C = component
+            component.initialize()
             component.compose()
             init
+            component.afterCompose()
           }
       }
     }

@@ -112,28 +112,35 @@ class VirtualListView[T] extends Box("div") {
               minHeight = s"${slot.height}px"
             }
             itemRenderer(slot.item, slot.index)
-            
-            if (!RenderBackend.current.isServer) {
-               dom.window.requestAnimationFrame { _ =>
-                 host.domNode.foreach { node =>
-                   val actualHeight = node.asInstanceOf[dom.html.Div].offsetHeight.toDouble
-                   if (actualHeight > 0 && math.abs(actualHeight - slot.height) > 0.5) {
-                      heights(slot.index) = actualHeight
-                      recomputeVisibleSlots()
-                   }
-                 }
-               }
-            }
+            measureCellAfterRender(slot, summon[Box])
           }
         }
       }
     }
     
+    measureViewportAfterRender()
+  }
+
+  private def measureCellAfterRender(slot: VisibleSlot, cell: Box): Unit = {
     if (!RenderBackend.current.isServer) {
-       dom.window.requestAnimationFrame { _ =>
-          viewportHeightProperty.set(host.clientHeight.toDouble)
-          recomputeVisibleSlots()
-       }
+      dom.window.requestAnimationFrame { _ =>
+        cell.host.domNode.foreach { node =>
+          val actualHeight = node.asInstanceOf[dom.html.Div].offsetHeight.toDouble
+          if (actualHeight > 0 && math.abs(actualHeight - slot.height) > 0.5) {
+            heights(slot.index) = actualHeight
+            recomputeVisibleSlots()
+          }
+        }
+      }
+    }
+  }
+
+  private def measureViewportAfterRender(): Unit = {
+    if (!RenderBackend.current.isServer) {
+      dom.window.requestAnimationFrame { _ =>
+        viewportHeightProperty.set(host.clientHeight.toDouble)
+        recomputeVisibleSlots()
+      }
     }
   }
   

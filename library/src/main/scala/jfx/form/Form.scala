@@ -1,6 +1,7 @@
 package jfx.form
 
 import jfx.core.component.Box
+import jfx.core.component.Component.*
 import jfx.core.state.ListProperty
 import jfx.dsl.DslRuntime
 
@@ -32,11 +33,11 @@ class Form extends Box("form") with FormContext {
   }
 
   override def compose(): Unit = {
+    given jfx.core.component.Component = this
     super.compose()
-    addDisposable(host.addEventListener("submit", event => {
+    onSubmit { event =>
       event.preventDefault()
-      // You can add submit logic here
-    }))
+    }
   }
 }
 

@@ -6,7 +6,7 @@ import jfx.core.component.Component.*
 import jfx.core.state.{Disposable, ListProperty, Property}
 import jfx.dsl.{DslRuntime, StyleDsl}
 import jfx.statement.ForEach
-import org.scalajs.dom.{Event, HTMLDivElement, HTMLElement, window as browserWindow}
+import org.scalajs.dom.{HTMLElement, window as browserWindow}
 
 import scala.scalajs.js
 import scala.scalajs.js.timers.setTimeout
@@ -227,29 +227,38 @@ object Viewport {
     override def compose(): Unit = {
       given Component = this
       addClass("jfx-viewport-overlay")
-      host.setStyle("z-index", conf.zIndex.toString)
+      style {
+        zIndex = conf.zIndex.toString
+      }
 
-      val stopClickListener: Event => Unit = _.stopPropagation()
-      addDisposable(host.addEventListener("click", stopClickListener))
-
-      addDisposable(
-        followAnchorFixed(
-          overlayElement = host.asInstanceOf[jfx.core.render.DomHostElement].element.asInstanceOf[HTMLElement],
-          anchorElement = conf.anchor,
-          offsetXPx = conf.offsetXPx,
-          offsetYPx = conf.offsetYPx,
-          widthPx = conf.widthPx,
-          minWidthPx = conf.minWidthPx,
-          maxHeightPx = conf.maxHeightPx,
-          marginViewportPx = conf.marginViewportPx,
-          flipY = conf.flipY
-        )
-      )
+      onClick(_.stopPropagation())
+      followAnchor()
 
       if (conf.content != null) {
         conf.content()
       }
     }
+
+    private def followAnchor(): Unit = {
+      domElement.foreach { element =>
+        addDisposable(
+          followAnchorFixed(
+            overlayElement = element,
+            anchorElement = conf.anchor,
+            offsetXPx = conf.offsetXPx,
+            offsetYPx = conf.offsetYPx,
+            widthPx = conf.widthPx,
+            minWidthPx = conf.minWidthPx,
+            maxHeightPx = conf.maxHeightPx,
+            marginViewportPx = conf.marginViewportPx,
+            flipY = conf.flipY
+          )
+        )
+      }
+    }
+
+    private def domElement: Option[HTMLElement] =
+      host.domNode.collect { case element: HTMLElement => element }
   }
 
   final class Notification(conf: Viewport.NotificationConf) extends Box("div") {
@@ -262,9 +271,7 @@ object Viewport {
       text = conf.message
 
       addDisposable(conf.visible.observe(syncVisibleState))
-
-      val clickListener: Event => Unit = _ => Viewport.closeNotification(conf)
-      addDisposable(host.addEventListener("click", clickListener))
+      onClick(_ => Viewport.closeNotification(conf))
     }
 
     private def syncVisibleState(visible: Boolean): Unit = {

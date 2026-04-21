@@ -8,6 +8,7 @@ import jfx.core.state.Property
 import jfx.dsl.DslRuntime
 import jfx.layout.Div.div
 import jfx.layout.Span.span
+import jfx.statement.ObserveRender.observeRender
 import org.scalajs.dom.{Event, HTMLElement, Node, PointerEvent, window as browserWindow}
 
 import scala.scalajs.js
@@ -42,18 +43,15 @@ final class Window extends Box("div") {
   private var didRunOpenSequence = false
   private var activePointerCleanup: Option[Boolean => Unit] = None
   private var openAnimationHandle: Option[SetTimeoutHandle] = None
-  private var contentFactory: () => Component | Null = () => null
+  private val contentFactoryProperty: Property[() => Component | Null] = Property(() => null)
 
   override def compose(): Unit = {
     given Window = this
     addClass("jfx-window")
-    if (resizeable) {
-      addClass("jfx-window--resizable")
-    }
 
-    addDisposable(zIndexProperty.observe { value =>
-      host.setStyle("z-index", value.toString)
-    })
+    style {
+      zIndex_=(zIndexProperty.map(_.toString))
+    }
 
     addDisposable(maximizedProperty.observe(syncMaximizedState))
     addDisposable(activeProperty.observe(syncActiveState))
@@ -67,6 +65,12 @@ final class Window extends Box("div") {
       
       headerHost = div {
         addClass("jfx-window__header")
+        val header = summon[Box]
+        onPointerDown { event =>
+          if (shouldStartDrag(event)) {
+            startDrag(event, domElement(header))
+          }
+        }
         
         span {
           addClass("jfx-window__title")
@@ -99,13 +103,23 @@ final class Window extends Box("div") {
       
       containerHost = div {
         addClass("jfx-window__container")
+        observeRender(contentFactoryProperty) { factory =>
+          factory()
+          ()
+        }
       }
     }
 
-    configureHeaderDrag()
-    configureResizeHandles()
+    resizeHandles()
+  }
 
+  override def afterCompose(): Unit = {
     if (!didRunOpenSequence) {
+      given Component = this
+      if (resizeable) {
+        addClass("jfx-window--resizable")
+      }
+
       didRunOpenSequence = true
       openAnimationHandle = Some(setTimeout(300) {
         maximizedProperty.set(true)
@@ -232,48 +246,31 @@ final class Window extends Box("div") {
   }
 
   private[jfx] def setContentFactory(factory: () => Component | Null): Unit = {
-    contentFactory = if (factory == null) (() => null) else factory
-    if (containerHost != null) {
-       containerHost.host.clearChildren()
-       containerHost._children.foreach(_.dispose())
-       containerHost._children.clear()
-       
-       DslRuntime.withComponentScope(containerHost) {
-         contentFactory()
-       }
-    }
+    contentFactoryProperty.set(if (factory == null) (() => null) else factory)
   }
 
-  private def configureHeaderDrag(): Unit = {
-    val pointerDownListener: js.Function1[Event, Unit] = {
-      case event: PointerEvent if shouldStartDrag(event) =>
-        startDrag(event, headerHost.host.asInstanceOf[DomHostElement].element.asInstanceOf[HTMLElement])
-      case _ =>
-    }
-    headerHost.host.addEventListener("pointerdown", pointerDownListener)
-  }
-
-  private def configureResizeHandles(): Unit = {
+  private def resizeHandles()(using Window): Unit = {
     val handleNames = Vector(
       ("n", 0, -1), ("ne", 1, -1), ("e", 1, 0), ("se", 1, 1),
       ("s", 0, 1), ("sw", -1, 1), ("w", -1, 0), ("nw", -1, -1)
     )
-    DslRuntime.withComponentScope(this) {
-      handleNames.map { case (name, horizontal, vertical) =>
-        div {
-          addClass("jfx-window__handle")
-          addClass(s"jfx-window__handle--$name")
-          val handleEl = summon[Box].host.asInstanceOf[jfx.core.render.DomHostElement].element.asInstanceOf[HTMLElement]
-          val pointerDownListener: js.Function1[Event, Unit] = {
-            case event: PointerEvent if isPrimaryPointerButton(event) =>
-              startResize(event, handleEl, horizontal = horizontal, vertical = vertical)
-            case _ =>
+
+    handleNames.foreach { case (name, horizontal, vertical) =>
+      div {
+        addClass("jfx-window__handle")
+        addClass(s"jfx-window__handle--$name")
+        val handle = summon[Box]
+        onPointerDown { event =>
+          if (isPrimaryPointerButton(event)) {
+            startResize(event, domElement(handle), horizontal = horizontal, vertical = vertical)
           }
-          handleEl.addEventListener("pointerdown", pointerDownListener)
         }
       }
     }
   }
+
+  private def domElement(component: Component): HTMLElement =
+    component.host.asInstanceOf[DomHostElement].element.asInstanceOf[HTMLElement]
 
   private def startDrag(event: PointerEvent, captureTarget: HTMLElement): Unit = {
     if (!draggable) return
