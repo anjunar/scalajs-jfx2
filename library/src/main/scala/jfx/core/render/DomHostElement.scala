@@ -6,6 +6,8 @@ import scala.collection.mutable
 
 final class DomHostElement(val tagName: String, private var _element: dom.Element) extends HostElement {
   private val listeners = mutable.ArrayBuffer.empty[(String, dom.Event => Unit)]
+  private val attributes = mutable.Map.empty[String, String]
+  private val styles = mutable.Map.empty[String, String]
 
   def element: dom.Element = _element
 
@@ -17,31 +19,51 @@ final class DomHostElement(val tagName: String, private var _element: dom.Elemen
     if (_element != newElement) {
       // 1. Remove listeners from old element
       listeners.foreach { case (name, listener) => _element.removeEventListener(name, listener) }
-      
+
       // 2. Update element
       _element = newElement
-      
+
       // 3. Re-attach listeners to new element
       listeners.foreach { case (name, listener) => _element.addEventListener(name, listener) }
+
+      // 4. Re-apply attributes
+      attributes.foreach { case (name, value) => _element.setAttribute(name, value) }
+
+      // 5. Re-apply styles
+      val htmlEl = _element.asInstanceOf[dom.html.Element]
+      styles.foreach { case (name, value) => htmlEl.style.setProperty(name, value) }
     }
   }
 
   override def domNode: Option[dom.Node] = Some(_element)
   override def renderHtml(indent: Int): String = _element.outerHTML
 
-  override def setAttribute(name: String, value: String): Unit = _element.setAttribute(name, value)
-  override def attribute(name: String): Option[String] = Option(_element.getAttribute(name))
-  
+  override def setAttribute(name: String, value: String): Unit = {
+    attributes.update(name, value)
+    _element.setAttribute(name, value)
+  }
+
+  override def attribute(name: String): Option[String] = attributes.get(name).orElse(Option(_element.getAttribute(name)))
+
   override def setClassNames(classes: Seq[String]): Unit = {
-    if (classes.isEmpty) _element.removeAttribute("class")
-    else _element.setAttribute("class", classes.mkString(" "))
+    val value = classes.mkString(" ")
+    if (classes.isEmpty) {
+      attributes.remove("class")
+      _element.removeAttribute("class")
+    } else {
+      attributes.update("class", value)
+      _element.setAttribute("class", value)
+    }
   }
 
   override def getStyle(name: String): String =
-    _element.asInstanceOf[dom.html.Element].style.getPropertyValue(name)
-    
-  override def setStyle(name: String, value: String): Unit = 
+    styles.getOrElse(name, _element.asInstanceOf[dom.html.Element].style.getPropertyValue(name))
+
+  override def setStyle(name: String, value: String): Unit = {
+    styles.update(name, value)
     _element.asInstanceOf[dom.html.Element].style.setProperty(name, value)
+  }
+
 
   override def clientHeight: Int = _element.clientHeight
   override def clientWidth: Int = _element.clientWidth
