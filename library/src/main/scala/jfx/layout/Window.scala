@@ -200,17 +200,8 @@ final class Window extends Box("div") {
               browserWindow.requestAnimationFrame(_ => attempt(triesLeft - 1))
               ()
             } else {
-              val containerWidth = element.offsetParent match {
-                case host: HTMLElement if host.clientWidth > 0 => host.clientWidth.toDouble
-                case _ => browserWindow.innerWidth.toDouble
-              }
-              val containerHeight = element.offsetParent match {
-                case host: HTMLElement if host.clientHeight > 0 => host.clientHeight.toDouble
-                case _ => browserWindow.innerHeight.toDouble
-              }
-              val maxLeft = (containerWidth - width.toDouble).max(0.0)
-              val maxTop = (containerHeight - height.toDouble).max(0.0)
-              setLeftTopPx(storedLeft.toDouble.max(0.0).min(maxLeft), storedTop.toDouble.max(0.0).min(maxTop))
+              val clamped = clampToVisibleBounds(element, storedLeft.toDouble, storedTop.toDouble, width.toDouble, height.toDouble)
+              setLeftTopPx(clamped.left, clamped.top)
             }
           }
           browserWindow.requestAnimationFrame(_ => attempt(5))
@@ -233,9 +224,11 @@ final class Window extends Box("div") {
         browserWindow.requestAnimationFrame(_ => attempt(triesLeft - 1))
         ()
       } else {
-        val left = (browserWindow.scrollX + (browserWindow.innerWidth - width) / 2.0).max(0.0)
-        val top = (browserWindow.scrollY + (browserWindow.innerHeight - height) / 2.0).max(0.0)
-        setLeftTopPx(left, top)
+        val bounds = visibleBounds(element)
+        val desiredLeft = bounds.left + (bounds.width - width.toDouble) / 2.0
+        val desiredTop = bounds.top + (bounds.height - height.toDouble) / 2.0
+        val clamped = clampToVisibleBounds(element, desiredLeft, desiredTop, width.toDouble, height.toDouble)
+        setLeftTopPx(clamped.left, clamped.top)
         didAutoCenter = true
       }
     }
@@ -400,6 +393,29 @@ final class Window extends Box("div") {
     val element = host.asInstanceOf[jfx.core.render.DomHostElement].element.asInstanceOf[HTMLElement]
     element.style.left = s"${left.round.toInt}px"
     element.style.top = s"${top.round.toInt}px"
+  }
+
+  private final case class WindowPosition(left: Double, top: Double)
+
+  private final case class VisibleBounds(left: Double, top: Double, width: Double, height: Double)
+
+  private def visibleBounds(element: HTMLElement): VisibleBounds =
+    element.offsetParent match {
+      case parent: HTMLElement if parent.tagName != "BODY" && parent.tagName != "HTML" && parent.clientWidth > 0 && parent.clientHeight > 0 =>
+        VisibleBounds(parent.scrollLeft.toDouble, parent.scrollTop.toDouble, parent.clientWidth.toDouble, parent.clientHeight.toDouble)
+      case _ =>
+        VisibleBounds(browserWindow.scrollX, browserWindow.scrollY, browserWindow.innerWidth.toDouble, browserWindow.innerHeight.toDouble)
+    }
+
+  private def clampToVisibleBounds(element: HTMLElement, left: Double, top: Double, width: Double, height: Double): WindowPosition = {
+    val bounds = visibleBounds(element)
+    val margin = 8.0
+    val minLeft = bounds.left + margin
+    val minTop = bounds.top + margin
+    val maxLeft = (bounds.left + bounds.width - width - margin).max(minLeft)
+    val maxTop = (bounds.top + bounds.height - height - margin).max(minTop)
+
+    WindowPosition(left.max(minLeft).min(maxLeft), top.max(minTop).min(maxTop))
   }
 
   private def persistWindowStateToStorage(): Unit = {
