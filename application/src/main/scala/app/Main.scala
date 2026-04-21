@@ -238,7 +238,9 @@ object Main {
         text = I18n.text(sub)
       }
       addDisposable(host.addEventListener("click", _ => {
-        open = false // Close drawer after navigation
+        if (dom.window.innerWidth <= 720) {
+          open = false // Close drawer after navigation only on mobile
+        }
       }))
     }
   }
