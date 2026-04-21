@@ -83,4 +83,10 @@ class HydrationCursor(val root: dom.Node, startIndex: Int = 0) extends Cursor {
       new HydrationCursor(dom.document.createElement("div"))
     )
   }
+
+  def pruneRemaining(): Unit = {
+    while (index < childNodes.length) {
+      root.removeChild(childNodes.item(index))
+    }
+  }
 }

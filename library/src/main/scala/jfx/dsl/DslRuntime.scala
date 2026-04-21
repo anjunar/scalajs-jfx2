@@ -1,7 +1,7 @@
 package jfx.dsl
 
 import jfx.core.component.Component
-import jfx.core.render.{BrowserRenderBackend, Cursor, HydrationRenderBackend, RenderBackend}
+import jfx.core.render.{BrowserRenderBackend, Cursor, HydrationCursor, HydrationRenderBackend, RenderBackend}
 import jfx.di.{ServiceRegistry, HierarchicalRegistry}
 import org.scalajs.dom
 import scala.collection.mutable
@@ -137,13 +137,30 @@ object DslRuntime {
     
     if (component.isVirtual) {
       component.children.foreach(child => rehydrate(child, cursor))
+      if (component.parent.isEmpty) {
+        cursor match {
+          case h: HydrationCursor => h.pruneRemaining()
+          case _                  =>
+        }
+      }
     } else {
       component.hostNode match {
         case h: jfx.core.render.HostElement =>
           val sub = cursor.subCursor(h)
           component.children.foreach(child => rehydrate(child, sub))
+          sub match {
+            case h: HydrationCursor => h.pruneRemaining()
+            case _                  =>
+          }
         case _ =>
           // Non-element hosts (like text nodes) cannot have children in the DOM
+      }
+
+      if (component.parent.isEmpty) {
+        cursor match {
+          case h: HydrationCursor => h.pruneRemaining()
+          case _                  =>
+        }
       }
     }
   }
