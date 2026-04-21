@@ -36,4 +36,8 @@ object SubForm {
       }
     }
   }
+
+  def editable[M](using f: SubForm[M]): Boolean = f.editable
+  def editable_=[M](using f: SubForm[M])(value: Boolean): Unit = f.editable = value
+  def editableProperty[M](using f: SubForm[M]): Property[Boolean] = f.editableProperty
 }

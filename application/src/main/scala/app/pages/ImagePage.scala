@@ -1,13 +1,11 @@
 package app.pages
 
 import jfx.control.Image.*
-import jfx.form.ImageCropper.*
 import jfx.core.component.Component.*
 import jfx.layout.Div.div
 import jfx.layout.VBox.vbox
 import jfx.layout.HBox.hbox
 import jfx.core.state.Property
-import jfx.domain.Media
 import app.components.Showcase.*
 
 object ImagePage {
@@ -61,44 +59,7 @@ object ImagePage {
                 onClick { _ => currentSrc.set("https://images.unsplash.com/photo-1543852786-1cf6624b9987?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80") }
               }
               jfx.action.Button.button("Katze 2") {
-                onClick { _ => currentSrc.set("https://images.unsplash.com/photo-1533733508147-bb1797d7adad?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80") }
-              }
-            }
-          }
-        }
-
-        componentShowcase(
-          "Interaktiver Image Cropper",
-          "Der ImageCropper ermöglicht das Hochladen und Zuschneiden von Bildern direkt im Browser."
-        ) {
-          val mediaProp = Property[Media](null)
-          
-          vbox {
-            style { gap = "20px" }
-
-            imageCropper("profile-image", standalone = true) {
-              style { height = "300px" }
-              aspectRatio = Some(1.0) // Quadratisch
-              outputMaxWidth = Some(400)
-              addDisposable(valueProperty.observe(mediaProp.set))
-            }
-
-            div {
-              classes = "showcase-result"
-              vbox {
-                style { gap = "10px"; alignItems = "center" }
-                div { text = "Vorschau des Ergebnisses:"; style { fontWeight = "bold" } }
-                image {
-                  style { width = "100px"; height = "100px"; border = "1px solid #ddd"; borderRadius = "4px" }
-                  src = mediaProp.map { m =>
-                    if (m == null) "" 
-                    else {
-                      val data = m.thumbnail.get.data.get
-                      if (data.startsWith("data:")) data
-                      else s"data:${m.thumbnail.get.contentType.get};base64,$data"
-                    }
-                  }
-                }
+                onClick { _ => currentSrc.set("https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=300&q=80") }
               }
             }
           }

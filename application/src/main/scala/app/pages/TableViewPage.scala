@@ -1,11 +1,13 @@
 package app.pages
 
+import jfx.action.Button.button
 import jfx.control.TableColumn.column
 import jfx.control.TableView.*
 import jfx.control.{TableColumn, TableView}
 import jfx.core.component.Component.*
-import jfx.core.state.{ListProperty, RemoteListProperty}
+import jfx.core.state.{ListProperty, Property, RemoteListProperty}
 import jfx.layout.Div.div
+import jfx.layout.HBox.hbox
 import jfx.layout.VBox.vbox
 import app.components.Showcase.*
 
@@ -206,6 +208,162 @@ object TableViewPage {
         )
 
         metricStrip(
+          "ListProperty" -> "Lokale Daten mutieren reaktiv.",
+          "RemoteList" -> "Remote-Daten laden seiten- oder bereichsweise nach.",
+          "Virtual Rows" -> "Nur sichtbare Zeilen werden physisch gerendert."
+        )
+
+        componentShowcase(
+          "Lokale TableView",
+          "Die Control selbst: Items, Columns, RowHeight, Selection und reaktive ListProperty-Mutationen."
+        ) {
+          val localItems = ListProperty[ShowcaseBook]()
+          localItems.setAll(buildShowcaseBooks(8))
+          val selectedText = Property("Noch keine Zeile ausgewählt.")
+          val selectionRequest = Property(-1)
+
+          vbox {
+            style { gap = "16px" }
+
+            tableView[ShowcaseBook] {
+              val localTable = summon[TableView[ShowcaseBook]]
+              style { height = "300px" }
+              rowHeight = 42.0
+
+              column[ShowcaseBook, String]("Titel") { item =>
+                text = item.title
+              }.prefWidthProperty.set(260.0)
+
+              column[ShowcaseBook, String]("Autor") { item =>
+                text = item.author
+              }.prefWidthProperty.set(220.0)
+
+              column[ShowcaseBook, Int]("Jahr") { item =>
+                text = item.year.toString
+              }.prefWidthProperty.set(90.0)
+
+              TableView.items = localItems
+
+              addDisposable(selectionRequest.observeWithoutInitial(localTable.select))
+              addDisposable(localTable.selectedItemProperty.observe { item =>
+                selectedText.set(
+                  if (item == null) "Noch keine Zeile ausgewählt."
+                  else s"Ausgewählt: ${item.title} von ${item.author}"
+                )
+              })
+            }
+
+            hbox {
+              style { gap = "10px"; flexWrap = "wrap" }
+              button("Erste Zeile auswählen") {
+                onClick { _ =>
+                  selectionRequest.setAlways(0)
+                }
+              }
+              button("Zeile hinzufügen") {
+                onClick { _ =>
+                  val next = buildShowcaseBooks(localItems.length + 1).last
+                  localItems += next
+                }
+              }
+              button("Zurücksetzen") {
+                onClick { _ =>
+                  localItems.setAll(buildShowcaseBooks(8))
+                  selectionRequest.setAlways(-1)
+                }
+              }
+            }
+
+            div {
+              classes = "showcase-result"
+              text = selectedText
+            }
+          }
+        }
+
+        apiSection(
+          "TableView DSL",
+          "Das ist die eigentliche Control-Nutzung, unabhängig davon, ob die Daten lokal oder remote kommen."
+        ) {
+          codeBlock("scala", """val books = ListProperty[Book]()
+books.setAll(seedBooks)
+
+tableView[Book] {
+  rowHeight = 42.0
+  showHeader = true
+
+  column[Book, String]("Titel") { book =>
+    text = book.title
+  }
+
+  column[Book, String]("Autor") { book =>
+    text = book.author
+  }
+
+  column[Book, Int]("Jahr") { book =>
+    text = book.year.toString
+  }
+
+  TableView.items = books
+}""")
+        }
+
+        componentShowcase(
+          "TableView Control Logic",
+          "Die wichtigsten Zustände in der TableView selbst, nicht in der Route."
+        ) {
+          div {
+            style { display = "flex"; gap = "14px"; flexWrap = "wrap" }
+            logicCard(
+              "itemsRefProperty",
+              "Hält die aktuelle ListProperty. Beim Wechsel werden Observer neu verdrahtet und sichtbare Rows neu berechnet."
+            )
+            logicCard(
+              "visibleRowsProperty",
+              "Enthält nur die Row-Slots, die für ScrollTop, ViewportHeight und Overscan sichtbar sein müssen."
+            )
+            logicCard(
+              "renderedWidthsProperty",
+              "Verteilt Spaltenbreiten anhand von PrefWidth und ViewportWidth stabil auf Header und Body."
+            )
+            logicCard(
+              "RemoteListProperty",
+              "Liefert Loading/Error/Sorting/Range-State. Die TableView triggert lazy load oder range load aus dem sichtbaren Bereich."
+            )
+            logicCard(
+              "crawlable",
+              "Im SSR wird der sichtbare Bereich über offset/limit bestimmt und ein echter More-Link erzeugt."
+            )
+            logicCard(
+              "selection",
+              "Zeilenklick setzt selectedIndexProperty; daraus wird selectedItemProperty aktualisiert."
+            )
+          }
+        }
+
+        apiSection(
+          "Virtualisierung Intern",
+          "Die Control rendert nicht die ganze Liste, sondern berechnet aus Scroll- und Viewport-State den sichtbaren Bereich."
+        ) {
+          codeBlock("scala", """visibleRange(total):
+  firstVisible = floor(scrollTop / rowHeight)
+  visibleCount = ceil(viewportHeight / rowHeight) + 1
+  start = max(0, firstVisible - overscanRows)
+  end = min(total, firstVisible + visibleCount + overscanRows)
+
+recomputeVisibleRows():
+  visibleRows = start.until(end).map { index =>
+    VisibleRow(index, itemAt(index))
+  }
+
+onScroll:
+  scrollTopProperty = viewport.scrollTop
+  scrollLeftProperty = viewport.scrollLeft
+  viewportHeightProperty = viewport.clientHeight
+  viewportWidthProperty = viewport.clientWidth""")
+        }
+
+        metricStrip(
           "1000" -> "Remote geladene Buchzeilen im Beispiel.",
           "50" -> "Zeilen pro initialer Remote-Page.",
           "3" -> "Sortierbare Spalten mit stabilen Sort-Keys."
@@ -249,8 +407,26 @@ object TableViewPage {
         )
 
         apiSection(
-          "Remote TableView Route Usage",
-          "Die Route lädt die erste Page vor dem Rendern, damit SSR und Hydration denselben Anfangszustand teilen."
+          "RemoteListProperty",
+          "Sortierung und Lazy Loading gehören zur Datenquelle. Die TableView fragt diese Fähigkeiten nur ab."
+        ) {
+          codeBlock("scala", """ListProperty.remote[Book, BookQuery](
+  loader = ListProperty.RemoteLoader { query =>
+    fetchBooks(query)
+  },
+  initialQuery = BookQuery.first(limit = 50),
+  sortUpdater = Some((query, sorting) =>
+    query.copy(index = 0, sorting = sorting.toVector)
+  ),
+  rangeQueryUpdater = Some((query, index, limit) =>
+    query.copy(index = index, limit = limit)
+  )
+)""")
+        }
+
+        apiSection(
+          "Async Route Usage",
+          "Die Route ist nur die SSR-Hülle: Sie lädt die erste Page vor dem Rendern, damit SSR und Hydration denselben Anfangszustand teilen."
         ) {
           codeBlock("scala", """asyncRoute("/table-view") {
   val books = TableViewPage.createRemoteBooks(pageSize = 50)
@@ -262,6 +438,21 @@ object TableViewPage {
   }.toJSPromise
 }""")
         }
+      }
+    }
+  }
+
+  private def logicCard(title: String, body: String): Unit = {
+    vbox {
+      classes = "showcase-result"
+      style { gap = "8px"; flex = "1 1 260px" }
+      div {
+        style { fontWeight = "800" }
+        text = title
+      }
+      div {
+        style { color = "var(--aj-ink-muted)" }
+        text = body
       }
     }
   }

@@ -826,6 +826,10 @@ object ImageCropper {
   def placeholder(using c: ImageCropper): String = c.placeholder
   def placeholder_=(using c: ImageCropper)(value: String): Unit = c.placeholder = value
 
+  def editable(using c: ImageCropper): Boolean = c.editable
+  def editable_=(using c: ImageCropper)(value: Boolean): Unit = c.editable = value
+  def editableProperty(using c: ImageCropper): Property[Boolean] = c.editableProperty
+
   def disabled(using c: ImageCropper): Boolean = c.disabled
   def disabled_=(using c: ImageCropper)(value: Boolean): Unit = c.disabled = value
 

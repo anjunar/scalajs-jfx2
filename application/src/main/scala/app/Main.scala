@@ -89,6 +89,7 @@ object Main {
       asyncRoute("/window") { page { WindowPage.render() } },
       asyncRoute("/domain") { page { DomainPage.render() } },
       asyncRoute("/image") { page { ImagePage.render() } },
+      asyncRoute("/image-cropper") { page { ImageCropperPage.render() } },
       asyncRoute("/editor") { page { EditorPage.render() } }
     )
 
@@ -116,6 +117,7 @@ object Main {
               sidebarSection("Interaktion")
               navLink("/button", "Aktion", "Der Puls der App")
               navLink("/image", "Bilder", "Visuelle Identität")
+              navLink("/image-cropper", "ImageCropper", "Upload & Zuschnitt")
               
               sidebarSection("Gespräch")
               navLink("/input", "Formulare", "Natürlicher Dialog")

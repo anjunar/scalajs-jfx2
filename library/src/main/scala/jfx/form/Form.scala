@@ -41,4 +41,8 @@ object Form {
   }
 
   def controls[M](using f: Form[M]): jfx.core.state.ListProperty[Control[?]] = f.controls
+
+  def editable[M](using f: Form[M]): Boolean = f.editable
+  def editable_=[M](using f: Form[M])(value: Boolean): Unit = f.editable = value
+  def editableProperty[M](using f: Form[M]): Property[Boolean] = f.editableProperty
 }
