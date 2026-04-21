@@ -144,11 +144,19 @@ trait Component extends Disposable {
     if (isVirtual) {
       _host = null
     } else {
-      _host = if (tagName == "#text") {
+      val nextHost = if (tagName == "#text") {
          cursor.claimText("") 
       } else {
          cursor.claimElement(tagName)
       }
+
+      (_host, nextHost) match {
+        case (current: jfx.core.render.DomHostElement, next: jfx.core.render.DomHostElement) =>
+          current.updateElement(next.element)
+        case _ =>
+          _host = nextHost
+      }
+      
       syncClasses() // Apply classes after bind
     }
   }

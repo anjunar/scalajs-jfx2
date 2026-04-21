@@ -47,6 +47,9 @@ object Main {
       case Some(root) if root.children.length > 0 =>
         Hydration.hydrate(root) {
           demo(initialPath)
+        }.`catch` { error =>
+          dom.console.error(s"Hydration failed: $error")
+          js.undefined
         }
 
       case Some(root) =>

@@ -31,6 +31,28 @@ private[jfx] trait AsyncRenderPending {
   def pendingRenderPromises: Seq[js.Promise[Unit]]
 }
 
+object AsyncRenderPending {
+  import scala.concurrent.{ExecutionContext, Future}
+  import jfx.core.component.Component
+  import scala.scalajs.js.JSConverters.*
+
+  def awaitPending(root: Component)(using ExecutionContext): Future[Unit] = {
+    val pending = collectPending(root)
+
+    if (pending.isEmpty) Future.successful(())
+    else Future.sequence(pending.map(_.toFuture)).flatMap(_ => awaitPending(root)).map(_ => ())
+  }
+
+  private def collectPending(component: Component): Seq[js.Promise[Unit]] = {
+    val own = component match {
+      case pending: AsyncRenderPending => pending.pendingRenderPromises
+      case _                           => Nil
+    }
+
+    own ++ component.children.flatMap(collectPending)
+  }
+}
+
 object BrowserRenderBackend extends RenderBackend {
   override def isServer: Boolean = false
   override def nextCursor(parent: Option[HostElement]): Cursor = {

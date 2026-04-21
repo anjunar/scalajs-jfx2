@@ -2,47 +2,74 @@ package jfx.core.render
 
 import org.scalajs.dom
 import jfx.core.state.Disposable
+import scala.collection.mutable
 
-final class DomHostElement(val tagName: String, val element: dom.Element) extends HostElement {
-  override def domNode: Option[dom.Node] = Some(element)
-  override def renderHtml(indent: Int): String = element.outerHTML
+final class DomHostElement(val tagName: String, private var _element: dom.Element) extends HostElement {
+  private val listeners = mutable.ArrayBuffer.empty[(String, dom.Event => Unit)]
 
-  override def setAttribute(name: String, value: String): Unit = element.setAttribute(name, value)
-  override def attribute(name: String): Option[String] = Option(element.getAttribute(name))
+  def element: dom.Element = _element
+
+  /**
+   * Updates the underlying DOM element. 
+   * Used during rehydration to move a component from a dry-run node to a real DOM node.
+   */
+  def updateElement(newElement: dom.Element): Unit = {
+    if (_element != newElement) {
+      // 1. Remove listeners from old element
+      listeners.foreach { case (name, listener) => _element.removeEventListener(name, listener) }
+      
+      // 2. Update element
+      _element = newElement
+      
+      // 3. Re-attach listeners to new element
+      listeners.foreach { case (name, listener) => _element.addEventListener(name, listener) }
+    }
+  }
+
+  override def domNode: Option[dom.Node] = Some(_element)
+  override def renderHtml(indent: Int): String = _element.outerHTML
+
+  override def setAttribute(name: String, value: String): Unit = _element.setAttribute(name, value)
+  override def attribute(name: String): Option[String] = Option(_element.getAttribute(name))
   
   override def setClassNames(classes: Seq[String]): Unit = {
-    if (classes.isEmpty) element.removeAttribute("class")
-    else element.setAttribute("class", classes.mkString(" "))
+    if (classes.isEmpty) _element.removeAttribute("class")
+    else _element.setAttribute("class", classes.mkString(" "))
   }
 
   override def getStyle(name: String): String =
-    element.asInstanceOf[dom.html.Element].style.getPropertyValue(name)
+    _element.asInstanceOf[dom.html.Element].style.getPropertyValue(name)
     
   override def setStyle(name: String, value: String): Unit = 
-    element.asInstanceOf[dom.html.Element].style.setProperty(name, value)
+    _element.asInstanceOf[dom.html.Element].style.setProperty(name, value)
 
-  override def clientHeight: Int = element.clientHeight
-  override def clientWidth: Int = element.clientWidth
+  override def clientHeight: Int = _element.clientHeight
+  override def clientWidth: Int = _element.clientWidth
 
   override def addEventListener(name: String, listener: dom.Event => Unit): Disposable = {
-    element.addEventListener(name, listener)
-    () => element.removeEventListener(name, listener)
+    _element.addEventListener(name, listener)
+    val entry = (name, listener)
+    listeners += entry
+    () => {
+      _element.removeEventListener(name, listener)
+      listeners -= entry
+    }
   }
 
   override def clearChildren(): Unit = {
-    while (element.firstChild != null) element.removeChild(element.firstChild)
+    while (_element.firstChild != null) _element.removeChild(_element.firstChild)
   }
 
   override def insertChild(index: Int, child: HostNode): Unit = {
     val node = child.domNode.getOrElse(throw new IllegalArgumentException("Cannot insert HostNode without DOM node"))
-    if (index >= element.childNodes.length) {
-      element.appendChild(node)
+    if (index >= _element.childNodes.length) {
+      _element.appendChild(node)
     } else {
-      element.insertBefore(node, element.childNodes.item(index))
+      _element.insertBefore(node, _element.childNodes.item(index))
     }
   }
 
   override def removeChild(child: HostNode): Unit = {
-    child.domNode.foreach(element.removeChild)
+    child.domNode.foreach(_element.removeChild)
   }
 }

@@ -129,6 +129,26 @@ object DslRuntime {
     }
 
   /**
+   * Recursively binds an existing component tree to a new cursor.
+   * Used for async hydration after the dry-run is complete.
+   */
+  def rehydrate(component: Component, cursor: Cursor): Unit = {
+    component.bind(cursor)
+    
+    if (component.isVirtual) {
+      component.children.foreach(child => rehydrate(child, cursor))
+    } else {
+      component.hostNode match {
+        case h: jfx.core.render.HostElement =>
+          val sub = cursor.subCursor(h)
+          component.children.foreach(child => rehydrate(child, sub))
+        case _ =>
+          // Non-element hosts (like text nodes) cannot have children in the DOM
+      }
+    }
+  }
+
+  /**
    * Main entry point for DSL: Creates a component and binds it immediately.
    */
   def build[C <: Component](factory: => C)(init: C ?=> Unit): C = {

@@ -34,25 +34,9 @@ object Ssr {
         }
       }
 
-      awaitPending(root).map(_ => cursor.resultHtml(root)).toJSPromise
+      AsyncRenderPending.awaitPending(root).map(_ => cursor.resultHtml(root)).toJSPromise
     } catch {
       case error: Throwable => js.Promise.reject(error).asInstanceOf[js.Promise[String]]
     }
-  }
-
-  private def awaitPending(root: Component): Future[Unit] = {
-    val pending = collectPending(root)
-
-    if (pending.isEmpty) Future.successful(())
-    else Future.sequence(pending.map(_.toFuture)).flatMap(_ => awaitPending(root)).map(_ => ())
-  }
-
-  private def collectPending(component: Component): Seq[js.Promise[Unit]] = {
-    val own = component match {
-      case pending: AsyncRenderPending => pending.pendingRenderPromises
-      case _                           => Nil
-    }
-
-    own ++ component.children.flatMap(collectPending)
   }
 }
