@@ -4,7 +4,7 @@ import jfx.core.component.Component
 import jfx.core.state.ListProperty
 import jfx.dsl.DslRuntime
 
-class ForEach[T](val items: ListProperty[T], val renderItem: T => Unit) extends Component {
+class ForEach[T](val items: ListProperty[T], val renderItem: (T, Int) => Any) extends Component {
   override def tagName: String = "" 
 
   override def compose(): Unit = {
@@ -14,10 +14,14 @@ class ForEach[T](val items: ListProperty[T], val renderItem: T => Unit) extends 
 
     addDisposable(items.observeChanges {
       case ListProperty.Add(item, _) => appendItem(item)
-      case ListProperty.Insert(index, item, _) => insertItem(index, item)
-      case ListProperty.RemoveAt(index, _, _) => removeItem(index)
+      case ListProperty.Insert(index, _, _) => rebuildFrom(index)
+      case ListProperty.InsertAll(index, _, _) => rebuildFrom(index)
+      case ListProperty.RemoveAt(index, _, _) => rebuildFrom(index)
+      case ListProperty.RemoveRange(index, _, _) => rebuildFrom(index)
+      case ListProperty.UpdateAt(index, _, newItem, _) => replaceItem(index, newItem)
+      case ListProperty.Patch(from, _, _, _) => rebuildFrom(from)
+      case ListProperty.Clear(_, _) => resetItems()
       case ListProperty.Reset(_) => resetItems()
-      case _ => 
     })
   }
 
@@ -25,7 +29,7 @@ class ForEach[T](val items: ListProperty[T], val renderItem: T => Unit) extends 
 
   private def insertItem(index: Int, item: T): Unit = {
     DslRuntime.updateBranch(this, Some(index)) {
-      renderItem(item)
+      renderItem(item, index)
     }
   }
 
@@ -37,14 +41,48 @@ class ForEach[T](val items: ListProperty[T], val renderItem: T => Unit) extends 
     }
   }
 
+  private def replaceItem(index: Int, item: T): Unit = {
+    if (index >= 0 && index < _children.length) {
+      removeItem(index)
+      insertItem(index, item)
+    } else {
+      rebuildFrom(index)
+    }
+  }
+
+  private def rebuildFrom(index: Int): Unit = {
+    val start = math.max(0, math.min(index, children.length))
+    while (children.length > start) removeItem(start)
+
+    var currentIndex = start
+    while (currentIndex < items.length) {
+      insertItem(currentIndex, items(currentIndex))
+      currentIndex += 1
+    }
+  }
+
   private def resetItems(): Unit = {
     while (children.nonEmpty) removeItem(0)
-    items.foreach(appendItem)
+    items.zipWithIndex.foreach { (item, index) =>
+      insertItem(index, item)
+    }
   }
 }
 
 object ForEach {
-  def forEach[T](items: ListProperty[T])(renderItem: T => Unit): ForEach[T] = {
+  def apply[T](items: ListProperty[T])(renderItem: (T, Int) => Any): ForEach[T] =
+    forEach(items)(renderItem)
+
+  def apply[T](items: ListProperty[T])(renderItem: T => Any): ForEach[T] =
+    forEach(items)(renderItem)
+
+  def forEach[T](items: ListProperty[T])(renderItem: (T, Int) => Any): ForEach[T] = {
     DslRuntime.build(new ForEach(items, renderItem)) {}
+  }
+
+  def forEach[T](items: ListProperty[T])(renderItem: T => Any): ForEach[T] = {
+    forEach(items) { (item, _) =>
+      renderItem(item)
+    }
   }
 }

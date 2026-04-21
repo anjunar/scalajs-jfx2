@@ -99,4 +99,59 @@ class ForEachSpec extends AnyFlatSpec with Matchers {
     fe.children(0).calculateDomOffset shouldBe 0 // A
     fe.children(1).calculateDomOffset shouldBe 1 // C
   }
+
+  it should "render item indices and keep them stable after insertion" in {
+    val items = new ListProperty[String](js.Array("A", "C"))
+    var fe: ForEach[String] = null
+
+    Ssr.renderToString {
+      fe = forEach(items) { (item: String, index: Int) =>
+        div {
+          classes = Seq(s"item-$index-$item")
+          text = s"$index:$item"
+        }
+      }
+      fe
+    }
+
+    items.insert(1, "B")
+
+    fe.children should have size 3
+    fe.children(0).asInstanceOf[jfx.core.component.Box].classes should contain ("item-0-A")
+    fe.children(1).asInstanceOf[jfx.core.component.Box].classes should contain ("item-1-B")
+    fe.children(2).asInstanceOf[jfx.core.component.Box].classes should contain ("item-2-C")
+  }
+
+  it should "handle range, patch, update, clear and reset changes" in {
+    val items = new ListProperty[String](js.Array("A"))
+    var fe: ForEach[String] = null
+
+    Ssr.renderToString {
+      fe = forEach(items) { (item: String, index: Int) =>
+        div {
+          classes = Seq(s"entry-$index-$item")
+          text = item
+        }
+      }
+      fe
+    }
+
+    items.insertAll(1, Seq("B", "C"))
+    fe.children should have size 3
+    fe.children(2).asInstanceOf[jfx.core.component.Box].classes should contain ("entry-2-C")
+
+    items.update(0, "Z")
+    fe.children(0).asInstanceOf[jfx.core.component.Box].classes should contain ("entry-0-Z")
+
+    items.patchInPlace(1, Seq("Y"), 2)
+    fe.children should have size 2
+    fe.children(1).asInstanceOf[jfx.core.component.Box].classes should contain ("entry-1-Y")
+
+    items.clear()
+    fe.children shouldBe empty
+
+    items.setAll(Seq("R", "S"))
+    fe.children should have size 2
+    fe.children(1).asInstanceOf[jfx.core.component.Box].classes should contain ("entry-1-S")
+  }
 }
