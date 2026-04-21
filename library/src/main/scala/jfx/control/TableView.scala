@@ -81,12 +81,10 @@ final class TableView[S] extends Box("div") {
     addDisposable(columns.observeChanges(_ => recomputeVisibleRows()))
     addDisposable(rowHeightProperty.observe(_ => recomputeVisibleRows()))
 
-    // Hydrierung: Scroll-Position aus URL wiederherstellen
     if (!RenderBackend.current.isServer) {
        val (offset, _) = getCrawlParams
        if (offset > 0) {
-          val rh = rowHeightProperty.get
-          scrollTopProperty.set(offset * rh)
+          scrollTopProperty.set(offset * rowHeightProperty.get)
        }
     }
 
@@ -141,10 +139,7 @@ final class TableView[S] extends Box("div") {
 
       if (!RenderBackend.current.isServer) {
          dom.window.requestAnimationFrame { _ =>
-            val vh = host.clientHeight.toDouble
-            viewportHeightProperty.set(vh)
-            
-            // Falls wir einen Offset haben, müssen wir den Container physisch scrollen
+            viewportHeightProperty.set(host.clientHeight.toDouble)
             val (offset, _) = getCrawlParams
             if (offset > 0) {
                val target = host.asInstanceOf[jfx.core.render.DomHostElement].element.asInstanceOf[dom.html.Div]
@@ -158,6 +153,7 @@ final class TableView[S] extends Box("div") {
         addClass("jfx-table-content")
         style {
           position = "relative"
+          // Wir lassen die Höhe im SSR Modus weg, damit der Link nachrücken kann
           if (!RenderBackend.current.isServer) {
             height_=(items.asProperty.map(it => s"${it.length * rowHeightProperty.get}px"))
           }
@@ -168,7 +164,8 @@ final class TableView[S] extends Box("div") {
           div {
             addClass("jfx-table-row-slot")
             style {
-              position = if (RenderBackend.current.isServer) "relative" else "absolute"
+              // Immer absolute für Hydrierung, aber im SSR mit festen top-Werten
+              position = "absolute" 
               top_=(Property(s"${rowDef.index * rowHeightProperty.get}px"))
               left = "0"
               width_=(totalColumnWidthProperty.map(w => s"${w}px"))
@@ -182,30 +179,30 @@ final class TableView[S] extends Box("div") {
             }
           }
         }
+      }
 
-        // Pagination Link (reaktive ListProperty für SSR und Client)
-        val paginationLinks = new ListProperty[String]()
-        val currentPath = getRouteContext.map(_.path).getOrElse("")
+      val hasMoreProperty = items.asProperty.map { itms =>
+         val (offset, limit) = getCrawlParams
+         crawlableProperty.get && offset + limit < itms.length
+      }
 
-        def updatePagination(): Unit = {
+      condition(hasMoreProperty) {
+        thenDo {
+           // Wir entfernen das div um den Link, um Hydration-Probleme zu vermeiden
            val (offset, limit) = getCrawlParams
-           if (crawlableProperty.get && offset + limit < items.length) {
-              paginationLinks.setAll(Seq(s"$currentPath?offset=${offset + limit}&limit=$limit"))
-           } else {
-              paginationLinks.setAll(Seq.empty)
-           }
-        }
-
-        addDisposable(items.observeChanges(_ => updatePagination()))
-        updatePagination() // Initialer Aufruf
-
-        forEach(paginationLinks) { nextUrl =>
-           div {
-             style { padding = "20px"; textAlign = "center" }
-             link(nextUrl) {
-               addClass("jfx-table-more-link")
-               text = "More items..."
+           val currentPath = getRouteContext.map(_.path).getOrElse("")
+           link(s"$currentPath?offset=${offset + limit}&limit=$limit") {
+             style { 
+               display = "block"
+               padding = "20px"
+               textAlign = "center"
+               // Im SSR Modus schieben wir den Link physisch unter die absoluten Zeilen
+               if (RenderBackend.current.isServer) {
+                 marginTop = s"${(offset + limit) * rowHeightProperty.get}px"
+               }
              }
+             addClass("jfx-table-more-link")
+             text = "More items..."
            }
         }
       }
