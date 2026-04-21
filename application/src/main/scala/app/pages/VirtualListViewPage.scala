@@ -43,30 +43,10 @@ object VirtualListViewPage {
 
           vbox {
             style { height = "500px"; border = "1px solid var(--aj-line)"; borderRadius = "8px"; overflow = "hidden" }
-            
+
             virtualList(items) { (item, index) =>
-              val itm = if (item == null) ShowcaseItem("Lädt...", 44.0, "transparent") else item
               div {
-                style { 
-                  height = s"${itm.height}px"
-                  padding = "0 16px"
-                  display = "flex"; alignItems = "center"
-                  background = itm.color
-                  borderBottom = "1px solid var(--aj-line-soft)"
-                  boxSizing = "border-box"
-                }
-                div {
-                  style { 
-                    width = "40px"; height = "24px"; marginRight = "16px"
-                    background = "var(--aj-accent)"
-                    borderRadius = "4px"; display = "flex"; alignItems = "center"; justifyContent = "center"
-                    color = "white"; fontSize = "11px"; fontWeight = "bold"
-                  }
-                  text = index.toString
-                }
-                div {
-                  text = itm.title
-                }
+                text = s"$index"
               }
             }
           }
