@@ -157,4 +157,22 @@ object StyleDsl {
 
   def overflowX(using s: StyleProxy): String = ""
   def overflowX_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("overflow-x", v)
+
+  def boxShadow(using s: StyleProxy): String = ""
+  def boxShadow_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("box-shadow", v)
+
+  def objectFit(using s: StyleProxy): String = ""
+  def objectFit_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("object-fit", v)
+
+  def objectPosition(using s: StyleProxy): String = ""
+  def objectPosition_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("object-position", v)
+
+  def cursor(using s: StyleProxy): String = ""
+  def cursor_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("cursor", v)
+
+  def pointerEvents(using s: StyleProxy): String = ""
+  def pointerEvents_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("pointer-events", v)
+
+  def flexWrap(using s: StyleProxy): String = ""
+  def flexWrap_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("flex-wrap", v)
 }

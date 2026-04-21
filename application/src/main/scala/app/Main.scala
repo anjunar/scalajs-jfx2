@@ -87,7 +87,8 @@ object Main {
       asyncRoute("/virtual-list") { page { VirtualListViewPage.render() } },
       asyncRoute("/layout") { page { LayoutPage.render() } },
       asyncRoute("/window") { page { WindowPage.render() } },
-      asyncRoute("/domain") { page { DomainPage.render() } }
+      asyncRoute("/domain") { page { DomainPage.render() } },
+      asyncRoute("/image") { page { ImagePage.render() } }
     )
 
     div {
@@ -113,6 +114,7 @@ object Main {
               
               sidebarSection("Interaktion")
               navLink("/button", "Aktion", "Der Puls der App")
+              navLink("/image", "Bilder", "Visuelle Identität")
               
               sidebarSection("Gespräch")
               navLink("/input", "Formulare", "Natürlicher Dialog")
