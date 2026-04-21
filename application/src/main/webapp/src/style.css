@@ -549,9 +549,7 @@ html[data-theme="dark"] select {
     padding: 14px;
     overflow: auto;
     color: var(--aj-ink);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--aj-info) 10%, transparent), transparent 34%),
-        color-mix(in srgb, var(--aj-surface-muted) 76%, transparent);
+    background: var(--aj-surface-muted);
     font-family: "Cascadia Code", "JetBrains Mono", "Fira Code", monospace;
     font-size: 0.9rem;
     line-height: 1.55;
@@ -562,15 +560,27 @@ html[data-theme="dark"] select {
 }
 
 .hljs-keyword {
-    color: var(--aj-accent-strong);
+    color: #b15c00;
     font-weight: 800;
 }
 
+html[data-theme="dark"] .hljs-keyword {
+    color: var(--aj-accent-strong);
+}
+
 .hljs-string {
+    color: #436d3d;
+}
+
+html[data-theme="dark"] .hljs-string {
     color: var(--aj-warning);
 }
 
 .hljs-number {
+    color: #2b5b82;
+}
+
+html[data-theme="dark"] .hljs-number {
     color: var(--aj-info);
 }
 

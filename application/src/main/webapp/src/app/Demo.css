@@ -365,18 +365,28 @@
 }
 
 .code-block {
-    background: #1e1e1e;
-    color: #d4d4d4;
+    background: var(--aj-surface-muted);
+    color: var(--aj-ink);
     padding: 18px;
-    border-radius: 8px;
+    border-radius: 12px;
     font-family: 'JetBrains Mono', 'Fira Code', monospace;
     font-size: 0.9rem;
     line-height: 1.6;
     overflow-x: auto;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid var(--aj-line-soft);
+}
+
+html[data-theme="dark"] .code-block {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border-color: rgba(255,255,255,0.1);
 }
 
 .code-block__lang {
+    color: var(--aj-ink-faint);
+}
+
+html[data-theme="dark"] .code-block__lang {
     color: rgba(255, 255, 255, 0.54);
 }
 
