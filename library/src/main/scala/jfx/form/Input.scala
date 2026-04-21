@@ -18,9 +18,13 @@ class Input(override val name: String, override val standalone: Boolean = false)
     attribute("name", name)
     
     onInput { _ =>
-      org.scalajs.dom.console.log(s"Input '$name' changed to: $nativeValue")
-      setDirty(true)
-      valueProperty.set(nativeValue)
+      if (editableProperty.get) {
+        org.scalajs.dom.console.log(s"Input '$name' changed to: $nativeValue")
+        setDirty(true)
+        valueProperty.set(nativeValue)
+      } else {
+        nativeInput.foreach(_.value = valueProperty.get)
+      }
     }
 
     onFocus(_ => setFocused(true))
@@ -31,6 +35,7 @@ class Input(override val name: String, override val standalone: Boolean = false)
 
     bindNativeValue()
     bindNativePlaceholder()
+    bindNativeEditable()
 
     addDisposable(validators.observe(_ => validate()))
     addDisposable(dirtyProperty.observe(_ => validate()))
@@ -65,6 +70,17 @@ class Input(override val name: String, override val standalone: Boolean = false)
       nativeInput.foreach(_.placeholder = if (placeholder == null) "" else placeholder)
     })
   }
+
+  private def bindNativeEditable(): Unit = {
+    addDisposable(editableProperty.observe { editable =>
+      nativeInput.foreach { input =>
+        input.readOnly = !editable
+        if (!editable) {
+          input.value = valueProperty.get
+        }
+      }
+    })
+  }
 }
 
 object Input {
@@ -78,6 +94,9 @@ object Input {
 
   def placeholder(using i: Input): String = i.placeholder
   def placeholder_=(value: String)(using i: Input): Unit = i.placeholder = value
+  def editable(using i: Input): Boolean = i.editableProperty.get
+  def editable_=(value: Boolean)(using i: Input): Unit = i.editableProperty.set(value)
+  def editableProperty(using i: Input): Property[Boolean] = i.editableProperty
   def stringValueProperty(using i: Input): Property[String] = i.stringValueProperty
   def validators(using i: Input): jfx.core.state.ListProperty[jfx.form.validators.Validator[String]] = i.validators
   def errorsProperty(using i: Input): jfx.core.state.ListProperty[String] = i.errorsProperty

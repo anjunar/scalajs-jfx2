@@ -38,6 +38,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
     addClass("jfx-editor-host")
 
     addDisposable(valueProperty.observe(_ => validate()))
+    addDisposable(valueProperty.observeWithoutInitial(syncExternalValue))
     addDisposable(validators.observe(_ => validate()))
     addDisposable(dirtyProperty.observe(_ => validate()))
     addDisposable(placeholderProperty.observe(_ => refreshPlaceholder()))
@@ -392,6 +393,24 @@ class Editor(val name: String, override val standalone: Boolean = false)
     valueProperty.set(json.asInstanceOf[js.Any])
   }
 
+  private def syncExternalValue(value: js.Any | Null): Unit =
+    if (lexicalEditor != null) {
+      val nextStateJson = toLexicalJson(value).getOrElse(emptyStateJson())
+      if (lastSeenStateJson != null && lastSeenStateJson == nextStateJson) {
+        return
+      }
+
+      lastSeenStateJson = nextStateJson
+
+      try {
+        val state = lexicalEditor.nn.parseEditorState(nextStateJson)
+        lexicalEditor.nn.setEditorState(state, js.Dynamic.literal())
+        refreshPlaceholder()
+      } catch {
+        case _: Throwable =>
+      }
+    }
+
   private def refreshPlaceholder(): Unit =
     if (placeholderElement != null && lexicalEditor != null) {
       val text = Option(placeholderProperty.get).map(_.trim).getOrElse("")
@@ -518,6 +537,9 @@ class Editor(val name: String, override val standalone: Boolean = false)
         )
       )
     )
+
+  private def emptyStateJson(): String =
+    plainTextStateJson("")
 
   private def defaultNodes(): js.Array[js.Any] =
     js.Array(

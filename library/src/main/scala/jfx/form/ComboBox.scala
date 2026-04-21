@@ -56,6 +56,7 @@ class ComboBox[T](override val name: String, override val standalone: Boolean = 
     given Component = this
     addClass("jfx-combo-box")
     classIf("jfx-combo-box-open", openProperty)
+    classIf("jfx-combo-box-readonly", editableProperty.map(editable => !editable))
     
     tabIndex = 0
     role = "combobox"
@@ -64,19 +65,23 @@ class ComboBox[T](override val name: String, override val standalone: Boolean = 
     onClick { _ => toggle() }
     
     onKeyDown { e =>
-      e.key match {
-        case "ArrowDown" | "ArrowUp" => 
-          e.preventDefault()
-          if (!openProperty.get) openProperty.set(true)
-        case "Enter" | " " => 
-          e.preventDefault()
-          toggle()
-        case "Escape" => 
-          if (openProperty.get) {
+      if (editableProperty.get) {
+        e.key match {
+          case "ArrowDown" | "ArrowUp" =>
             e.preventDefault()
-            openProperty.set(false)
-          }
-        case _ => 
+            if (!openProperty.get) openProperty.set(true)
+          case "Enter" | " " =>
+            e.preventDefault()
+            toggle()
+          case "Escape" =>
+            if (openProperty.get) {
+              e.preventDefault()
+              openProperty.set(false)
+            }
+          case _ =>
+        }
+      } else if (openProperty.get) {
+        openProperty.set(false)
       }
     }
 
@@ -163,20 +168,32 @@ class ComboBox[T](override val name: String, override val standalone: Boolean = 
     addDisposable(selectionProperty.observe { list =>
        valueProperty.set(list.headOption.getOrElse(null.asInstanceOf[T]))
     })
+    addDisposable(editableProperty.observe { editable =>
+      if (!editable) {
+        openProperty.set(false)
+      }
+    })
   }
 
-  def toggle(): Unit = openProperty.set(!openProperty.get)
-
-  def selectItem(item: T): Unit = {
-    if (multipleSelectionProperty.get) {
-      val idx = selectionProperty.toSeq.indexWhere(isSame(_, item))
-      if (idx >= 0) selectionProperty.remove(idx)
-      else selectionProperty += item
+  def toggle(): Unit =
+    if (editableProperty.get) {
+      openProperty.set(!openProperty.get)
     } else {
-      selectionProperty.setAll(Seq(item))
       openProperty.set(false)
     }
-    setDirty(true)
+
+  def selectItem(item: T): Unit = {
+    if (editableProperty.get) {
+      if (multipleSelectionProperty.get) {
+        val idx = selectionProperty.toSeq.indexWhere(isSame(_, item))
+        if (idx >= 0) selectionProperty.remove(idx)
+        else selectionProperty += item
+      } else {
+        selectionProperty.setAll(Seq(item))
+        openProperty.set(false)
+      }
+      setDirty(true)
+    }
   }
 }
 
@@ -190,6 +207,10 @@ object ComboBox {
 
   def placeholder(using c: ComboBox[?]): String = c.placeholderProperty.get
   def placeholder_=(using c: ComboBox[?])(v: String): Unit = c.placeholderProperty.set(v)
+
+  def editable(using c: ComboBox[?]): Boolean = c.editableProperty.get
+  def editable_=(using c: ComboBox[?])(v: Boolean): Unit = c.editableProperty.set(v)
+  def editableProperty(using c: ComboBox[?]): Property[Boolean] = c.editableProperty
 
   def converter[T](using c: ComboBox[T]): T => String = c.converterProperty.get
   def converter_=[T](using c: ComboBox[T])(v: T => String): Unit = c.converterProperty.set(v)
