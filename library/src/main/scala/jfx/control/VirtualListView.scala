@@ -1,11 +1,14 @@
 package jfx.control
 
+import jfx.control.Link.link
 import jfx.core.component.{Box, Component}
 import jfx.core.component.Component.*
 import jfx.core.render.RenderBackend
 import jfx.core.state.{CompositeDisposable, Disposable, ListProperty, Property, RemoteListProperty}
 import jfx.dsl.DslRuntime
 import jfx.layout.Div.div
+import jfx.router.RouteContext
+import jfx.statement.Condition.*
 import jfx.statement.ForEach.forEach
 import org.scalajs.dom
 
@@ -19,6 +22,7 @@ final class VirtualListView[T](
   initialEstimateHeight: Double = 44.0,
   initialOverscanPx: Double = 240.0,
   initialPrefetchItems: Int = 80,
+  initialCrawlable: Boolean = false,
   initialRenderer: (T | Null, Int) => Unit = (_: T | Null, _: Int) => ()
 ) extends Box("div") {
 
@@ -33,6 +37,9 @@ final class VirtualListView[T](
   val scrollTopProperty = Property(0.0)
   val viewportHeightProperty = Property(400.0)
 
+  val crawlableProperty = Property(initialCrawlable)
+  private val defaultLimit = 50
+
   private val visibleSlotsProperty = new ListProperty[VirtualListView.VisibleSlot[T]]()
   private val itemStateRevisionProperty = Property(0)
   private val remoteStateRevisionProperty = Property(0)
@@ -46,6 +53,7 @@ final class VirtualListView[T](
   private var itemsObserver: Disposable = VirtualListView.noopDisposable
   private var remoteItemsObserver: Disposable = VirtualListView.noopDisposable
   private var viewportMeasureScheduled = false
+  private var routeContext: Option[RouteContext] = None
 
   def itemsProperty: Property[ListProperty[T]] =
     itemsRefProperty
@@ -86,8 +94,25 @@ final class VirtualListView[T](
   def setRenderer(renderer: (T | Null, Int) => Unit): Unit =
     itemRenderer = if (renderer == null) ((_: T | Null, _: Int) => ()) else renderer
 
+  private def captureRouteContext(): Unit =
+    routeContext = currentRouteContext()
+
+  private def currentRouteContext(): Option[RouteContext] =
+    routeContext.orElse {
+      try Some(DslRuntime.service[RouteContext])
+      catch { case _: Throwable => None }
+    }
+
+  private def getCrawlParams: (Int, Int) = {
+    val ctx = currentRouteContext()
+    val offset = ctx.flatMap(_.queryParams.get("offset")).flatMap(_.toIntOption).getOrElse(0)
+    val limit = ctx.flatMap(_.queryParams.get("limit")).flatMap(_.toIntOption).getOrElse(defaultLimit)
+    (math.max(0, offset), math.max(1, limit))
+  }
+
   override def compose(): Unit = {
     given Component = this
+    captureRouteContext()
 
     addClass("jfx-virtual-list")
     classIf("jfx-virtual-list-loading", remoteStateRevisionProperty.map { _ =>
@@ -108,10 +133,18 @@ final class VirtualListView[T](
     addDisposable(viewportHeightProperty.observe(_ => recomputeVisibleSlots()))
     addDisposable(overscanPxProperty.observe(_ => recomputeVisibleSlots()))
     addDisposable(prefetchItemsProperty.observe(_ => recomputeVisibleSlots()))
+    addDisposable(crawlableProperty.observe(_ => refreshItemState()))
     addDisposable(estimateHeightProperty.observe { _ =>
       resetMeasurements()
       refreshItemState()
     })
+
+    if (!RenderBackend.current.isServer) {
+      val (offset, _) = getCrawlParams
+      if (offset > 0) {
+        scrollTopProperty.set(offsetFor(offset))
+      }
+    }
 
     style {
       display = "block"
@@ -147,6 +180,24 @@ final class VirtualListView[T](
 
         forEach(visibleSlotsProperty) { slot =>
           VirtualListView.virtualListCell(slot, itemRenderer, handleMeasuredHeight)
+        }
+
+        condition(itemStateRevisionProperty.map(_ => hasMoreCrawlPage)) {
+          thenDo {
+            val (offset, limit) = getCrawlParams
+            link(nextCrawlHref(offset, limit)) {
+              addClass("jfx-virtual-list-more-link")
+              style {
+                display = "block"
+                padding = "20px"
+                textAlign = "center"
+                if (RenderBackend.current.isServer) {
+                  marginTop = s"${offsetFor(offset + limit)}px"
+                }
+              }
+              text = "More items..."
+            }
+          }
         }
       }
     }
@@ -242,6 +293,15 @@ final class VirtualListView[T](
       return
     }
 
+    if (RenderBackend.current.isServer && crawlableProperty.get) {
+      val (offset, limit) = getCrawlParams
+      val start = math.min(offset, total)
+      val end = math.min(total, start + limit)
+      visibleSlotsProperty.setAll((start until end).map(crawlSlotFor))
+      bumpItemState()
+      return
+    }
+
     val viewportHeight = math.max(1.0, viewportHeightProperty.get)
     val overscan = math.max(0.0, overscanPxProperty.get)
     val startOffset = math.max(0.0, scrollTopProperty.get - overscan)
@@ -268,6 +328,17 @@ final class VirtualListView[T](
     if (!RenderBackend.current.isServer && slots.nonEmpty) {
       requestMoreIfNecessary(slots.head.index, slots.last.index + 1)
     }
+  }
+
+  private def crawlSlotFor(index: Int): VirtualListView.VisibleSlot[T] = {
+    val item = itemAt(index)
+    VirtualListView.VisibleSlot(
+      index = index,
+      item = item,
+      loaded = item != null,
+      top = offsetFor(index),
+      height = heightFor(index)
+    )
   }
 
   private def handleMeasuredHeight(index: Int, height: Double): Unit =
@@ -445,6 +516,19 @@ final class VirtualListView[T](
     }
   }
 
+  private def hasMoreCrawlPage: Boolean = {
+    val (offset, limit) = getCrawlParams
+    crawlableProperty.get && offset + limit < maxRenderableCount
+  }
+
+  private def nextCrawlHref(offset: Int, limit: Int): String = {
+    val next = s"offset=${offset + limit}&limit=$limit"
+    currentRouteContext().map(_.path).filter(path => path.nonEmpty && path != "/") match {
+      case Some(path) => s"$path?$next"
+      case None       => s"?$next"
+    }
+  }
+
   private def maxSlotsForViewport(viewportHeight: Double): Int = {
     val minRowHeight = math.max(12.0, math.min(estimateHeight, math.max(estimateHeight / 2.0, 1.0)))
     val area = viewportHeight + 2 * math.max(0.0, overscanPxProperty.get)
@@ -513,7 +597,8 @@ object VirtualListView {
     items: ListProperty[T],
     estimateHeightPx: Int = 44,
     overscanPx: Int = 240,
-    prefetchItems: Int = 80
+    prefetchItems: Int = 80,
+    crawlable: Boolean = false
   )(renderer: Renderer[T]): VirtualListView[T] =
     DslRuntime.build(
       new VirtualListView[T](
@@ -521,6 +606,7 @@ object VirtualListView {
         initialEstimateHeight = estimateHeightPx.toDouble,
         initialOverscanPx = overscanPx.toDouble,
         initialPrefetchItems = prefetchItems,
+        initialCrawlable = crawlable,
         initialRenderer = renderer
       )
     ) {}
@@ -562,6 +648,12 @@ object VirtualListView {
 
   def prefetchItems_=(value: Int)(using v: VirtualListView[?]): Unit =
     v.prefetchItemsProperty.set(math.max(1, value))
+
+  def crawlable(using v: VirtualListView[?]): Boolean =
+    v.crawlableProperty.get
+
+  def crawlable_=(value: Boolean)(using v: VirtualListView[?]): Unit =
+    v.crawlableProperty.set(value)
 
   private def virtualListCell[T](
     slot: VisibleSlot[T],

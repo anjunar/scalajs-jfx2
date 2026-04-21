@@ -44,7 +44,7 @@ object VirtualListViewPage {
           vbox {
             style { height = "500px"; border = "1px solid var(--aj-line)"; borderRadius = "8px"; overflow = "hidden" }
 
-            virtualList(items) { (itemOrNull, index) =>
+            virtualList(items, estimateHeightPx = 64, crawlable = true) { (itemOrNull, index) =>
               val item = itemOrNull.asInstanceOf[ShowcaseItem]
               div {
                 style {
@@ -63,6 +63,7 @@ object VirtualListViewPage {
 
         insightGrid(
           ("Cursor", "Nur sichtbare Kinder zählen", "Virtuelle Container müssen physische DOM-Knoten kontrolliert einfügen und entfernen."),
+          ("SEO", "SSR rendert Crawl-Fenster", "Mit crawlable = true nutzt die Liste offset/limit und gibt Crawlern echte Folgeseiten."),
           ("Höhen", "Schätzung und Messung müssen zusammenpassen", "Variable Zeilenhöhen dürfen die Scrollposition nicht springen lassen."),
           ("Daten", "Listen bleiben Properties", "Wenn sich die Daten ändern, reagiert die Ansicht ohne manuelle DOM-Synchronisation im Template.")
         )
@@ -73,7 +74,43 @@ object VirtualListViewPage {
         ) {
           codeBlock("scala", """val items = new ListProperty[ShowcaseItem]()
 
-virtualList(items) { (item, index) =>
+virtualList(items, estimateHeightPx = 64, crawlable = true) { (item, index) =>
+  div {
+    style { height = s"${item.height}px" }
+    text = s"$index - ${item.title}"
+  }
+}""")
+        }
+
+        apiSection(
+          "Crawlable VirtualList",
+          "Wie bei der TableView rendert SSR ein stabiles Fenster und verlinkt die nächste Page."
+        ) {
+          codeBlock("text", """/virtual-list?offset=0&limit=50
+  rendert Items 0 bis 49
+
+/virtual-list?offset=50&limit=50
+  rendert Items 50 bis 99
+
+Browser:
+  scrollTop startet bei offset * estimateHeight
+
+SSR:
+  More-Link zeigt auf offset + limit""")
+        }
+
+        apiSection(
+          "Async Route Usage",
+          "Die Route bleibt die SSR-Hülle. Die VirtualList selbst wird mit crawlable = true konfiguriert und liest offset/limit aus dem RouteContext."
+        ) {
+          codeBlock("scala", """asyncRoute("/virtual-list") {
+  page {
+    VirtualListViewPage.render()
+  }
+}
+
+// In der Page:
+virtualList(items, estimateHeightPx = 64, crawlable = true) { (item, index) =>
   div {
     style { height = s"${item.height}px" }
     text = s"$index - ${item.title}"
