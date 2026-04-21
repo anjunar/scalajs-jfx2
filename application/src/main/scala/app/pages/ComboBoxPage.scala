@@ -110,16 +110,16 @@ object ComboBoxPage {
         }
 
         apiSection("Usage") {
-          codeBlock("scala", """comboBox[Member]("team-selector") {
-  placeholder = "Mitglied wählen..."
-  items = myMemberList
-  
-  itemRenderer { (member, isSelected) =>
-    hbox {
-       // Avatar, Name, Checkmark...
-    }
-  }
-}""")
+          codeBlock("scala", """|comboBox[Member]("team-selector") {
+                                |  placeholder = "Mitglied wählen..."
+                                |  items = myMemberList
+                                |
+                                |  itemRenderer { (member, isSelected) =>
+                                |    hbox {
+                                |       // Avatar, Name, Checkmark...
+                                |    }
+                                |  }
+                                |}""".stripMargin)
         }
       }
     }
