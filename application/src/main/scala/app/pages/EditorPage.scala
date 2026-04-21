@@ -3,7 +3,7 @@ package app.pages
 import app.components.Showcase.*
 import jfx.core.component.Component.*
 import jfx.form.Editor.*
-import jfx.form.editor.plugins.basePlugin
+import jfx.form.editor.plugins.{basePlugin, codePlugin, headingPlugin, imagePlugin, linkPlugin, listPlugin, tablePlugin}
 import jfx.layout.Div.div
 import jfx.layout.VBox.vbox
 
@@ -21,7 +21,7 @@ object EditorPage {
 
         componentShowcase(
           "Editor Playground",
-          "Echter Lexical-Mount mit BasePlugin und Toolbar-Renderer."
+          "Echter Lexical-Mount mit Toolbar-Renderer und allen Editor-Plugins."
         ) {
           editor("editor-playground", standalone = true) {
             value = "Dieser Text kommt bereits aus dem SSR-Fallback und wird nach der Hydration von Lexical übernommen."
@@ -31,12 +31,18 @@ object EditorPage {
               minHeight = "320px"
             }
             basePlugin()
+            headingPlugin()
+            listPlugin()
+            linkPlugin()
+            imagePlugin()
+            tablePlugin()
+            codePlugin()
           }
         }
 
         noteBlock(
           "Nächster Schritt",
-          "Wenn die Base-Toolbar stabil bleibt, können wir die nächsten Plugins einzeln nachziehen: Heading, List, Link, Image und Table."
+          "Jetzt können wir die einzelnen Dialoge und Spezialknoten im Browser gezielt polieren: Link, Image, Table und CodeMirror."
         )
 
         apiSection(
@@ -48,6 +54,12 @@ object EditorPage {
   placeholder = "Text schreiben..."
   style { minHeight = "320px" }
   basePlugin()
+  headingPlugin()
+  listPlugin()
+  linkPlugin()
+  imagePlugin()
+  tablePlugin()
+  codePlugin()
 }""")
         }
       }

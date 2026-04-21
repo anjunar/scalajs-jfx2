@@ -4,9 +4,9 @@ import jfx.core.component.{Box, ClientSideComponent, Component}
 import jfx.core.component.Component.*
 import jfx.core.state.{Property, ReadOnlyProperty}
 import jfx.dsl.DslRuntime
-import jfx.form.editor.plugins.EditorPlugin
+import jfx.form.editor.plugins.{DefaultDialogService, EditorPlugin}
 import jfx.layout.Div.div
-import lexical.{EditorModule, EditorTheme, EditorThemeBuilder, Lexical, LexicalBuilder, LexicalCode, LexicalEditor, LexicalLink, LexicalList, LexicalRichText, RibbonRenderer, ToolbarDropdown, ToolbarElement, ToolbarManager, ToolbarRegistry}
+import lexical.{EditorModule, EditorTheme, EditorThemeBuilder, Lexical, LexicalBuilder, LexicalCode, LexicalEditor, LexicalLink, LexicalList, LexicalRichText, RibbonRenderer, ToolbarDropdown, ToolbarElement, ToolbarManager, ToolbarRegistry, setDialogService}
 import org.scalajs.dom.{Event, HTMLDivElement, HTMLElement}
 
 import scala.collection.mutable
@@ -28,13 +28,13 @@ class Editor(val name: String, override val standalone: Boolean = false)
   private var editorDomCleanup: (() => Unit) | Null = null
   private var lastSeenStateJson: String | Null = null
   private var fallbackRendered = false
+  private val editorRegistrations = mutable.ArrayBuffer.empty[js.Function0[Unit]]
   private val pluginComponents = mutable.ArrayBuffer.empty[EditorPlugin]
 
   override protected def composeFallback(): Unit = {
     given Component = this
     addClass("editor")
     addClass("jfx-editor-host")
-    attribute("data-client-side", "fallback")
 
     addDisposable(valueProperty.observe(_ => validate()))
     addDisposable(validators.observe(_ => validate()))
@@ -77,9 +77,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
             div {
               addClass("jfx-editor__surface")
               addClass("lexical-editor-input")
-              attribute("role", "textbox")
-              attribute("aria-multiline", "true")
-              attribute("aria-readonly", "true")
+              role = "textbox"
               previewText.foreach(value => text = value)
             }
           }
@@ -155,12 +153,12 @@ class Editor(val name: String, override val standalone: Boolean = false)
   private def renderFallbackToolbarElement(element: ToolbarElement)(using Component): Unit =
     element match {
       case module: EditorModule =>
-        Box.box("button") {
+        div {
           addClass("lexical-ribbon-button")
-          attribute("type", "button")
-          attribute("disabled", "true")
-          attribute("aria-disabled", "true")
-          attribute("title", module.name)
+          style {
+            cursor = "not-allowed"
+            opacity = "0.58"
+          }
           module.iconName match {
             case Some(icon) =>
               Box.box("span") {
@@ -173,13 +171,15 @@ class Editor(val name: String, override val standalone: Boolean = false)
         }
 
       case dropdown: ToolbarDropdown =>
-        Box.box("button") {
+        div {
           addClass("lexical-ribbon-button")
-          attribute("type", "button")
-          attribute("disabled", "true")
-          attribute("aria-disabled", "true")
-          attribute("title", dropdown.name)
-          text = dropdown.name
+          style {
+            cursor = "not-allowed"
+            opacity = "0.58"
+          }
+          val selectedLabel =
+            dropdown.options.headOption.map(option => s"${dropdown.name}: ${option.label}").getOrElse(dropdown.name)
+          text = selectedLabel
         }
 
       case _ =>
@@ -247,6 +247,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
 
     val editor = builder.build(surface.nn)
     lexicalEditor = editor
+    editor.setDialogService(new DefaultDialogService())
     editorUnregister = editor.registerUpdateListener { (_: js.Dynamic) =>
       refreshPlaceholder()
       publishEditorState(editor, markDirty = true)
@@ -290,6 +291,14 @@ class Editor(val name: String, override val standalone: Boolean = false)
       editorDomCleanup.nn.apply()
       editorDomCleanup = null
     }
+
+    editorRegistrations.reverseIterator.foreach { unregister =>
+      try unregister()
+      catch {
+        case _: Throwable =>
+      }
+    }
+    editorRegistrations.clear()
 
     editorSurface = null
     if (toolbarHost != null) {
@@ -342,7 +351,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
     pluginComponents.foreach { plugin =>
       val unregister = plugin.install(editor)
       if (unregister != null) {
-        addDisposable(() => unregister())
+        editorRegistrations += unregister
       }
     }
 
@@ -490,13 +499,17 @@ class Editor(val name: String, override val standalone: Boolean = false)
 
   private def defaultNodes(): js.Array[js.Any] =
     js.Array(
-      LexicalRichText.HeadingNode,
-      LexicalRichText.QuoteNode,
-      LexicalList.ListNode,
-      LexicalList.ListItemNode,
-      LexicalLink.LinkNode,
-      LexicalCode.CodeNode
-    ) ++ pluginComponents.iterator.flatMap(_.nodes).toSeq
+      (
+        Seq(
+          LexicalRichText.HeadingNode,
+          LexicalRichText.QuoteNode,
+          LexicalList.ListNode,
+          LexicalList.ListItemNode,
+          LexicalLink.LinkNode,
+          LexicalCode.CodeNode
+        ) ++ pluginComponents.iterator.flatMap(_.nodes).toSeq
+      ).distinct*
+    )
 
   private def collectToolbarElements(): Seq[ToolbarElement] =
     pluginComponents.iterator.flatMap(_.toolbarElements).toSeq

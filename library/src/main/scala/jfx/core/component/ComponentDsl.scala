@@ -70,8 +70,10 @@ trait ComponentAttributeDsl {
   def role(using c: Component): String = c.host.attribute("role").getOrElse("")
   def role_=(value: String)(using c: Component): Unit = c.host.setAttribute("role", value)
 
+  @deprecated("Use typed DSL properties or component-specific DSL methods instead. The generic attribute escape hatch will be removed.", "next")
   def attribute(name: String, value: String)(using c: Component): Unit = c.host.setAttribute(name, value)
 
+  @deprecated("Use typed DSL properties or component-specific DSL methods instead. The generic attribute escape hatch will be removed.", "next")
   def attribute(name: String, value: ReadOnlyProperty[String])(using c: Component): Unit = {
     c.addDisposable(value.observe(v => c.host.setAttribute(name, v)))
   }
