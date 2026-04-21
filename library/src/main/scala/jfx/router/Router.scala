@@ -43,7 +43,9 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component {
       state.currentMatchOption match {
         case Some(m) =>
           val ctx = RouteContext(state.path, state.url, m.fullPath, m.params, state.queryParams, state, m)
-          m.route.factory(ctx)
+          DslRuntime.provide(ctx) {
+            m.route.factory(ctx)
+          }
         case None =>
           jfx.core.component.Box.box("div") { text = s"No route matched for: ${state.path}" }
       }

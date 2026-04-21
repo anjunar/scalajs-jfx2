@@ -1,7 +1,7 @@
 package app.pages
 
 import jfx.control.TableColumn.column
-import jfx.control.TableView.tableView
+import jfx.control.TableView.*
 import jfx.control.{TableColumn, TableView}
 import jfx.core.component.Component.*
 import jfx.core.state.ListProperty
@@ -128,15 +128,16 @@ object TableViewPage {
         style { gap = "24px" }
         div {
           style { opacity = "0.8"; fontSize = "14px"; marginBottom = "8px" }
-          text = "Selbst massive Datensätze fühlen sich bei JFX2 wunderbar leicht an. Genieße reibungsloses Virtual Scrolling und volle Reaktivität, während deine Tabellen elegant und performant bleiben – egal wie tief die Daten ragen."
+          text = "Die JFX2 TableView vereint reaktive Virtualisierung mit voller SEO-Tauglichkeit. Im Browser genießen Benutzer flüssiges Scrolling, während Crawler durch echte HTML-Links die gesamte Datenmenge indexieren können."
         }
-        componentShowcase("Virtuelle Bibliothek (1000 Meisterwerke)") {
+        componentShowcase("Crawlbarer Bücher-Katalog") {
           val books = new ListProperty[ShowcaseBook]()
           books.setAll(buildShowcaseBooks(1000))
-          import jfx.control.TableView.{tableView, rowHeight, items}
+          
           tableView[ShowcaseBook] {
-            style { height = "400px" }
+            style { height = "500px" }
             rowHeight = 40.0
+            crawlable = true
 
             column[ShowcaseBook, String]("Titel") { item =>
                text = item.title
@@ -144,28 +145,21 @@ object TableViewPage {
             column[ShowcaseBook, String]("Autor") { item =>
                text = item.author
             }
+            column[ShowcaseBook, Int]("Jahr") { item =>
+               text = item.year.toString
+            }
 
-            items = books.get
+            TableView.items = books
           }
         }
-        apiSection("Virtual Scrolling TableView Usage") {
-          codeBlock("scala", """import jfx.control.TableView.{tableView, rowHeight, items}
-val books = new ListProperty[Book]()
-books.setAll(myLargeDataset)
-
-tableView[Book] {
-  style { height = "400px" } // Container must have a height
-  rowHeight = 40.0 // Needed for virtual scroll calculation
-
+        apiSection("Crawlable TableView Usage") {
+          codeBlock("scala", """tableView[Book] {
+  crawlable = true // SEO enabled
+  items = myLargeDataset
+  
   column[Book, String]("Titel") { item =>
      text = item.title
   }
-  
-  column[Book, String]("Autor") { item =>
-     text = item.author
-  }
-
-  items = books.get
 }""")
         }
       }

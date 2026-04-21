@@ -11,14 +11,16 @@ class SsrCursor(
   private val rootElements = mutable.ArrayBuffer.empty[HostNode]
   private var currentIndex = index.getOrElse(0)
 
-  override def position: Option[Int] = index.map(_ => currentIndex)
+  override def position: Option[Int] = Some(currentIndex)
 
   override def claimElement(tagName: String): HostElement = {
     val el = new SsrHostElement(tagName)
+    // Wir fügen hier NICHTS automatisch ein. 
+    // Das erledigt DslRuntime über syncChildAddition -> host.insertChild
     if (target.isEmpty && index.isEmpty) {
       rootElements += el
     }
-    if (index.isDefined) currentIndex += 1
+    currentIndex += 1
     el
   }
 
@@ -30,12 +32,12 @@ class SsrCursor(
     if (target.isEmpty && index.isEmpty) {
       rootElements += t
     }
-    if (index.isDefined) currentIndex += 1
+    currentIndex += 1
     t
   }
 
   override def subCursor(element: HostElement): Cursor = {
-    new SsrCursor(Some(element.asInstanceOf[SsrHostElement]))
+    new SsrCursor(Some(element.asInstanceOf[SsrHostElement]), Some(0))
   }
 
   def resultHtml(root: Component): String = {

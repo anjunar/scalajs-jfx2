@@ -8,6 +8,8 @@ import jfx.dsl.DslRuntime
 import jfx.layout.Div.div
 import jfx.statement.Condition.*
 import jfx.statement.ForEach.forEach
+import jfx.router.RouteContext
+import jfx.control.Link.link
 import org.scalajs.dom
 
 final class TableView[S] extends Box("div") {
@@ -23,25 +25,45 @@ final class TableView[S] extends Box("div") {
   val scrollLeftProperty = Property(0.0)
   val viewportHeightProperty = Property(400.0)
 
+  val crawlableProperty = Property(false)
+  private val defaultLimit = 50
+
   private case class VisibleRow(index: Int, item: S)
   private val visibleRowsProperty = new ListProperty[VisibleRow]()
 
+  private def getRouteContext: Option[RouteContext] = 
+    try { Some(DslRuntime.service[RouteContext]) } catch { case _: Exception => None }
+
+  private def getCrawlParams: (Int, Int) = {
+    val ctx = getRouteContext
+    val offset = ctx.flatMap(_.queryParams.get("offset")).flatMap(_.toIntOption).getOrElse(0)
+    val limit = ctx.flatMap(_.queryParams.get("limit")).flatMap(_.toIntOption).getOrElse(defaultLimit)
+    (offset, limit)
+  }
+
   private def recomputeVisibleRows(): Unit = {
-    val top = scrollTopProperty.get
-    val height = viewportHeightProperty.get
-    val rh = rowHeightProperty.get
     val itms = items.toSeq
     val total = itms.length
-    
-    if (total == 0) {
-      visibleRowsProperty.setAll(Seq.empty)
+
+    if (RenderBackend.current.isServer && crawlableProperty.get) {
+      val (offset, limit) = getCrawlParams
+      val end = math.min(total, offset + limit)
+      visibleRowsProperty.setAll((offset until end).map(i => VisibleRow(i, itms(i))))
     } else {
-      val overscan = 4
-      val firstVisible = math.floor(top / rh).toInt
-      val visibleCount = math.ceil(height / rh).toInt + 1
-      val start = math.max(0, firstVisible - overscan)
-      val end = math.min(total, firstVisible + visibleCount + overscan)
-      visibleRowsProperty.setAll((start until end).map(i => VisibleRow(i, itms(i))))
+      val top = scrollTopProperty.get
+      val height = viewportHeightProperty.get
+      val rh = rowHeightProperty.get
+      
+      if (total == 0) {
+        visibleRowsProperty.setAll(Seq.empty)
+      } else {
+        val overscan = 4
+        val firstVisible = math.floor(top / rh).toInt
+        val visibleCount = math.ceil(height / rh).toInt + 1
+        val start = math.max(0, firstVisible - overscan)
+        val end = math.min(total, firstVisible + visibleCount + overscan)
+        visibleRowsProperty.setAll((start until end).map(i => VisibleRow(i, itms(i))))
+      }
     }
   }
 
@@ -58,6 +80,15 @@ final class TableView[S] extends Box("div") {
     addDisposable(items.observeChanges(_ => recomputeVisibleRows()))
     addDisposable(columns.observeChanges(_ => recomputeVisibleRows()))
     addDisposable(rowHeightProperty.observe(_ => recomputeVisibleRows()))
+
+    // Hydrierung: Scroll-Position aus URL wiederherstellen
+    if (!RenderBackend.current.isServer) {
+       val (offset, _) = getCrawlParams
+       if (offset > 0) {
+          val rh = rowHeightProperty.get
+          scrollTopProperty.set(offset * rh)
+       }
+    }
 
     style {
       display = "flex"
@@ -110,7 +141,15 @@ final class TableView[S] extends Box("div") {
 
       if (!RenderBackend.current.isServer) {
          dom.window.requestAnimationFrame { _ =>
-            viewportHeightProperty.set(host.clientHeight.toDouble)
+            val vh = host.clientHeight.toDouble
+            viewportHeightProperty.set(vh)
+            
+            // Falls wir einen Offset haben, müssen wir den Container physisch scrollen
+            val (offset, _) = getCrawlParams
+            if (offset > 0) {
+               val target = host.asInstanceOf[jfx.core.render.DomHostElement].element.asInstanceOf[dom.html.Div]
+               target.scrollTop = offset * rowHeightProperty.get
+            }
             recomputeVisibleRows()
          }
       }
@@ -119,7 +158,9 @@ final class TableView[S] extends Box("div") {
         addClass("jfx-table-content")
         style {
           position = "relative"
-          height_=(items.asProperty.map(it => s"${it.length * rowHeightProperty.get}px"))
+          if (!RenderBackend.current.isServer) {
+            height_=(items.asProperty.map(it => s"${it.length * rowHeightProperty.get}px"))
+          }
           width_=(totalColumnWidthProperty.map(w => s"${w}px"))
         }
 
@@ -127,7 +168,7 @@ final class TableView[S] extends Box("div") {
           div {
             addClass("jfx-table-row-slot")
             style {
-              position = "absolute"
+              position = if (RenderBackend.current.isServer) "relative" else "absolute"
               top_=(Property(s"${rowDef.index * rowHeightProperty.get}px"))
               left = "0"
               width_=(totalColumnWidthProperty.map(w => s"${w}px"))
@@ -140,6 +181,32 @@ final class TableView[S] extends Box("div") {
               row.bind(rowDef.index, rowDef.item, TableView.this, columns.get.toSeq, rowHeightProperty.get)
             }
           }
+        }
+
+        // Pagination Link (reaktive ListProperty für SSR und Client)
+        val paginationLinks = new ListProperty[String]()
+        val currentPath = getRouteContext.map(_.path).getOrElse("")
+
+        def updatePagination(): Unit = {
+           val (offset, limit) = getCrawlParams
+           if (crawlableProperty.get && offset + limit < items.length) {
+              paginationLinks.setAll(Seq(s"$currentPath?offset=${offset + limit}&limit=$limit"))
+           } else {
+              paginationLinks.setAll(Seq.empty)
+           }
+        }
+
+        addDisposable(items.observeChanges(_ => updatePagination()))
+        updatePagination() // Initialer Aufruf
+
+        forEach(paginationLinks) { nextUrl =>
+           div {
+             style { padding = "20px"; textAlign = "center" }
+             link(nextUrl) {
+               addClass("jfx-table-more-link")
+               text = "More items..."
+             }
+           }
         }
       }
     }
@@ -157,9 +224,6 @@ object TableView {
   def items_=[S](v: scala.collection.IterableOnce[S])(using t: TableView[S]): Unit =
     t.items.setAll(v)
 
-  def items_=[S](v: scala.scalajs.js.Array[S])(using t: TableView[S]): Unit =
-    t.items.setAll(v)
-
   def rowHeight(using t: TableView[?]): Double = t.rowHeightProperty.get
   def rowHeight_=(v: Double)(using t: TableView[?]): Unit = t.rowHeightProperty.set(v)
 
@@ -168,9 +232,11 @@ object TableView {
 
   def prefWidth(using t: TableView[?]): Option[Double] = t.prefWidthProperty.get
   def prefWidth_=(v: Double)(using t: TableView[?]): Unit = t.prefWidthProperty.set(Some(v))
-  def prefWidth_=(v: Option[Double])(using t: TableView[?]): Unit = t.prefWidthProperty.set(v)
   def prefWidth_=(v: jfx.core.state.ReadOnlyProperty[Double])(using t: TableView[?]): Unit =
     t.addDisposable(v.observe(w => t.prefWidthProperty.set(Some(w))))
+
+  def crawlable(using t: TableView[?]): Boolean = t.crawlableProperty.get
+  def crawlable_=(v: Boolean)(using t: TableView[?]): Unit = t.crawlableProperty.set(v)
 
   def columns[S](using t: TableView[S]): ListProperty[TableColumn[S, ?]] =
     t.columns
