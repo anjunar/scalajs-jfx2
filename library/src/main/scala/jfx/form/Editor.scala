@@ -1,13 +1,15 @@
 package jfx.form
 
-import jfx.core.component.{ClientSideComponent, Component}
+import jfx.core.component.{Box, ClientSideComponent, Component}
 import jfx.core.component.Component.*
 import jfx.core.state.{Property, ReadOnlyProperty}
 import jfx.dsl.DslRuntime
+import jfx.form.editor.plugins.EditorPlugin
 import jfx.layout.Div.div
-import lexical.{EditorTheme, EditorThemeBuilder, Lexical, LexicalBuilder, LexicalCode, LexicalEditor, LexicalLink, LexicalList, LexicalRichText}
+import lexical.{EditorModule, EditorTheme, EditorThemeBuilder, Lexical, LexicalBuilder, LexicalCode, LexicalEditor, LexicalLink, LexicalList, LexicalRichText, RibbonRenderer, ToolbarDropdown, ToolbarElement, ToolbarManager, ToolbarRegistry}
 import org.scalajs.dom.{Event, HTMLDivElement, HTMLElement}
 
+import scala.collection.mutable
 import scala.scalajs.js
 
 class Editor(val name: String, override val standalone: Boolean = false)
@@ -20,21 +22,19 @@ class Editor(val name: String, override val standalone: Boolean = false)
 
   private var lexicalEditor: LexicalEditor | Null = null
   private var editorSurface: HTMLDivElement | Null = null
+  private var toolbarHost: HTMLElement | Null = null
   private var placeholderElement: HTMLElement | Null = null
   private var editorUnregister: js.Function0[Unit] | Null = null
   private var editorDomCleanup: (() => Unit) | Null = null
   private var lastSeenStateJson: String | Null = null
+  private var fallbackRendered = false
+  private val pluginComponents = mutable.ArrayBuffer.empty[EditorPlugin]
 
   override protected def composeFallback(): Unit = {
     given Component = this
     addClass("editor")
     addClass("jfx-editor-host")
     attribute("data-client-side", "fallback")
-
-    div {
-      addClass("jfx-editor-fallback")
-      text = "Editor wird im Browser aktiviert"
-    }
 
     addDisposable(valueProperty.observe(_ => validate()))
     addDisposable(validators.observe(_ => validate()))
@@ -53,8 +53,141 @@ class Editor(val name: String, override val standalone: Boolean = false)
     }
   }
 
+  override def afterCompose(): Unit =
+    if (!fallbackRendered) {
+      fallbackRendered = true
+      renderFallbackContent()
+    }
+
+  private def renderFallbackContent(): Unit = {
+    given Component = this
+    val previewText = extractPreviewText(valueProperty.get)
+
+    div {
+      addClass("jfx-editor")
+      div {
+        addClass("jfx-editor__shell")
+        renderFallbackToolbar()
+
+        div {
+          addClass("jfx-editor__surface-wrap")
+
+          Box.box("section") {
+            addClass("jfx-editor__surface-frame")
+            div {
+              addClass("jfx-editor__surface")
+              addClass("lexical-editor-input")
+              attribute("role", "textbox")
+              attribute("aria-multiline", "true")
+              attribute("aria-readonly", "true")
+              previewText.foreach(value => text = value)
+            }
+          }
+
+          div {
+            addClass("jfx-editor__placeholder")
+            visible = previewText.isEmpty && placeholderProperty.get.trim.nonEmpty
+            text = placeholderProperty.get.trim
+          }
+        }
+      }
+    }
+  }
+
+  private def renderFallbackToolbar()(using Component): Unit = {
+    val elements = collectToolbarElements()
+
+    div {
+      addClass("jfx-editor__toolbar")
+      visible = editableProperty.get && elements.nonEmpty
+
+      if (editableProperty.get && elements.nonEmpty) {
+        val model = new ToolbarRegistry(elements.toList).getModel
+
+        div {
+          addClass("lexical-ribbon-wrapper")
+
+          div {
+            addClass("lexical-ribbon-tabs")
+            model.tabs.zipWithIndex.foreach { case (tab, index) =>
+              div {
+                addClass("lexical-ribbon-tab")
+                if (index == 0) {
+                  addClass("active")
+                }
+                text = tab.name
+              }
+            }
+          }
+
+          div {
+            addClass("lexical-ribbon-content")
+            model.tabs.zipWithIndex.foreach { case (tab, tabIndex) =>
+              div {
+                addClass("lexical-ribbon-tab-content")
+                style {
+                  display = if (tabIndex == 0) "flex" else "none"
+                }
+
+                tab.sections.foreach { section =>
+                  div {
+                    addClass("lexical-ribbon-section")
+
+                    div {
+                      addClass("lexical-ribbon-buttons-container")
+                      section.modules.foreach(renderFallbackToolbarElement)
+                    }
+
+                    div {
+                      addClass("lexical-ribbon-section-label")
+                      text = section.name
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private def renderFallbackToolbarElement(element: ToolbarElement)(using Component): Unit =
+    element match {
+      case module: EditorModule =>
+        Box.box("button") {
+          addClass("lexical-ribbon-button")
+          attribute("type", "button")
+          attribute("disabled", "true")
+          attribute("aria-disabled", "true")
+          attribute("title", module.name)
+          module.iconName match {
+            case Some(icon) =>
+              Box.box("span") {
+                addClass("material-icons")
+                text = icon
+              }
+            case None =>
+              text = module.name
+          }
+        }
+
+      case dropdown: ToolbarDropdown =>
+        Box.box("button") {
+          addClass("lexical-ribbon-button")
+          attribute("type", "button")
+          attribute("disabled", "true")
+          attribute("aria-disabled", "true")
+          attribute("title", dropdown.name)
+          text = dropdown.name
+        }
+
+      case _ =>
+    }
+
   override protected def mountClient(): Unit = {
     editorSurface = null
+    toolbarHost = null
     placeholderElement = null
 
     renderClient {
@@ -64,23 +197,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
         addClass("jfx-editor")
         div {
           addClass("jfx-editor__shell")
-          div {
-            addClass("jfx-editor__toolbar")
-            div {
-              addClass("jfx-editor__toolbar-group")
-              div {
-                addClass("jfx-editor__toolbar-group-label")
-                text = "Lexical"
-              }
-              div {
-                addClass("jfx-editor__toolbar-buttons")
-                div {
-                  addClass("jfx-editor__toolbar-button")
-                  text = "Basis aktiv"
-                }
-              }
-            }
-          }
+          EditorToolbarHost(element => toolbarHost = element)
 
           div {
             addClass("jfx-editor__surface-wrap")
@@ -96,6 +213,11 @@ class Editor(val name: String, override val standalone: Boolean = false)
 
     mountLexical()
   }
+
+  private[jfx] def registerPlugin(plugin: EditorPlugin): Unit =
+    if (!pluginComponents.exists(_.name == plugin.name)) {
+      pluginComponents += plugin
+    }
 
   override def dispose(): Unit = {
     destroyEditorView()
@@ -119,6 +241,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
         .withTheme(defaultTheme())
         .withEditable(editableProperty.get)
         .withNodes(defaultNodes())
+        .withModules(collectModules()*)
 
     initialStateJson.foreach(builder.withInitialState)
 
@@ -139,6 +262,8 @@ class Editor(val name: String, override val standalone: Boolean = false)
       publishEditorState(editor, markDirty = false)
     }
 
+    renderToolbar(editor)
+    installPlugins(editor)
     refreshPlaceholder()
   }
 
@@ -167,6 +292,10 @@ class Editor(val name: String, override val standalone: Boolean = false)
     }
 
     editorSurface = null
+    if (toolbarHost != null) {
+      toolbarHost.nn.innerHTML = ""
+    }
+    toolbarHost = null
     placeholderElement = null
   }
 
@@ -189,6 +318,31 @@ class Editor(val name: String, override val standalone: Boolean = false)
       if (editorSurface != null) {
         editorSurface.nn.setAttribute("contenteditable", editable.toString)
         editorSurface.nn.setAttribute("aria-readonly", (!editable).toString)
+      }
+      renderToolbar(lexicalEditor.nn)
+    }
+
+  private def renderToolbar(editor: LexicalEditor): Unit =
+    if (toolbarHost != null) {
+      val elements = collectToolbarElements()
+      val host = toolbarHost.nn
+      host.innerHTML = ""
+      host.style.display =
+        if (editableProperty.get && elements.nonEmpty) ""
+        else "none"
+
+      if (editableProperty.get && elements.nonEmpty) {
+        val registry = new ToolbarRegistry(elements.toList)
+        val manager = new ToolbarManager(editor, registry, new RibbonRenderer())
+        manager.createToolbar(host)
+      }
+    }
+
+  private def installPlugins(editor: LexicalEditor): Unit =
+    pluginComponents.foreach { plugin =>
+      val unregister = plugin.install(editor)
+      if (unregister != null) {
+        addDisposable(() => unregister())
       }
     }
 
@@ -242,8 +396,97 @@ class Editor(val name: String, override val standalone: Boolean = false)
           js.JSON.stringify(value.asInstanceOf[js.Any])
         }
 
-      Option(asString).map(_.trim).filter(_.nonEmpty)
+      Option(asString)
+        .map(_.trim)
+        .filter(_.nonEmpty)
+        .map { text =>
+          if (looksLikeJson(text)) text
+          else plainTextStateJson(text)
+        }
     }
+
+  private def extractPreviewText(value: js.Any | Null): Option[String] =
+    if (value == null || js.isUndefined(value.asInstanceOf[js.Any])) {
+      None
+    } else if (js.typeOf(value.asInstanceOf[js.Any]) == "string") {
+      val text = value.asInstanceOf[String].trim
+      if (text.isEmpty) None
+      else if (looksLikeJson(text)) extractTextFromLexicalJson(text).orElse(Some(text))
+      else Some(text)
+    } else {
+      extractTextFromLexicalJson(js.JSON.stringify(value.asInstanceOf[js.Any]))
+    }
+
+  private def looksLikeJson(value: String): Boolean =
+    value.startsWith("{") || value.startsWith("[")
+
+  private def extractTextFromLexicalJson(json: String): Option[String] =
+    try {
+      val parsed = js.JSON.parse(json)
+      val root = parsed.asInstanceOf[js.Dynamic].selectDynamic("root").asInstanceOf[js.Any]
+      val source =
+        if (jsValueExists(root)) root
+        else parsed.asInstanceOf[js.Any]
+      val parts = mutable.ArrayBuffer.empty[String]
+      collectText(source, parts)
+      Option(parts.mkString(" ").trim).filter(_.nonEmpty)
+    } catch {
+      case _: Throwable => None
+    }
+
+  private def collectText(value: js.Any, parts: mutable.ArrayBuffer[String]): Unit =
+    if (jsValueExists(value)) {
+      val dynamic = value.asInstanceOf[js.Dynamic]
+      val text = dynamic.selectDynamic("text").asInstanceOf[js.Any]
+      if (jsValueExists(text) && js.typeOf(text) == "string") {
+        parts += text.asInstanceOf[String]
+      }
+
+      val childrenValue = dynamic.selectDynamic("children").asInstanceOf[js.Any]
+      if (jsValueExists(childrenValue)) {
+        try {
+          childrenValue.asInstanceOf[js.Array[js.Any]].foreach(child => collectText(child, parts))
+        } catch {
+          case _: Throwable =>
+        }
+      }
+    }
+
+  private def jsValueExists(value: js.Any): Boolean =
+    value != null && !js.isUndefined(value)
+
+  private def plainTextStateJson(text: String): String =
+    js.JSON.stringify(
+      js.Dynamic.literal(
+        root = js.Dynamic.literal(
+          children = js.Array(
+            js.Dynamic.literal(
+              children = js.Array(
+                js.Dynamic.literal(
+                  detail = 0,
+                  format = 0,
+                  mode = "normal",
+                  style = "",
+                  text = text,
+                  `type` = "text",
+                  version = 1
+                )
+              ),
+              direction = null,
+              format = "",
+              indent = 0,
+              `type` = "paragraph",
+              version = 1
+            )
+          ),
+          direction = null,
+          format = "",
+          indent = 0,
+          `type` = "root",
+          version = 1
+        )
+      )
+    )
 
   private def defaultNodes(): js.Array[js.Any] =
     js.Array(
@@ -253,7 +496,16 @@ class Editor(val name: String, override val standalone: Boolean = false)
       LexicalList.ListItemNode,
       LexicalLink.LinkNode,
       LexicalCode.CodeNode
-    )
+    ) ++ pluginComponents.iterator.flatMap(_.nodes).toSeq
+
+  private def collectToolbarElements(): Seq[ToolbarElement] =
+    pluginComponents.iterator.flatMap(_.toolbarElements).toSeq
+
+  private def collectModules(): Seq[EditorModule] =
+    (
+      pluginComponents.iterator.flatMap(_.modules).toSeq ++
+        collectToolbarElements().collect { case module: EditorModule => module }
+    ).distinct
 
   private def defaultTheme(): EditorTheme =
     new EditorThemeBuilder()
@@ -303,6 +555,21 @@ private final class EditorSurface(onReady: HTMLDivElement => Unit) extends Compo
 private object EditorSurface {
   def apply(onReady: HTMLDivElement => Unit): EditorSurface =
     DslRuntime.build(new EditorSurface(onReady)) {}
+}
+
+private final class EditorToolbarHost(onReady: HTMLElement => Unit) extends Component {
+  override def tagName: String = "div"
+
+  override def compose(): Unit = {
+    given Component = this
+    addClass("jfx-editor__toolbar")
+    host.domNode.collect { case element: HTMLElement => onReady(element) }
+  }
+}
+
+private object EditorToolbarHost {
+  def apply(onReady: HTMLElement => Unit): EditorToolbarHost =
+    DslRuntime.build(new EditorToolbarHost(onReady)) {}
 }
 
 private final class EditorSurfaceFrame extends Component {
