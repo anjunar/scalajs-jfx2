@@ -40,6 +40,28 @@ object EditorPage {
           }
         }
 
+        componentShowcase(
+          "Readonly Editor",
+          "Dieselbe Client-Island, aber mit editable = false: keine Toolbar und kein editierbarer Root."
+        ) {
+          editor("editor-readonly", standalone = true) {
+            value = "Dieser Editor ist readonly. Der Text ist im SSR sichtbar und bleibt nach der Hydration nicht editierbar."
+            editable = false
+            placeholder = "Readonly"
+            style {
+              width = "100%"
+              minHeight = "220px"
+            }
+            basePlugin()
+            headingPlugin()
+            listPlugin()
+            linkPlugin()
+            imagePlugin()
+            tablePlugin()
+            codePlugin()
+          }
+        }
+
         noteBlock(
           "Nächster Schritt",
           "Jetzt können wir die einzelnen Dialoge und Spezialknoten im Browser gezielt polieren: Link, Image, Table und CodeMirror."
@@ -60,6 +82,11 @@ object EditorPage {
   imagePlugin()
   tablePlugin()
   codePlugin()
+}
+
+editor("readonly", standalone = true) {
+  value = "Readonly Inhalt"
+  editable = false
 }""")
         }
       }

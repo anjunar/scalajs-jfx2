@@ -28,6 +28,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
   private var editorDomCleanup: (() => Unit) | Null = null
   private var lastSeenStateJson: String | Null = null
   private var fallbackRendered = false
+  private var toolbarRendered = false
   private val editorRegistrations = mutable.ArrayBuffer.empty[js.Function0[Unit]]
   private val pluginComponents = mutable.ArrayBuffer.empty[EditorPlugin]
 
@@ -77,6 +78,9 @@ class Editor(val name: String, override val standalone: Boolean = false)
             div {
               addClass("jfx-editor__surface")
               addClass("lexical-editor-input")
+              if (!editableProperty.get) {
+                addClass("lexical-read-only")
+              }
               role = "textbox"
               previewText.foreach(value => text = value)
             }
@@ -255,7 +259,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
 
     surface.nn.setAttribute("role", "textbox")
     surface.nn.setAttribute("aria-multiline", "true")
-    surface.nn.setAttribute("aria-readonly", (!editableProperty.get).toString)
+    syncEditableSurface(editableProperty.get)
 
     if (initialStateJson.nonEmpty) {
       lastSeenStateJson = initialStateJson.orNull
@@ -305,6 +309,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
       toolbarHost.nn.innerHTML = ""
     }
     toolbarHost = null
+    toolbarRendered = false
     placeholderElement = null
   }
 
@@ -324,26 +329,43 @@ class Editor(val name: String, override val standalone: Boolean = false)
   private def updateEditable(editable: Boolean): Unit =
     if (lexicalEditor != null) {
       lexicalEditor.nn.setEditable(editable)
-      if (editorSurface != null) {
-        editorSurface.nn.setAttribute("contenteditable", editable.toString)
-        editorSurface.nn.setAttribute("aria-readonly", (!editable).toString)
+      syncEditableSurface(editable)
+      if (!editable) {
+        lexicalEditor.nn.blur()
       }
       renderToolbar(lexicalEditor.nn)
+    }
+
+  private def syncEditableSurface(editable: Boolean): Unit =
+    if (editorSurface != null) {
+      val surface = editorSurface.nn
+      surface.setAttribute("contenteditable", editable.toString)
+      surface.setAttribute("aria-readonly", (!editable).toString)
+      surface.classList.toggle("lexical-read-only", !editable)
+      surface.classList.toggle("lexical-editor-input", true)
     }
 
   private def renderToolbar(editor: LexicalEditor): Unit =
     if (toolbarHost != null) {
       val elements = collectToolbarElements()
       val host = toolbarHost.nn
-      host.innerHTML = ""
+      val showToolbar = editableProperty.get && elements.nonEmpty
+
+      if (elements.isEmpty) {
+        host.innerHTML = ""
+        toolbarRendered = false
+      }
+
       host.style.display =
-        if (editableProperty.get && elements.nonEmpty) ""
+        if (showToolbar) ""
         else "none"
 
-      if (editableProperty.get && elements.nonEmpty) {
+      if (showToolbar && !toolbarRendered) {
+        host.innerHTML = ""
         val registry = new ToolbarRegistry(elements.toList)
         val manager = new ToolbarManager(editor, registry, new RibbonRenderer())
         manager.createToolbar(host)
+        toolbarRendered = true
       }
     }
 
@@ -553,6 +575,15 @@ object Editor {
 
   def placeholder_=(using e: Editor)(value: String): Unit =
     e.placeholder = value
+
+  def editable(using e: Editor): Boolean =
+    e.editableProperty.get
+
+  def editable_=(using e: Editor)(value: Boolean): Unit =
+    e.editableProperty.set(value)
+
+  def editableProperty(using e: Editor): Property[Boolean] =
+    e.editableProperty
 }
 
 private final class EditorSurface(onReady: HTMLDivElement => Unit) extends Component {
