@@ -70,8 +70,9 @@ object Main {
       route("/button") { ButtonPage.render() },
       route("/input") { InputPage.render() },
       route("/combo-box") { ComboBoxPage.render() },
-      route("/layout") { LayoutPage.render() },
       route("/table-view") { TableViewPage.render() },
+      route("/virtual-list") { VirtualListViewPage.render() },
+      route("/layout") { LayoutPage.render() },
       route("/window") { WindowPage.render() }
     )
 
@@ -109,6 +110,7 @@ object Main {
 
               sidebarSection("Wissen")
               navLink("/table-view", "Daten", "Atmen und Fließen")
+              navLink("/virtual-list", "VirtualList", "Unendliche Weiten")
             }
             
             div {

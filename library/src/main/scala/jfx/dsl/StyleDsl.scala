@@ -101,6 +101,18 @@ object StyleDsl {
   def border(using s: StyleProxy): String = ""
   def border_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("border", v)
 
+  def borderBottom(using s: StyleProxy): String = ""
+  def borderBottom_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("border-bottom", v)
+
+  def borderTop(using s: StyleProxy): String = ""
+  def borderTop_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("border-top", v)
+
+  def borderLeft(using s: StyleProxy): String = ""
+  def borderLeft_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("border-left", v)
+
+  def borderRight(using s: StyleProxy): String = ""
+  def borderRight_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("border-right", v)
+
   def fontWeight(using s: StyleProxy): String = ""
   def fontWeight_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("font-weight", v)
 

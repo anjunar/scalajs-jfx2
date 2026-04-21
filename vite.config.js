@@ -6,6 +6,12 @@ import { resolve } from "node:path";
 export default defineConfig({
     base: "/scalajs-jfx2/",
     root: "application/src/main/webapp",
+    server: {
+        fs: {
+            allow: [resolve(__dirname, ".")],
+        },
+        clearScreen: false,
+    },
     build: {
         outDir: resolve(__dirname, "docs"),
         emptyOutDir: true,
