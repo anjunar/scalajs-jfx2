@@ -130,6 +130,38 @@
     color: var(--aj-ink-muted);
 }
 
+.app-toolbar__chooser {
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid var(--aj-line-soft);
+    border-radius: 999px;
+    background: var(--aj-surface-muted);
+}
+
+.app-toolbar__choice {
+    min-height: 30px;
+    padding: 0 11px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--aj-ink-soft);
+    cursor: pointer;
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.app-toolbar__choice:hover {
+    background: var(--aj-surface-hover);
+    color: var(--aj-ink);
+}
+
+.app-toolbar__choice.is-active {
+    background: var(--aj-accent);
+    color: var(--aj-ink-inverse);
+    box-shadow: 0 8px 18px var(--aj-shadow-medium);
+}
+
 .app-content-viewport {
     flex: 1 1 auto;
     overflow-y: auto;
@@ -513,5 +545,20 @@ div.hbox.layout-shell-demo {
 
     .component-showcase__render {
         padding: 20px;
+    }
+
+    .app-toolbar {
+        gap: 10px;
+        padding: 0 14px;
+    }
+
+    .app-toolbar__title,
+    .app-toolbar__version {
+        display: none;
+    }
+
+    .app-toolbar__choice {
+        min-height: 28px;
+        padding: 0 9px;
     }
 }

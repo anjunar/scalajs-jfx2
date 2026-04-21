@@ -32,6 +32,8 @@ import scala.scalajs.js.annotation.JSExportTopLevel
 
 import app.pages.*
 import app.domain.DomainRegistry
+import app.I18n.Key
+import app.Theme.Mode
 import jfx.core.state.RemoteListProperty
 
 object Main {
@@ -49,12 +51,16 @@ object Main {
       case Some(root) if root.children.length > 0 =>
         Hydration.hydrate(root) {
           demo(initialPath)
+        }.`then` { _ =>
+          Theme.syncFromDocument()
+          js.undefined
         }.`catch` { error =>
           dom.console.error(s"Hydration failed: $error")
           js.undefined
         }
 
       case Some(root) =>
+        Theme.syncFromDocument()
         Browser.mount(root) {
           demo(initialPath)
         }
@@ -106,37 +112,37 @@ object Main {
             
             div {
               classes = "app-sidebar__header"
-              div { classes = "app-sidebar__logo"; text = "JFX2 API" }
+              div { classes = "app-sidebar__logo"; text = I18n.text(Key.SidebarLogo) }
             }
 
             div {
               classes = "app-sidebar__nav"
-              sidebarSection("Willkommen")
-              navLink("/", "Entdecken", "Die JFX2 Vision")
+              sidebarSection(Key.SectionWelcome)
+              navLink("/", Key.NavOverview, Key.NavOverviewSub)
               
-              sidebarSection("Interaktion")
-              navLink("/button", "Aktion", "Der Puls der App")
-              navLink("/image", "Bilder", "Visuelle Identität")
-              navLink("/image-cropper", "ImageCropper", "Upload & Zuschnitt")
+              sidebarSection(Key.SectionInteraction)
+              navLink("/button", Key.NavButton, Key.NavButtonSub)
+              navLink("/image", Key.NavImage, Key.NavImageSub)
+              navLink("/image-cropper", Key.NavImageCropper, Key.NavImageCropperSub)
               
-              sidebarSection("Gespräch")
-              navLink("/input", "Formulare", "Natürlicher Dialog")
-              navLink("/combo-box", "ComboBox", "Elegante Auswahl")
-              navLink("/editor", "Editor", "Lexical Playground")
+              sidebarSection(Key.SectionConversation)
+              navLink("/input", Key.NavInput, Key.NavInputSub)
+              navLink("/combo-box", Key.NavComboBox, Key.NavComboBoxSub)
+              navLink("/editor", Key.NavEditor, Key.NavEditorSub)
               
-              sidebarSection("Architektur")
-              navLink("/layout", "Struktur", "Raum für Design")
-              navLink("/window", "Fenster", "Raum für Fokus")
+              sidebarSection(Key.SectionArchitecture)
+              navLink("/layout", Key.NavLayout, Key.NavLayoutSub)
+              navLink("/window", Key.NavWindow, Key.NavWindowSub)
 
-              sidebarSection("Wissen")
-              navLink("/table-view", "Daten", "Atmen und Fließen")
-              navLink("/virtual-list", "VirtualList", "Unendliche Weiten")
-              navLink("/domain", "Domain", "Mapping & Reflection")
+              sidebarSection(Key.SectionKnowledge)
+              navLink("/table-view", Key.NavTableView, Key.NavTableViewSub)
+              navLink("/virtual-list", Key.NavVirtualList, Key.NavVirtualListSub)
+              navLink("/domain", Key.NavDomain, Key.NavDomainSub)
             }
             
             div {
               classes = "app-sidebar__footer"
-              text = "Built with JFX2"
+              text = I18n.text(Key.Footer)
             }
           }
         }
@@ -153,12 +159,35 @@ object Main {
               }
               div {
                 classes = "app-toolbar__title"
-                text = "Live Documentation"
+                text = I18n.text(Key.AppTitle)
               }
               div { classes = "spacer"; style { flex = "1" } }
+              hbox {
+                classes = "app-toolbar__chooser app-toolbar__language"
+                button() {
+                  classes = Seq("app-toolbar__choice")
+                  text = I18n.text(Key.Language)
+                  onClick { _ => I18n.toggle() }
+                }
+              }
+              hbox {
+                classes = "app-toolbar__chooser app-toolbar__theme"
+                button() {
+                  classes = Seq("app-toolbar__choice")
+                  text = I18n.text(Key.ThemeLight)
+                  classIf("is-active", Theme.modeProperty.map(_ == Mode.Light))
+                  onClick { _ => Theme.set(Mode.Light) }
+                }
+                button() {
+                  classes = Seq("app-toolbar__choice")
+                  text = I18n.text(Key.ThemeDark)
+                  classIf("is-active", Theme.modeProperty.map(_ == Mode.Dark))
+                  onClick { _ => Theme.set(Mode.Dark) }
+                }
+              }
               div {
                 classes = "app-toolbar__version"
-                text = "v2.0.0-alpha"
+                text = I18n.text(Key.Version)
               }
             }
 
@@ -174,7 +203,7 @@ object Main {
               classes = "app-footer"
               div {
                 classes = "app-footer__text"
-                text = s"\u00a9 ${new js.Date().getFullYear()} Anjunar. Pure Scala.js Architecture."
+                text = I18n.text(Key.Copyright).map(copy => s"\u00a9 ${new js.Date().getFullYear()} Anjunar. $copy")
               }
             }
           }
@@ -190,23 +219,23 @@ object Main {
       TableViewPage.render(books)
     }
 
-  private def sidebarSection(title: String) = {
+  private def sidebarSection(title: Key) = {
     div {
       classes = "app-sidebar__section-title"
-      text = title
+      text = I18n.text(title)
     }
   }
 
-  private def navLink(path: String, label: String, sub: String)(using d: Drawer) = {
+  private def navLink(path: String, label: Key, sub: Key)(using d: Drawer) = {
     link(path) {
       classes = "app-nav-link"
       div {
         classes = "app-nav-link__label"
-        text = label
+        text = I18n.text(label)
       }
       div {
         classes = "app-nav-link__sub"
-        text = sub
+        text = I18n.text(sub)
       }
       addDisposable(host.addEventListener("click", _ => {
         open = false // Close drawer after navigation
