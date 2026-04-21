@@ -152,4 +152,21 @@ class TableRow[S] extends Box("div") {
 object TableRow {
   def tableRow[S](init: TableRow[S] ?=> Unit): TableRow[S] =
     DslRuntime.build(new TableRow[S]())(init)
+
+  def rowItem[S](
+    rowIndex: Int,
+    rowValue: S,
+    tableView: TableView[S],
+    columns: Seq[TableColumn[S, ?]],
+    rowHeight: Double
+  )(using row: TableRow[S]): Unit =
+    row.bind(rowIndex, rowValue, tableView, columns, rowHeight)
+
+  def placeholderRow[S](
+    rowIndex: Int,
+    tableView: TableView[S],
+    columns: Seq[TableColumn[S, ?]],
+    rowHeight: Double
+  )(using row: TableRow[S]): Unit =
+    row.bindPlaceholder(rowIndex, tableView, columns, rowHeight)
 }

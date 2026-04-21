@@ -112,7 +112,7 @@ class VirtualListView[T] extends Box("div") {
               minHeight = s"${slot.height}px"
             }
             itemRenderer(slot.item, slot.index)
-            measureCellAfterRender(slot, summon[Box])
+            measureCellAfterRender(slot)
           }
         }
       }
@@ -121,7 +121,7 @@ class VirtualListView[T] extends Box("div") {
     measureViewportAfterRender()
   }
 
-  private def measureCellAfterRender(slot: VisibleSlot, cell: Box): Unit = {
+  private def measureCellAfterRender(slot: VisibleSlot)(using cell: Box): Unit = {
     if (!RenderBackend.current.isServer) {
       dom.window.requestAnimationFrame { _ =>
         cell.host.domNode.foreach { node =>

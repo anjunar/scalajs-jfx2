@@ -32,10 +32,10 @@ class Condition(val property: ReadOnlyProperty[Boolean]) extends Component {
 
 object Condition {
   def condition(property: ReadOnlyProperty[Boolean])(init: Condition ?=> Unit): Condition = {
-    DslRuntime.build(new Condition(property)) {
-      init
-      val c = summon[Condition]
-      c.renderInternal()
+    val condition = new Condition(property)
+    DslRuntime.build(condition) {
+      init(using condition)
+      condition.renderInternal()
     }
   }
   def thenDo(builder: => Unit)(using c: Condition): Unit = c.registerThen(builder)

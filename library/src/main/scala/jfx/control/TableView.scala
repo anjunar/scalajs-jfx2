@@ -10,7 +10,7 @@ import jfx.layout.Div.div
 import jfx.router.RouteContext
 import jfx.statement.Condition.*
 import jfx.statement.ForEach.forEach
-import jfx.control.TableRow.tableRow
+import jfx.control.TableRow.*
 import org.scalajs.dom
 
 import scala.concurrent.ExecutionContext
@@ -385,12 +385,11 @@ final class TableView[S] extends Box("div") {
                   }
 
                   tableRow[S] {
-                    val row = summon[TableRow[S]]
                     rowDef.item match {
                       case Some(value) =>
-                        row.bind(rowDef.index, value, TableView.this, columns.get.toSeq, rowHeightProperty.get)
+                        rowItem(rowDef.index, value, TableView.this, columns.get.toSeq, rowHeightProperty.get)
                       case None =>
-                        row.bindPlaceholder(rowDef.index, TableView.this, columns.get.toSeq, rowHeightProperty.get)
+                        placeholderRow(rowDef.index, TableView.this, columns.get.toSeq, rowHeightProperty.get)
                     }
                   }
                 }

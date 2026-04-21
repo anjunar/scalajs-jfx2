@@ -8,10 +8,10 @@ class Conditional(condition: ReadOnlyProperty[Boolean]) extends Condition(condit
 object Conditional {
 
   def conditional(condition: ReadOnlyProperty[Boolean])(init: Conditional ?=> Unit): Conditional = {
-    DslRuntime.build(new Conditional(condition)) {
-      init
-      val c = summon[Conditional]
-      c.renderInternal()
+    val conditional = new Conditional(condition)
+    DslRuntime.build(conditional) {
+      init(using conditional)
+      conditional.renderInternal()
     }
   }
 

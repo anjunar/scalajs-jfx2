@@ -65,11 +65,8 @@ final class Window extends Box("div") {
       
       headerHost = div {
         addClass("jfx-window__header")
-        val header = summon[Box]
         onPointerDown { event =>
-          if (shouldStartDrag(event)) {
-            startDrag(event, domElement(header))
-          }
+          startHeaderDrag(event)
         }
         
         span {
@@ -259,13 +256,22 @@ final class Window extends Box("div") {
       div {
         addClass("jfx-window__handle")
         addClass(s"jfx-window__handle--$name")
-        val handle = summon[Box]
         onPointerDown { event =>
-          if (isPrimaryPointerButton(event)) {
-            startResize(event, domElement(handle), horizontal = horizontal, vertical = vertical)
-          }
+          startHandleResize(event, horizontal = horizontal, vertical = vertical)
         }
       }
+    }
+  }
+
+  private def startHeaderDrag(event: PointerEvent)(using header: Box): Unit = {
+    if (shouldStartDrag(event)) {
+      startDrag(event, domElement(header))
+    }
+  }
+
+  private def startHandleResize(event: PointerEvent, horizontal: Int, vertical: Int)(using handle: Box): Unit = {
+    if (isPrimaryPointerButton(event)) {
+      startResize(event, domElement(handle), horizontal = horizontal, vertical = vertical)
     }
   }
 
