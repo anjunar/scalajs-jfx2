@@ -44,9 +44,18 @@ object VirtualListViewPage {
           vbox {
             style { height = "500px"; border = "1px solid var(--aj-line)"; borderRadius = "8px"; overflow = "hidden" }
 
-            virtualList(items) { (item, index) =>
+            virtualList(items) { (itemOrNull, index) =>
+              val item = itemOrNull.asInstanceOf[ShowcaseItem]
               div {
-                text = s"$index"
+                style {
+                  height = if (item != null) s"${item.height}px" else "44px"
+                  backgroundColor = if (item != null) item.color else "transparent"
+                  display = "flex"
+                  alignItems = "center"
+                  padding = "0 16px"
+                  borderBottom = "1px solid var(--aj-line-faint)"
+                }
+                text = if (item != null) s"$index - ${item.title}" else s"$index - Lade..."
               }
             }
           }
