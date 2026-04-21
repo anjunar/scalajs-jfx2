@@ -31,6 +31,7 @@ import scala.scalajs.js.JSConverters.*
 import scala.scalajs.js.annotation.JSExportTopLevel
 
 import app.pages.*
+import app.domain.DomainRegistry
 import jfx.core.state.RemoteListProperty
 
 object Main {
@@ -40,6 +41,7 @@ object Main {
 
   @JSExportTopLevel("boot")
   def boot(): Unit = {
+    DomainRegistry.init()
     val maybeRoot = Option(dom.document.getElementById("root")).map(_.asInstanceOf[HTMLElement])
     val initialPath = s"${dom.window.location.pathname}${dom.window.location.search}"
 
@@ -84,7 +86,8 @@ object Main {
       },
       asyncRoute("/virtual-list") { page { VirtualListViewPage.render() } },
       asyncRoute("/layout") { page { LayoutPage.render() } },
-      asyncRoute("/window") { page { WindowPage.render() } }
+      asyncRoute("/window") { page { WindowPage.render() } },
+      asyncRoute("/domain") { page { DomainPage.render() } }
     )
 
     div {
@@ -122,6 +125,7 @@ object Main {
               sidebarSection("Wissen")
               navLink("/table-view", "Daten", "Atmen und Fließen")
               navLink("/virtual-list", "VirtualList", "Unendliche Weiten")
+              navLink("/domain", "Domain", "Mapping & Reflection")
             }
             
             div {

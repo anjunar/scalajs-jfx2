@@ -8,6 +8,8 @@ import jfx.form.InputContainer.inputContainer
 import jfx.form.validators.{EmailValidator, NotBlankValidator}
 import jfx.layout.Div.div
 import jfx.layout.VBox.vbox
+import jfx.layout.HBox.hbox
+import jfx.form.Form
 import org.scalajs.dom
 import scala.scalajs.js
 import app.components.Showcase.*
@@ -61,47 +63,80 @@ inputContainer("Name eingeben...") {
 }""")
         }
         componentShowcase(
-          "DI-Bound Form",
-          "Im Form-Kontext melden sich Controls selbst an. Submit-Logik kann dadurch alle Felder gemeinsam validieren."
+          "Domain-Bound Form",
+          "Formulare können direkt an Domänen-Objekte gebunden werden. Reflection verbindet Feldnamen mit Properties."
         ) {
-          import jfx.form.Form.{form, controls, clearErrors}
-          form {
+          import jfx.form.Form.form
+          import jfx.form.SubForm.subForm
+          import jfx.form.Formular
+          import app.domain.{User, Address}
+
+          val user = new User()
+          user.name.set("Max Mustermann")
+          user.address.get.city.set("Musterstadt")
+
+          form(user) {
+            val f = summon[Form[User]]
             vbox {
-              style { gap = "10px" }
-              
-              inputContainer("Vorname") {
-                input("firstName") { 
-                  validators += NotBlankValidator("Vorname darf nicht leer sein")
-                }
+              style { gap = "15px" }
+
+              inputContainer("Vollständiger Name") {
+                input("name") {}
               }
 
               inputContainer("E-Mail") {
-                input("email") { 
-                  validators += EmailValidator()
-                }
+                input("email") {}
               }
-              
-              button("Submit (Siehe Konsole)") {
-                onClick { _ => 
-                  // Validate all controls before submit
-                  val hasErrors = controls.get.map(_.validate(forceVisible = true)).exists(_.nonEmpty)
-                  if (hasErrors) {
-                     dom.window.alert("Formular enthält Fehler!")
-                  } else {
-                     val data = controls.get.map(c => s"${c.name}: ${c.valueProperty.get}").mkString(", ")
-                     dom.window.alert(s"Form Data: $data")
+
+              subForm("address") {
+                vbox {
+                  style { gap = "10px"; padding = "10px"; border = "1px solid #eee"; borderRadius = "4px" }
+                  div { text = "Adresse (SubForm)"; style { fontWeight = "bold" } }
+                  
+                  inputContainer("Straße") {
+                    input("street") {}
+                  }
+                  inputContainer("Stadt") {
+                    input("city") {}
                   }
                 }
               }
-              
-              button("Clear") {
-                onClick { _ =>
-                  controls.foreach(_.valueProperty.asInstanceOf[Property[String]].set(""))
-                  clearErrors()
+
+              hbox {
+                style { gap = "10px" }
+                button("Validieren") {
+                  onClick { _ =>
+                    import jfx.form.Form.controls
+                    val hasErrors = controls(using f).get.map(_.validate(forceVisible = true)).exists(_.nonEmpty)
+                    if (hasErrors) {
+                      dom.window.alert("Formular enthält Fehler!")
+                    } else {
+                      dom.window.alert("Alles ok!")
+                    }
+                  }
                 }
+              }
+
+              div {
+                classes = "showcase-result"
+                val info = user.name.map(n => s"Aktueller User: $n (${user.email.get}) wohnt in ${user.address.get.city.get}")
+                text = info
               }
             }
           }
+        }
+        apiSection(
+          "Domain Binding",
+          "Durch die Übergabe eines Objekts an 'form' suchen sich die Inputs automatisch die passenden Properties."
+        ) {
+          codeBlock("scala", """val user = new User()
+form(user) {
+  input("name") // Bindet an user.name (Property[String])
+  
+  subForm("address") {
+    input("city") // Bindet an user.address.city
+  }
+}""")
         }
 
         insightGrid(

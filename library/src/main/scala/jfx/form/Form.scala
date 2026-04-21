@@ -2,35 +2,10 @@ package jfx.form
 
 import jfx.core.component.Box
 import jfx.core.component.Component.*
-import jfx.core.state.ListProperty
+import jfx.core.state.Property
 import jfx.dsl.DslRuntime
 
-class Form extends Box("form") with FormContext {
-  val controls: ListProperty[Control[?]] = new ListProperty[Control[?]]()
-
-  override def registerControl(control: Control[?]): Unit = {
-    if (!controls.contains(control)) {
-      controls += control
-    }
-  }
-
-  override def unregisterControl(control: Control[?]): Unit = {
-    val idx = controls.indexOf(control)
-    if (idx >= 0) controls.remove(idx)
-  }
-
-  override def clearErrors(): Unit = {
-    controls.foreach { control =>
-      control.setErrors(Nil)
-    }
-  }
-
-  override def resetInteractionState(): Unit = {
-    controls.foreach { control =>
-      control.setDirty(false)
-      control.setErrors(Nil)
-    }
-  }
+class Form[M](val name: String = "default") extends Box("form") with Formular[M] {
 
   override def compose(): Unit = {
     given jfx.core.component.Component = this
@@ -39,11 +14,16 @@ class Form extends Box("form") with FormContext {
       event.preventDefault()
     }
   }
+
+  def setModel(model: M): Unit = {
+    valueProperty.asInstanceOf[Property[M]].set(model)
+  }
 }
 
 object Form {
-  def form(init: Form ?=> Unit): Form = {
-    val f = new Form()
+  def form[M](model: M)(init: Form[M] ?=> Unit): Form[M] = {
+    val f = new Form[M]()
+    f.setModel(model)
     DslRuntime.build(f) {
       DslRuntime.provide[FormContext](f) {
         init(using f)
@@ -51,7 +31,14 @@ object Form {
     }
   }
 
-  def controls(using f: Form): ListProperty[Control[?]] = f.controls
+  def form(init: Form[Any] ?=> Unit): Form[Any] = {
+    val f = new Form[Any]()
+    DslRuntime.build(f) {
+      DslRuntime.provide[FormContext](f) {
+        init(using f)
+      }
+    }
+  }
 
-  def clearErrors()(using f: Form): Unit = f.clearErrors()
+  def controls[M](using f: Form[M]): jfx.core.state.ListProperty[Control[?]] = f.controls
 }

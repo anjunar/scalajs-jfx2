@@ -18,6 +18,7 @@ class Input(override val name: String, override val standalone: Boolean = false)
     attribute("name", name)
     
     onInput { _ =>
+      org.scalajs.dom.console.log(s"Input '$name' changed to: $nativeValue")
       setDirty(true)
       valueProperty.set(nativeValue)
     }

@@ -19,7 +19,7 @@ trait Control[V] extends Component with Editable {
   val invalidProperty: ReadOnlyProperty[Boolean] =
     errorsProperty.map(_.length > 0)
 
-  val valueProperty: Property[V]
+  val valueProperty: ReadOnlyProperty[V]
 
   def placeholder: String = placeholderProperty.get
   def placeholder_=(value: String): Unit = placeholderProperty.set(value)
@@ -35,6 +35,9 @@ trait Control[V] extends Component with Editable {
 
     if (forceVisible || dirtyProperty.get) {
       if (forceVisible) setDirty(true)
+      if (errors.nonEmpty) {
+        org.scalajs.dom.console.log(s"Control '$name' invalid: ${errors.mkString(", ")}")
+      }
       errorsProperty.setAll(errors)
     } else {
       errorsProperty.setAll(Nil)

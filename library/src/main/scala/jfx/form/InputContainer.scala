@@ -6,36 +6,34 @@ import jfx.dsl.DslRuntime
 import jfx.core.component.Component.*
 import org.scalajs.dom
 
+import jfx.layout.Div.div
+import jfx.layout.HorizontalLine.horizontalLine
+
 object InputContainer {
   def inputContainer(placeholderText: String)(init: => Unit): Box = {
-    val container = new Box("div")
-    DslRuntime.build(container) {
+    div {
       addClass("jfx-input-container")
+      val container = summon[Box]
 
-      val labelDiv = new Box("div")
-      DslRuntime.build(labelDiv) {
+      val labelDiv = div {
         addClass("jfx-input-container__label")
-        val pSpan = new Box("span")
-        DslRuntime.build(pSpan) {
+        div {
           addClass("placeholder")
           text = placeholderText
         }
       }
 
-      val contentSlot = new Box("div")
-      DslRuntime.build(contentSlot) {
+      val contentSlot = div {
         addClass("jfx-input-container__control")
         init // Render child control here
       }
 
-      val divider = new Box("hr")
-      DslRuntime.build(divider) {
+      val divider = horizontalLine {
         addClass("jfx-input-container__divider")
       }
 
-      val errorsDiv = new Box("div")
       val errorsTextProp = Property("")
-      DslRuntime.build(errorsDiv) {
+      val errorsDiv = div {
         addClass("jfx-input-container__errors")
         text = errorsTextProp
       }
@@ -74,6 +72,5 @@ object InputContainer {
         })
       }
     }
-    container
   }
 }
