@@ -38,6 +38,7 @@ object RouterConfig {
   def resolve(path: String): String = {
     if (path == null) ""
     else if (path.startsWith("http") || path.startsWith("//") || path.startsWith("mailto:") || path.startsWith("tel:")) path
+    else if (path.startsWith("?") || path.startsWith("#")) path
     else {
       val p = if (path.startsWith("/")) path else s"/$path"
       val base = basePath

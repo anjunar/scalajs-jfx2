@@ -19,16 +19,21 @@ import jfx.layout.Viewport
 import jfx.layout.HorizontalLine.horizontalLine
 import jfx.router.Route
 import jfx.router.Route.route
+import jfx.router.RouteContext
 import jfx.router.Router.router
 import jfx.router.RouterConfig
 import jfx.ssr.Ssr
 import org.scalajs.dom
 import org.scalajs.dom.HTMLElement
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.scalajs.js
+import scala.scalajs.js.JSConverters.*
 import scala.scalajs.js.annotation.JSExportTopLevel
 
 import app.pages.*
+import jfx.core.state.RemoteListProperty
 
 object Main {
 
@@ -70,7 +75,13 @@ object Main {
       route("/button") { ButtonPage.render() },
       route("/input") { InputPage.render() },
       route("/combo-box") { ComboBoxPage.render() },
-      route("/table-view") { TableViewPage.render() },
+      asyncRoute("/table-view") {
+        val books = TableViewPage.createRemoteBooks(pageSize = 50)
+
+        books.reload(TableViewPage.ShowcaseBookQuery.first(50)).toFuture.map { _ =>
+          tableViewPage(books)
+        }
+      },
       route("/virtual-list") { VirtualListViewPage.render() },
       route("/layout") { LayoutPage.render() },
       route("/window") { WindowPage.render() }
@@ -161,6 +172,16 @@ object Main {
       }
     }
   }
+
+  private def asyncRoute(path: String)(factory: RouteContext ?=> Future[Route.Factory]): Route =
+    Route.asyncRoute(path) {
+      factory.toJSPromise
+    }
+
+  private def tableViewPage(
+    books: RemoteListProperty[TableViewPage.ShowcaseBook, TableViewPage.ShowcaseBookQuery]
+  ): Route.Factory =
+    (ctx: RouteContext) ?=> TableViewPage.render(books)
 
   private def sidebarSection(title: String) = {
     div {

@@ -4,14 +4,27 @@ import jfx.control.TableColumn.column
 import jfx.control.TableView.*
 import jfx.control.{TableColumn, TableView}
 import jfx.core.component.Component.*
-import jfx.core.state.ListProperty
+import jfx.core.state.{ListProperty, RemoteListProperty}
 import jfx.layout.Div.div
 import jfx.layout.VBox.vbox
 import app.components.Showcase.*
 
+import scala.concurrent.{ExecutionContext, Future}
+import scala.scalajs.js.JSConverters.*
+
 object TableViewPage {
 
   final case class ShowcaseBook(title: String, author: String, year: Int)
+  final case class ShowcaseBookQuery(
+    index: Int,
+    limit: Int,
+    sorting: Vector[ListProperty.RemoteSort] = Vector.empty
+  )
+
+  object ShowcaseBookQuery {
+    def first(limit: Int, sorting: Vector[ListProperty.RemoteSort] = Vector.empty): ShowcaseBookQuery =
+      ShowcaseBookQuery(index = 0, limit = math.max(1, limit), sorting = sorting)
+  }
 
   private val showcaseBookCatalog: Vector[(String, String, Int)] = Vector(
     ("Der Hobbit", "J. R. R. Tolkien", 1937),
@@ -122,7 +135,66 @@ object TableViewPage {
     }
   }
 
-  def render() = {
+  def createRemoteBooks(
+    pageSize: Int = 50
+  )(using executionContext: ExecutionContext): RemoteListProperty[ShowcaseBook, ShowcaseBookQuery] = {
+    val normalizedPageSize = math.max(1, pageSize)
+
+    ListProperty.remote[ShowcaseBook, ShowcaseBookQuery](
+      loader = ListProperty.RemoteLoader { query =>
+        Future {
+          val sorted = sortBooks(buildShowcaseBooks(1000).toVector, query.sorting)
+          val rows = sorted.slice(query.index, query.index + query.limit)
+          val nextIndex = query.index + rows.length
+
+          ListProperty.RemotePage[ShowcaseBook, ShowcaseBookQuery](
+            items = rows,
+            offset = Some(query.index),
+            nextQuery =
+              if (nextIndex < sorted.length) Some(query.copy(index = nextIndex, limit = normalizedPageSize))
+              else None,
+            totalCount = Some(sorted.length),
+            hasMore = Some(nextIndex < sorted.length)
+          )
+        }.toJSPromise
+      },
+      initialQuery = ShowcaseBookQuery.first(normalizedPageSize),
+      executionContext = executionContext,
+      sortUpdater = Some((query, sorting) =>
+        query.copy(
+          index = 0,
+          limit = normalizedPageSize,
+          sorting = sorting.toVector
+        )
+      ),
+      rangeQueryUpdater = Some((query, index, limit) =>
+        query.copy(
+          index = index,
+          limit = math.max(1, limit)
+        )
+      )
+    )
+  }
+
+  private def sortBooks(
+    books: Vector[ShowcaseBook],
+    sorting: Vector[ListProperty.RemoteSort]
+  ): Vector[ShowcaseBook] =
+    sorting.headOption match {
+      case Some(sort) =>
+        val sorted =
+          sort.field match {
+            case "title"  => books.sortBy(_.title.toLowerCase)
+            case "author" => books.sortBy(_.author.toLowerCase)
+            case "year"   => books.sortBy(_.year)
+            case _        => books
+          }
+        if (sort.ascending) sorted else sorted.reverse
+      case None =>
+        books
+    }
+
+  def render(books: RemoteListProperty[ShowcaseBook, ShowcaseBookQuery]) = {
     showcasePage("TableView", "Datenmengen, die atmen und fließen.") {
       vbox {
         style { gap = "24px" }
@@ -131,34 +203,38 @@ object TableViewPage {
           text = "Die JFX2 TableView vereint reaktive Virtualisierung mit voller SEO-Tauglichkeit. Im Browser genießen Benutzer flüssiges Scrolling, während Crawler durch echte HTML-Links die gesamte Datenmenge indexieren können."
         }
         componentShowcase("Crawlbarer Bücher-Katalog") {
-          val books = new ListProperty[ShowcaseBook]()
-          books.setAll(buildShowcaseBooks(1000))
-          
           tableView[ShowcaseBook] {
             style { height = "500px" }
             rowHeight = 40.0
             crawlable = true
 
-            column[ShowcaseBook, String]("Titel") { item =>
+            val titleColumn = column[ShowcaseBook, String]("Titel") { item =>
                text = item.title
             }
-            column[ShowcaseBook, String]("Autor") { item =>
+            titleColumn.sortableProperty.set(true)
+            titleColumn.sortKeyProperty.set(Some("title"))
+
+            val authorColumn = column[ShowcaseBook, String]("Autor") { item =>
                text = item.author
             }
-            column[ShowcaseBook, Int]("Jahr") { item =>
+            authorColumn.sortableProperty.set(true)
+            authorColumn.sortKeyProperty.set(Some("author"))
+
+            val yearColumn = column[ShowcaseBook, Int]("Jahr") { item =>
                text = item.year.toString
             }
+            yearColumn.sortableProperty.set(true)
+            yearColumn.sortKeyProperty.set(Some("year"))
 
             TableView.items = books
           }
         }
-        apiSection("Crawlable TableView Usage") {
-          codeBlock("scala", """tableView[Book] {
-  crawlable = true // SEO enabled
-  items = myLargeDataset
+        apiSection("Remote TableView Route Usage") {
+          codeBlock("scala", """asyncRoute("/table-view") {
+  val books = TableViewPage.createRemoteBooks(pageSize = 50)
   
-  column[Book, String]("Titel") { item =>
-     text = item.title
+  books.reload(TableViewPage.ShowcaseBookQuery.first(50)).toFuture.map { _ =>
+    (ctx: RouteContext) ?=> TableViewPage.render(books)
   }
 }""")
         }

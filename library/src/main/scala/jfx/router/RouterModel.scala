@@ -32,13 +32,23 @@ case class RouterState(
 case class Route(
   path: String,
   factory: RouteContext => Unit,
+  asyncFactory: Option[RouteContext => js.Promise[Route.Factory]] = None,
   children: Seq[Route] = Nil
 )
 
 object Route {
+  type Factory = RouteContext ?=> Unit
+
   def route(path: String)(factory: RouteContext ?=> Unit): Route = {
     Route(path, ctx => factory(using ctx))
   }
+
+  def asyncRoute(path: String)(factory: RouteContext ?=> js.Promise[Factory]): Route =
+    Route(
+      path = path,
+      factory = _ => (),
+      asyncFactory = Some(ctx => factory(using ctx))
+    )
 }
 
 object RouteMatcher {

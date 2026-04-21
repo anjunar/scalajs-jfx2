@@ -30,6 +30,8 @@ class TableRow[S] extends Box("div") {
     rowHeight: Double
   ): Unit = {
     given Component = this
+    removeBaseClass("jfx-table-row-empty")
+    removeBaseClass("jfx-table-row-placeholder")
     indexProperty.set(rowIndex)
     itemProperty.set(rowValue)
     
@@ -57,6 +59,46 @@ class TableRow[S] extends Box("div") {
           flex = "0 0 auto"
         }
         typedColumn.cellRenderer.get.foreach(r => r(rowValue))
+      }
+    }
+  }
+
+  private[control] def bindPlaceholder(
+    rowIndex: Int,
+    tableView: TableView[S],
+    columns: Seq[TableColumn[S, ?]],
+    rowHeight: Double
+  ): Unit = {
+    given Component = this
+    indexProperty.set(rowIndex)
+    itemProperty.set(null)
+
+    addBaseClass("jfx-table-row-empty")
+    addBaseClass("jfx-table-row-placeholder")
+    if (rowIndex % 2 == 0) {
+      addBaseClass("jfx-table-row-even")
+      removeBaseClass("jfx-table-row-odd")
+    } else {
+      addBaseClass("jfx-table-row-odd")
+      removeBaseClass("jfx-table-row-even")
+    }
+
+    attribute("aria-selected", "false")
+
+    children.toSeq.foreach { c => removeChild(c); c.dispose() }
+
+    columns.zipWithIndex.foreach { case (col, colIndex) =>
+      val typedColumn = col.asInstanceOf[TableColumn[S, Any]]
+      Box.box("div") {
+        addClass("jfx-table-cell")
+        addClass("jfx-table-cell-empty")
+        addClass("jfx-table-cell-loading-placeholder")
+        style {
+          val w = tableView.renderedWidthsProperty.map(ws => s"${ws.lift(colIndex).getOrElse(typedColumn.prefWidth)}px")
+          width_=(w)
+          minWidth_=(w)
+          flex = "0 0 auto"
+        }
       }
     }
   }
