@@ -11,6 +11,7 @@ import jfx.statement.ForEach.forEach
 import jfx.router.RouteContext
 import jfx.control.Link.link
 import org.scalajs.dom
+import scala.scalajs.js
 
 final class TableView[S] extends Box("div") {
 
@@ -23,10 +24,15 @@ final class TableView[S] extends Box("div") {
   
   val scrollTopProperty = Property(0.0)
   val scrollLeftProperty = Property(0.0)
+  val viewportWidthProperty = Property(0.0)
   val viewportHeightProperty = Property(400.0)
 
   val crawlableProperty = Property(false)
   private val defaultLimit = 50
+
+  val selectedIndexProperty = Property(-1)
+  val selectedItemProperty = Property[S | Null](null)
+  val placeholderProperty = Property[Component | Null](null)
 
   private case class VisibleRow(index: Int, item: S)
   private val visibleRowsProperty = new ListProperty[VisibleRow]()
@@ -67,9 +73,15 @@ final class TableView[S] extends Box("div") {
     }
   }
 
-  private val totalColumnWidthProperty: ReadOnlyProperty[Double] = columns.asProperty.map { cols =>
-    cols.toSeq.foldLeft(0.0)((sum, col) => sum + col.prefWidth)
+  val renderedWidthsProperty: ReadOnlyProperty[Vector[Double]] = {
+    viewportWidthProperty.flatMap { vw =>
+      columns.asProperty.map { cols =>
+        resolveRenderedColumnWidths(cols.toSeq, vw)
+      }
+    }
   }
+
+  private val totalColumnWidthProperty: ReadOnlyProperty[Double] = renderedWidthsProperty.map(_.sum)
 
   override def compose(): Unit = {
     given Component = this
@@ -77,9 +89,19 @@ final class TableView[S] extends Box("div") {
     
     addDisposable(scrollTopProperty.observe(_ => recomputeVisibleRows()))
     addDisposable(viewportHeightProperty.observe(_ => recomputeVisibleRows()))
+    addDisposable(viewportWidthProperty.observe(_ => recomputeVisibleRows()))
     addDisposable(items.observeChanges(_ => recomputeVisibleRows()))
     addDisposable(columns.observeChanges(_ => recomputeVisibleRows()))
     addDisposable(rowHeightProperty.observe(_ => recomputeVisibleRows()))
+    addDisposable(selectedIndexProperty.observe(_ => recomputeVisibleRows()))
+
+    addDisposable(selectedIndexProperty.observe { idx =>
+      if (idx >= 0 && idx < items.length) {
+        selectedItemProperty.set(items(idx))
+      } else {
+        selectedItemProperty.set(null)
+      }
+    })
 
     if (!RenderBackend.current.isServer) {
        val (offset, _) = getCrawlParams
@@ -111,10 +133,12 @@ final class TableView[S] extends Box("div") {
             }
 
             forEach(columns) { col =>
+              val index = columns.indexOf(col)
               div {
                 addClass("jfx-table-header-cell")
+                classIf("jfx-table-header-cell-sortable", col.sortableProperty)
                 style {
-                  width = s"${col.prefWidth}px"
+                  width_=(renderedWidthsProperty.map(ws => s"${ws.lift(index).getOrElse(col.prefWidth)}px"))
                   flex = "0 0 auto"
                   boxSizing = "border-box"
                 }
@@ -135,14 +159,17 @@ final class TableView[S] extends Box("div") {
         scrollTopProperty.set(target.scrollTop)
         scrollLeftProperty.set(target.scrollLeft)
         viewportHeightProperty.set(target.clientHeight.toDouble)
+        viewportWidthProperty.set(target.clientWidth.toDouble)
       }
 
       if (!RenderBackend.current.isServer) {
          dom.window.requestAnimationFrame { _ =>
-            viewportHeightProperty.set(host.clientHeight.toDouble)
+            val target = host.asInstanceOf[jfx.core.render.DomHostElement].element.asInstanceOf[dom.html.Div]
+            viewportHeightProperty.set(target.clientHeight.toDouble)
+            viewportWidthProperty.set(target.clientWidth.toDouble)
+            
             val (offset, _) = getCrawlParams
             if (offset > 0) {
-               val target = host.asInstanceOf[jfx.core.render.DomHostElement].element.asInstanceOf[dom.html.Div]
                target.scrollTop = offset * rowHeightProperty.get
             }
             recomputeVisibleRows()
@@ -159,21 +186,44 @@ final class TableView[S] extends Box("div") {
           width_=(totalColumnWidthProperty.map(w => s"${w}px"))
         }
 
-        forEach(visibleRowsProperty) { rowDef =>
-          div {
-            addClass("jfx-table-row-slot")
-            style {
-              position = "absolute"
-              top_=(Property(s"${rowDef.index * rowHeightProperty.get}px"))
-              left = "0"
-              width_=(totalColumnWidthProperty.map(w => s"${w}px"))
-              height = s"${rowHeightProperty.get}px"
-              display = "flex"
+        condition(items.asProperty.map(_.isEmpty)) {
+          thenDo {
+            div {
+              addClass("jfx-table-placeholder")
+              style {
+                position = "absolute"
+                top = "0"; left = "0"; width = "100%"; height = "100%"
+                display = "flex"; alignItems = "center"; justifyContent = "center"
+              }
+              val custom = placeholderProperty.get
+              if (custom != null) {
+                // To follow pure DSL, placeholders should be defined in compose
+                // or via a mechanism that respects component scope.
+                // For now we just don't do anything complex here.
+                ()
+              } else {
+                text = "No content in table"
+              }
             }
+          }
+          elseDo {
+            forEach(visibleRowsProperty) { rowDef =>
+              div {
+                addClass("jfx-table-row-slot")
+                style {
+                  position = "absolute" 
+                  top_=(Property(s"${rowDef.index * rowHeightProperty.get}px"))
+                  left = "0"
+                  width_=(totalColumnWidthProperty.map(w => s"${w}px"))
+                  height = s"${rowHeightProperty.get}px"
+                  display = "flex"
+                }
 
-            val row = new TableRow[S]()
-            DslRuntime.build(row) {
-              row.bind(rowDef.index, rowDef.item, TableView.this, columns.get.toSeq, rowHeightProperty.get)
+                val row = new TableRow[S]()
+                DslRuntime.build(row) {
+                  row.bind(rowDef.index, rowDef.item, TableView.this, columns.get.toSeq, rowHeightProperty.get)
+                }
+              }
             }
           }
         }
@@ -204,6 +254,100 @@ final class TableView[S] extends Box("div") {
       }
     }
   }
+
+  def select(index: Int): Unit = {
+    if (index >= 0 && index < items.length) {
+      selectedIndexProperty.set(index)
+    } else {
+      selectedIndexProperty.set(-1)
+    }
+  }
+
+  def select(item: S): Unit = {
+    val idx = items.toSeq.indexOf(item)
+    select(idx)
+  }
+
+  private def resolveRenderedColumnWidths(
+    columns: Seq[TableColumn[S, ?]],
+    viewportWidth: Double
+  ): Vector[Double] = {
+    if (columns.isEmpty) return Vector.empty
+
+    val baseWidths = columns.map(_.prefWidth).toVector
+    val minWidths = columns.map(_ => 40.0).toVector
+    val maxWidths = columns.map(_ => Double.PositiveInfinity).toVector
+    val resizableIndices = columns.indices.toVector
+
+    val minTotal = minWidths.sum
+    val targetTotal = math.max(minTotal, viewportWidth)
+
+    val delta = targetTotal - baseWidths.sum
+    if (math.abs(delta) < 0.5) return baseWidths
+
+    val adjusted =
+      if (delta > 0) {
+        distributeWidthDelta(
+          widths = baseWidths,
+          indices = resizableIndices,
+          lowerBounds = minWidths,
+          upperBounds = maxWidths,
+          delta = delta,
+          weight = index => math.max(1.0, baseWidths(index))
+        )
+      } else {
+        distributeWidthDelta(
+          widths = baseWidths,
+          indices = resizableIndices,
+          lowerBounds = minWidths,
+          upperBounds = maxWidths,
+          delta = delta,
+          weight = index => math.max(1.0, baseWidths(index) - minWidths(index))
+        )
+      }
+
+    adjusted
+  }
+
+  private def distributeWidthDelta(
+    widths: Vector[Double],
+    indices: Vector[Int],
+    lowerBounds: Vector[Double],
+    upperBounds: Vector[Double],
+    delta: Double,
+    weight: Int => Double
+  ): Vector[Double] = {
+    val buffer = widths.toArray
+    var remaining = delta
+    var active = indices
+    var iterations = 0
+
+    while (active.nonEmpty && math.abs(remaining) > 0.5 && iterations < 12) {
+      iterations += 1
+      val direction = math.signum(remaining)
+      val boundedActive = active.filter { index =>
+        if (direction > 0) buffer(index) + 0.5 < upperBounds(index)
+        else buffer(index) - 0.5 > lowerBounds(index)
+      }
+      active = boundedActive
+      if (active.isEmpty) {
+        remaining = 0.0
+      } else {
+        val totalWeight = active.map(index => math.max(0.0001, weight(index))).sum
+        var consumed = 0.0
+        active.foreach { index =>
+          val share = remaining * math.max(0.0001, weight(index)) / totalWeight
+          val updated = math.max(lowerBounds(index), math.min(buffer(index) + share, upperBounds(index)))
+          val actual = updated - buffer(index)
+          buffer(index) = updated
+          consumed += actual
+        }
+        if (math.abs(consumed) < 0.1) remaining = 0.0
+        else remaining -= consumed
+      }
+    }
+    buffer.toVector
+  }
 }
 
 object TableView {
@@ -230,6 +374,14 @@ object TableView {
 
   def crawlable(using t: TableView[?]): Boolean = t.crawlableProperty.get
   def crawlable_=(v: Boolean)(using t: TableView[?]): Unit = t.crawlableProperty.set(v)
+
+  def selectedIndex(using t: TableView[?]): Int = t.selectedIndexProperty.get
+  def selectedIndex_=(v: Int)(using t: TableView[?]): Unit = t.selectedIndexProperty.set(v)
+
+  def selectedItem[S](using t: TableView[S]): S | Null = t.selectedItemProperty.get
+
+  def placeholder[S](using t: TableView[S]): Component | Null = t.placeholderProperty.get
+  def placeholder_=[S](v: Component | Null)(using t: TableView[S]): Unit = t.placeholderProperty.set(v)
 
   def columns[S](using t: TableView[S]): ListProperty[TableColumn[S, ?]] =
     t.columns

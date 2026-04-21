@@ -4,6 +4,7 @@ import jfx.core.component.{Box, Component}
 import jfx.core.state.{Disposable, Property}
 import jfx.dsl.DslRuntime
 import jfx.core.component.Component.*
+import org.scalajs.dom
 
 class TableRow[S] extends Box("div") {
   val itemProperty = Property[S | Null](null)
@@ -32,33 +33,30 @@ class TableRow[S] extends Box("div") {
     indexProperty.set(rowIndex)
     itemProperty.set(rowValue)
     
-    // Update position
-/*
-    style {
-      top = s"${rowIndex * rowHeight}px"
-      height = s"${rowHeight}px"
-    }
-*/
-
-    // For Virtualization, we MUST rebuild or update the cell content.
-    // Since cellRenderer is a function S => Unit, we currently rebuild the cell's children
-    // to ensure the renderer runs with the NEW rowValue.
+    val isSelected = tableView.selectedIndexProperty.map(_ == rowIndex)
+    classIf("jfx-table-row-selected", isSelected)
+    classIf("jfx-table-row-even", Property(rowIndex % 2 == 0))
+    classIf("jfx-table-row-odd", Property(rowIndex % 2 != 0))
     
-    // Safety check: if we have children (cells), we need to clear them to re-render with new data
-    // because cellRenderer might have created components that are now stale.
+    attribute("aria-selected", isSelected.map(_.toString))
+
+    onClick { _ =>
+      tableView.select(rowIndex)
+    }
+
     children.toSeq.foreach { c => removeChild(c); c.dispose() }
 
-    columns.foreach { col =>
+    columns.zipWithIndex.foreach { case (col, colIndex) =>
       val typedColumn = col.asInstanceOf[TableColumn[S, Any]]
       Box.box("div") {
         addClass("jfx-table-cell")
-        // Apply column width if set
         style {
-          width = s"${typedColumn.prefWidth}px"
-          minWidth = s"${typedColumn.prefWidth}px"
+          val w = tableView.renderedWidthsProperty.map(ws => s"${ws.lift(colIndex).getOrElse(typedColumn.prefWidth)}px")
+          width_=(w)
+          minWidth_=(w)
           flex = "0 0 auto"
         }
-        typedColumn.cellRenderer.foreach(r => r(rowValue))
+        typedColumn.cellRenderer.get.foreach(r => r(rowValue))
       }
     }
   }

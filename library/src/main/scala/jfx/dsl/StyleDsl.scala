@@ -12,7 +12,6 @@ object StyleDsl {
     init(using proxy)
   }
 
-  // DSL Properties
   def boxSizing(using s: StyleProxy): String = ""
   def boxSizing_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("box-sizing", v)
 
@@ -39,15 +38,23 @@ object StyleDsl {
 
   def minHeight(using s: StyleProxy): String = ""
   def minHeight_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("min-height", v)
+  def minHeight_=(v: ReadOnlyProperty[String])(using s: StyleProxy, c: Component): Unit =
+    c.addDisposable(v.observe(s.host.setStyle("min-height", _)))
 
   def minWidth(using s: StyleProxy): String = ""
   def minWidth_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("min-width", v)
+  def minWidth_=(v: ReadOnlyProperty[String])(using s: StyleProxy, c: Component): Unit =
+    c.addDisposable(v.observe(s.host.setStyle("min-width", _)))
 
   def maxHeight(using s: StyleProxy): String = ""
   def maxHeight_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("max-height", v)
+  def maxHeight_=(v: ReadOnlyProperty[String])(using s: StyleProxy, c: Component): Unit =
+    c.addDisposable(v.observe(s.host.setStyle("max-height", _)))
 
   def maxWidth(using s: StyleProxy): String = ""
   def maxWidth_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("max-width", v)
+  def maxWidth_=(v: ReadOnlyProperty[String])(using s: StyleProxy, c: Component): Unit =
+    c.addDisposable(v.observe(s.host.setStyle("max-width", _)))
 
   def marginTop(using s: StyleProxy): String = ""
   def marginTop_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("margin-top", v)

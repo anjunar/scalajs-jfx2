@@ -101,7 +101,7 @@ object TableViewPage {
     ("Dracula", "Bram Stoker", 1897),
     ("Sherlock Holmes – Studie in Scharlachrot", "Arthur Conan Doyle", 1887),
     ("Kleiner Prinz", "Antoine de Saint-Exupéry", 1943),
-    ("Der Alchimist", "Paulo Coelho", 1988),
+    ("Der alchimist", "Paulo Coelho", 1988),
     ("Eine kurze Geschichte der Zeit", "Stephen Hawking", 1988),
     ("Sapiens", "Yuval Noah Harari", 2011),
     ("Gödel, Escher, Bach", "Douglas Hofstadter", 1979),

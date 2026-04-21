@@ -6,41 +6,52 @@ import jfx.dsl.DslRuntime
 import scala.annotation.targetName
 
 class TableColumn[S, T](initialText: String = "") extends Component {
-  override def tagName: String = "" 
 
-  val textProperty = Property(initialText)
-  val prefWidthProperty = Property(160.0)
+  override def tagName: String = ""
+
+  val textProperty: Property[String] = Property(initialText)
+  val prefWidthProperty: Property[Double] = Property(160.0)
+  val cellRenderer: Property[Option[S => Unit]] = Property(None)
   
-  // Cell Content logic
-  private var _cellRenderer: Option[S => Unit] = None
-  def setCellRenderer(renderer: S => Unit): Unit = _cellRenderer = Some(renderer)
-  def cellRenderer: Option[S => Unit] = _cellRenderer
+  val sortableProperty = Property(false)
+  val sortKeyProperty = Property[Option[String]](None)
 
   def text: String = textProperty.get
   def text_=(value: String): Unit = textProperty.set(value)
 
   def prefWidth: Double = prefWidthProperty.get
   def prefWidth_=(value: Double): Unit = prefWidthProperty.set(value)
+  
+  def setCellRenderer(renderer: S => Unit): Unit = {
+    cellRenderer.set(Some(renderer))
+  }
+
+  override def compose(): Unit = {
+  }
 }
 
 object TableColumn {
-  def column[S, T](text: String)(init: TableColumn[S, T] ?=> Unit): TableColumn[S, T] = {
-    val col = DslRuntime.build(new TableColumn[S, T](text))(init)
+  def tableColumn[S, T](text: String)(init: TableColumn[S, T] ?=> Unit): TableColumn[S, T] = {
+    val col = new TableColumn[S, T](text)
+    DslRuntime.build(col)(init)
+    
     DslRuntime.currentContext.parent match {
-      case Some(t: TableView[S] @unchecked) => t.columns += col
+      case Some(t: TableView[S]) => t.columns += col
       case _ => 
     }
     col
   }
 
-  // JFX2 simplified column API: column("Title") { item => text = item.title }
+  def column[S, T](text: String)(init: TableColumn[S, T] ?=> Unit): TableColumn[S, T] = {
+    tableColumn(text)(init)
+  }
+
   @targetName("columnWithRenderer")
   def column[S, T](text: String)(renderer: S => Unit): TableColumn[S, T] = {
     val col = new TableColumn[S, T](text)
     col.setCellRenderer(renderer)
-    DslRuntime.build(col) {}
     DslRuntime.currentContext.parent match {
-      case Some(t: TableView[S] @unchecked) => t.columns += col
+      case Some(t: TableView[S]) => t.columns += col
       case _ => 
     }
     col
@@ -53,13 +64,23 @@ object TableColumn {
 
   def cellRenderer_=[S](renderer: S => Unit)(using c: TableColumn[S, ?]): Unit = c.setCellRenderer(renderer)
 
-  def cellValueFactory[S, T](using c: TableColumn[S, T]): TableColumn.CellDataFeatures[S, T] => ReadOnlyProperty[T] | Null =
+  def cellValueFactory[S, T](using tableColumn: TableColumn[S, T]): TableColumn.CellDataFeatures[S, T] => ReadOnlyProperty[T] | Null =
     throw new UnsupportedOperationException("Not implemented in JFX2 yet")
   
+  def sortable[S, T](using c: TableColumn[S, T]): Boolean = c.sortableProperty.get
+  def sortable_=[S, T](v: Boolean)(using c: TableColumn[S, T]): Unit = c.sortableProperty.set(v)
+  
+  def sortKey[S, T](using c: TableColumn[S, T]): Option[String] = c.sortKeyProperty.get
+  def sortKey_=[S, T](v: String)(using c: TableColumn[S, T]): Unit = c.sortKeyProperty.set(Some(v))
+
   final case class CellDataFeatures[S, T](
     tableView: TableView[S],
     tableColumn: TableColumn[S, T],
     value: S,
     index: Int
   )
+
+  private[control] def withEnclosingTableView[S, A](tableView: TableView[S])(block: => A): A = {
+    block
+  }
 }
