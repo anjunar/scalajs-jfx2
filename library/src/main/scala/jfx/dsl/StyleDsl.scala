@@ -2,6 +2,7 @@ package jfx.dsl
 
 import jfx.core.component.Component
 import jfx.core.render.HostElement
+import jfx.core.state.ReadOnlyProperty
 
 class StyleProxy(val host: HostElement)
 
@@ -15,17 +16,26 @@ object StyleDsl {
   def boxSizing(using s: StyleProxy): String = ""
   def boxSizing_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("box-sizing", v)
 
-  def flex(using s: StyleProxy): String = ""
-  def flex_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("flex", v)
+  def width(using s: StyleProxy): String = ""
+  def width_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("width", v)
+  def width_=(v: ReadOnlyProperty[String])(using s: StyleProxy, c: Component): Unit =
+    c.addDisposable(v.observe(s.host.setStyle("width", _)))
 
   def height(using s: StyleProxy): String = ""
   def height_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("height", v)
+  def height_=(v: ReadOnlyProperty[String])(using s: StyleProxy, c: Component): Unit =
+    c.addDisposable(v.observe(s.host.setStyle("height", _)))
 
   def transform(using s: StyleProxy): String = ""
   def transform_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("transform", v)
+  def transform_=(v: ReadOnlyProperty[String])(using s: StyleProxy, c: Component): Unit =
+    c.addDisposable(v.observe(s.host.setStyle("transform", _)))
 
-  def width(using s: StyleProxy): String = ""
-  def width_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("width", v)
+  def top(using s: StyleProxy): String = ""
+  def top_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("top", v)
+  def top_=(v: ReadOnlyProperty[String])(using s: StyleProxy, c: Component): Unit =
+    c.addDisposable(v.observe(s.host.setStyle("top", _)))
+
 
   def minHeight(using s: StyleProxy): String = ""
   def minHeight_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("min-height", v)
@@ -63,6 +73,9 @@ object StyleDsl {
   def justifyContent(using s: StyleProxy): String = ""
   def justifyContent_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("justify-content", v)
 
+  def flex(using s: StyleProxy): String = ""
+  def flex_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("flex", v)
+
   def gap(using s: StyleProxy): String = ""
   def gap_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("gap", v)
 
@@ -98,9 +111,6 @@ object StyleDsl {
 
   def position(using s: StyleProxy): String = ""
   def position_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("position", v)
-
-  def top(using s: StyleProxy): String = ""
-  def top_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("top", v)
 
   def right(using s: StyleProxy): String = ""
   def right_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("right", v)

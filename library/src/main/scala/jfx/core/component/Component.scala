@@ -232,5 +232,9 @@ object Component {
     c.addDisposable(c.host.addEventListener("keydown", e => handler(e.asInstanceOf[dom.KeyboardEvent])))
   }
 
+  def onScroll(handler: dom.UIEvent => Unit)(using c: Component): Unit = {
+    c.addDisposable(c.host.addEventListener("scroll", e => handler(e.asInstanceOf[dom.UIEvent])))
+  }
+
   export jfx.dsl.StyleDsl.*
 }
