@@ -20,6 +20,7 @@ import jfx.layout.HorizontalLine.horizontalLine
 import jfx.router.Route
 import jfx.router.Route.route
 import jfx.router.Router.router
+import jfx.router.RouterConfig
 import jfx.ssr.Ssr
 import org.scalajs.dom
 import org.scalajs.dom.HTMLElement
@@ -56,10 +57,12 @@ object Main {
   }
 
   @JSExportTopLevel("renderSsr")
-  def renderSsr(path: String): String =
+  def renderSsr(path: String): String = {
+    // Only set here if we want a default for SSR, otherwise it stays empty/logic-driven
     Ssr.renderToString {
       demo(path)
     }
+  }
 
   private def demo(initialPath: String = "/") = {
     val routes = Seq(

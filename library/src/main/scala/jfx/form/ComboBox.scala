@@ -20,7 +20,6 @@ import scala.scalajs.js
 class ComboBox[T](override val name: String, override val standalone: Boolean = false) extends Component with Control[T] {
   override def tagName: String = "div"
 
-  // -- Properties --
   override val valueProperty: Property[T] = Property(null.asInstanceOf[T])
   val selectionProperty: ListProperty[T] = new ListProperty[T]()
   val itemsProperty: ListProperty[T] = new ListProperty[T]()
@@ -39,7 +38,6 @@ class ComboBox[T](override val name: String, override val standalone: Boolean = 
   val valueRendererProperty: Property[Option[T => Unit]] = Property(None)
   val footerRendererProperty: Property[Option[() => Unit]] = Property(None)
 
-  // -- Identity Logic --
   private def isSame(a: T, b: T): Boolean = {
     val aAny = a.asInstanceOf[Any]
     val bAny = b.asInstanceOf[Any]
@@ -47,7 +45,6 @@ class ComboBox[T](override val name: String, override val standalone: Boolean = 
     else identityProperty.get(a) == identityProperty.get(b)
   }
 
-  // -- Reactive Helpers --
   private val displayText = selectionProperty.asProperty.flatMap { list =>
     val first = list.headOption.getOrElse(null.asInstanceOf[T])
     if (first == null) placeholderProperty else Property(converterProperty.get(first))
@@ -88,8 +85,6 @@ class ComboBox[T](override val name: String, override val standalone: Boolean = 
       
       condition(valueRendererProperty.map(_.isDefined)) {
         thenDo {
-          // Wir nutzen ForEach für die selektierten Elemente.
-          // Das ist viel sauberer und handhabt das Entfernen alter Komponenten automatisch.
           ForEach.forEach(selectionProperty) { item =>
             valueRendererProperty.get.foreach(_(item))
           }
@@ -110,7 +105,6 @@ class ComboBox[T](override val name: String, override val standalone: Boolean = 
       text = "arrow_drop_down"
     }
     
-    // -- Dropdown Overlay --
     condition(openProperty) {
       thenDo {
         overlay(dropdownWidthProperty.get) {

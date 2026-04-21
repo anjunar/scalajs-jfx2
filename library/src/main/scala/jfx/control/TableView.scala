@@ -153,7 +153,6 @@ final class TableView[S] extends Box("div") {
         addClass("jfx-table-content")
         style {
           position = "relative"
-          // Wir lassen die Höhe im SSR Modus weg, damit der Link nachrücken kann
           if (!RenderBackend.current.isServer) {
             height_=(items.asProperty.map(it => s"${it.length * rowHeightProperty.get}px"))
           }
@@ -164,8 +163,7 @@ final class TableView[S] extends Box("div") {
           div {
             addClass("jfx-table-row-slot")
             style {
-              // Immer absolute für Hydrierung, aber im SSR mit festen top-Werten
-              position = "absolute" 
+              position = "absolute"
               top_=(Property(s"${rowDef.index * rowHeightProperty.get}px"))
               left = "0"
               width_=(totalColumnWidthProperty.map(w => s"${w}px"))
@@ -188,7 +186,6 @@ final class TableView[S] extends Box("div") {
 
       condition(hasMoreProperty) {
         thenDo {
-           // Wir entfernen das div um den Link, um Hydration-Probleme zu vermeiden
            val (offset, limit) = getCrawlParams
            val currentPath = getRouteContext.map(_.path).getOrElse("")
            link(s"$currentPath?offset=${offset + limit}&limit=$limit") {
@@ -196,7 +193,6 @@ final class TableView[S] extends Box("div") {
                display = "block"
                padding = "20px"
                textAlign = "center"
-               // Im SSR Modus schieben wir den Link physisch unter die absoluten Zeilen
                if (RenderBackend.current.isServer) {
                  marginTop = s"${(offset + limit) * rowHeightProperty.get}px"
                }
