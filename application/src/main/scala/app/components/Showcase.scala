@@ -3,7 +3,7 @@ package app.components
 import app.DemoI18n
 import jfx.core.component.Component.*
 import jfx.core.state.{Property, ReadOnlyProperty}
-import jfx.i18n.RuntimeMessage
+import jfx.i18n.{RuntimeMessage, i18n}
 import jfx.layout.Div.div
 import jfx.layout.VBox.vbox
 import scala.annotation.targetName
@@ -109,7 +109,7 @@ object Showcase {
       classes = "showcase-page"
       vbox {
         classes = "showcase-page__header"
-        div { classes = "showcase-page__eyebrow"; text = "JFX2 Showcase" }
+        div { classes = "showcase-page__eyebrow"; text = DemoI18n.text(i18n"JFX2 Showcase") }
         div { classes = "showcase-page__title"; text = title }
         div { classes = "showcase-page__subtitle"; text = subtitle }
       }

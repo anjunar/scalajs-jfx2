@@ -38,9 +38,9 @@ object OverviewPage {
               classes = "i18n-demo__toolbar"
               div {
                 classes = "i18n-demo__locale"
-                text = DemoI18n.localeLabel.map(locale => s"Locale: $locale")
+                text = DemoI18n.localeLabel.flatMap(locale => DemoI18n.text(i18n"Locale: $locale"))
               }
-              button("Switch locale") {
+              button(DemoI18n.text(i18n"Switch locale")) {
                 classes = Seq("calm-action", "calm-action--secondary")
                 onClick { _ => DemoI18n.toggle() }
               }
@@ -92,9 +92,9 @@ object OverviewPage {
   private def i18nSample(source: String, resolved: ReadOnlyProperty[String]): Unit = {
     vbox {
       classes = "i18n-demo__sample"
-      div { classes = "i18n-demo__label"; text = "Source" }
+      div { classes = "i18n-demo__label"; text = DemoI18n.text(i18n"Source") }
       div { classes = "i18n-demo__source"; text = source }
-      div { classes = "i18n-demo__label"; text = "Resolved" }
+      div { classes = "i18n-demo__label"; text = DemoI18n.text(i18n"Resolved") }
       div { classes = "i18n-demo__resolved"; text = resolved }
     }
   }

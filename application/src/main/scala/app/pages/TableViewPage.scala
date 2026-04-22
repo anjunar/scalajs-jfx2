@@ -9,7 +9,9 @@ import jfx.core.state.{ListProperty, Property, RemoteListProperty}
 import jfx.layout.Div.div
 import jfx.layout.HBox.hbox
 import jfx.layout.VBox.vbox
+import app.DemoI18n
 import app.components.Showcase.*
+import jfx.i18n.*
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.scalajs.js.JSConverters.*
@@ -197,29 +199,29 @@ object TableViewPage {
     }
 
   def render(books: RemoteListProperty[ShowcaseBook, ShowcaseBookQuery]) = {
-    showcasePage("TableView", "Datenmengen, die atmen und fließen.") {
+    showcasePage(i18n"TableView", i18n"Large data sets that breathe and flow.") {
       vbox {
         style { gap = "34px" }
 
         sectionIntro(
-          "Datenansicht",
-          "Eine Tabelle ist erst gut, wenn sie große Daten ruhig macht.",
-          "Die JFX2 TableView vereint reaktive Virtualisierung mit voller SEO-Tauglichkeit. Im Browser scrollt der Benutzer flüssig, während Crawler über echte HTML-Links die gesamte Datenmenge erreichen."
+          i18n"Data view",
+          i18n"A table is good when it makes large data feel calm.",
+          i18n"The JFX2 TableView combines reactive virtualization with crawlable SSR. In the browser users scroll smoothly, while crawlers can reach the full data set through real HTML links."
         )
 
         metricStrip(
-          "ListProperty" -> "Lokale Daten mutieren reaktiv.",
-          "RemoteList" -> "Remote-Daten laden seiten- oder bereichsweise nach.",
-          "Virtual Rows" -> "Nur sichtbare Zeilen werden physisch gerendert."
+          i18n"ListProperty" -> i18n"Local data mutates reactively.",
+          i18n"RemoteList" -> i18n"Remote data loads by page or by range.",
+          i18n"Virtual rows" -> i18n"Only visible rows are physically rendered."
         )
 
         componentShowcase(
-          "Lokale TableView",
-          "Die Control selbst: Items, Columns, RowHeight, Selection und reaktive ListProperty-Mutationen."
+          i18n"Local TableView",
+          i18n"The control itself: items, columns, row height, selection, and reactive ListProperty mutations."
         ) {
           val localItems = ListProperty[ShowcaseBook]()
           localItems.setAll(buildShowcaseBooks(8))
-          val selectedText = Property("Noch keine Zeile ausgewählt.")
+          val selectedText = Property(DemoI18n.resolveNow(i18n"No row selected yet."))
           val selectionRequest = Property(-1)
 
           vbox {
@@ -230,15 +232,15 @@ object TableViewPage {
               style { height = "300px" }
               rowHeight = 42.0
 
-              column[ShowcaseBook, String]("Titel") { item =>
+              column[ShowcaseBook, String](DemoI18n.resolveNow(i18n"Title")) { item =>
                 text = item.title
               }.prefWidthProperty.set(260.0)
 
-              column[ShowcaseBook, String]("Autor") { item =>
+              column[ShowcaseBook, String](DemoI18n.resolveNow(i18n"Author")) { item =>
                 text = item.author
               }.prefWidthProperty.set(220.0)
 
-              column[ShowcaseBook, Int]("Jahr") { item =>
+              column[ShowcaseBook, Int](DemoI18n.resolveNow(i18n"Year")) { item =>
                 text = item.year.toString
               }.prefWidthProperty.set(90.0)
 
@@ -247,26 +249,26 @@ object TableViewPage {
               addDisposable(selectionRequest.observeWithoutInitial(localTable.select))
               addDisposable(localTable.selectedItemProperty.observe { item =>
                 selectedText.set(
-                  if (item == null) "Noch keine Zeile ausgewählt."
-                  else s"Ausgewählt: ${item.title} von ${item.author}"
+                  if (item == null) DemoI18n.resolveNow(i18n"No row selected yet.")
+                  else DemoI18n.resolveNow(i18n"Selected: ${I18n.named("title", item.title)} by ${I18n.named("author", item.author)}")
                 )
               })
             }
 
             hbox {
               style { gap = "10px"; flexWrap = "wrap" }
-              button("Erste Zeile auswählen") {
+              button(DemoI18n.text(i18n"Select first row")) {
                 onClick { _ =>
                   selectionRequest.setAlways(0)
                 }
               }
-              button("Zeile hinzufügen") {
+              button(DemoI18n.text(i18n"Add row")) {
                 onClick { _ =>
                   val next = buildShowcaseBooks(localItems.length + 1).last
                   localItems += next
                 }
               }
-              button("Zurücksetzen") {
+              button(DemoI18n.text(i18n"Reset")) {
                 onClick { _ =>
                   localItems.setAll(buildShowcaseBooks(8))
                   selectionRequest.setAlways(-1)
@@ -282,8 +284,8 @@ object TableViewPage {
         }
 
         apiSection(
-          "TableView DSL",
-          "Das ist die eigentliche Control-Nutzung, unabhängig davon, ob die Daten lokal oder remote kommen."
+          i18n"TableView DSL",
+          i18n"This is the actual control usage, independent of whether the data is local or remote."
         ) {
           codeBlock("scala", """val books = ListProperty[Book]()
 books.setAll(seedBooks)
@@ -309,41 +311,41 @@ tableView[Book] {
         }
 
         componentShowcase(
-          "TableView Control Logic",
-          "Die wichtigsten Zustände in der TableView selbst, nicht in der Route."
+          i18n"TableView control logic",
+          i18n"The important state lives in the TableView itself, not in the route."
         ) {
           div {
             style { display = "flex"; gap = "14px"; flexWrap = "wrap" }
             logicCard(
               "itemsRefProperty",
-              "Hält die aktuelle ListProperty. Beim Wechsel werden Observer neu verdrahtet und sichtbare Rows neu berechnet."
+              i18n"Holds the current ListProperty. When it changes, observers are rewired and visible rows are recalculated."
             )
             logicCard(
               "visibleRowsProperty",
-              "Enthält nur die Row-Slots, die für ScrollTop, ViewportHeight und Overscan sichtbar sein müssen."
+              i18n"Contains only the row slots that must be visible for scrollTop, viewportHeight, and overscan."
             )
             logicCard(
               "renderedWidthsProperty",
-              "Verteilt Spaltenbreiten anhand von PrefWidth und ViewportWidth stabil auf Header und Body."
+              i18n"Distributes column widths from prefWidth and viewportWidth for header and body."
             )
             logicCard(
               "RemoteListProperty",
-              "Liefert Loading/Error/Sorting/Range-State. Die TableView triggert lazy load oder range load aus dem sichtbaren Bereich."
+              i18n"Provides loading, error, sorting, and range state. The TableView triggers lazy or range loading from the visible area."
             )
             logicCard(
               "crawlable",
-              "Im SSR wird der sichtbare Bereich über offset/limit bestimmt und ein echter More-Link erzeugt."
+              i18n"In SSR, the visible area is determined through offset and limit and a real More link is created."
             )
             logicCard(
               "selection",
-              "Zeilenklick setzt selectedIndexProperty; daraus wird selectedItemProperty aktualisiert."
+              i18n"Row clicks set selectedIndexProperty; selectedItemProperty is updated from it."
             )
           }
         }
 
         apiSection(
-          "Virtualisierung Intern",
-          "Die Control rendert nicht die ganze Liste, sondern berechnet aus Scroll- und Viewport-State den sichtbaren Bereich."
+          i18n"Virtualization internals",
+          i18n"The control does not render the whole list, but calculates the visible range from scroll and viewport state."
         ) {
           codeBlock("scala", """visibleRange(total):
   firstVisible = floor(scrollTop / rowHeight)
@@ -364,33 +366,33 @@ onScroll:
         }
 
         metricStrip(
-          "1000" -> "Remote geladene Buchzeilen im Beispiel.",
-          "50" -> "Zeilen pro initialer Remote-Page.",
-          "3" -> "Sortierbare Spalten mit stabilen Sort-Keys."
+          i18n"1000" -> i18n"Remotely loaded book rows in the example.",
+          i18n"50" -> i18n"Rows per initial remote page.",
+          i18n"3" -> i18n"Sortable columns with stable sort keys."
         )
 
         componentShowcase(
-          "Crawlbarer Bücher-Katalog",
-          "Remote-Daten, virtuelle Zeilen, sortierbare Spalten und crawlbare Navigation in einem Beispiel."
+          i18n"Crawlable book catalog",
+          i18n"Remote data, virtual rows, sortable columns, and crawlable navigation in one example."
         ) {
           tableView[ShowcaseBook] {
             style { height = "500px" }
             rowHeight = 40.0
             crawlable = true
 
-            val titleColumn = column[ShowcaseBook, String]("Titel") { item =>
+            val titleColumn = column[ShowcaseBook, String](DemoI18n.resolveNow(i18n"Title")) { item =>
                text = item.title
             }
             titleColumn.sortableProperty.set(true)
             titleColumn.sortKeyProperty.set(Some("title"))
 
-            val authorColumn = column[ShowcaseBook, String]("Autor") { item =>
+            val authorColumn = column[ShowcaseBook, String](DemoI18n.resolveNow(i18n"Author")) { item =>
                text = item.author
             }
             authorColumn.sortableProperty.set(true)
             authorColumn.sortKeyProperty.set(Some("author"))
 
-            val yearColumn = column[ShowcaseBook, Int]("Jahr") { item =>
+            val yearColumn = column[ShowcaseBook, Int](DemoI18n.resolveNow(i18n"Year")) { item =>
                text = item.year.toString
             }
             yearColumn.sortableProperty.set(true)
@@ -401,14 +403,14 @@ onScroll:
         }
 
         insightGrid(
-          ("Remote", "Die Query ist explizit", "Index, Limit und Sorting bilden zusammen den wiederholbaren Zustand der Datenanfrage."),
-          ("Cursor", "Virtuelle Zeilen brauchen stabile DOM-Pfade", "SSR, Hydration und ForEach müssen dieselben physischen Knoten meinen."),
-          ("SEO", "Crawlable bleibt eine fachliche Option", "Die Tabelle kann echte Links anbieten, ohne die Browser-Performance aufzugeben.")
+          (i18n"Remote", i18n"The query is explicit", i18n"Index, limit, and sorting together form the repeatable state of the data request."),
+          (i18n"Cursor", i18n"Virtual rows need stable DOM paths", i18n"SSR, hydration, and ForEach must refer to the same physical nodes."),
+          (i18n"SEO", i18n"Crawlable remains a product option", i18n"The table can offer real links without giving up browser performance.")
         )
 
         apiSection(
-          "RemoteListProperty",
-          "Sortierung und Lazy Loading gehören zur Datenquelle. Die TableView fragt diese Fähigkeiten nur ab."
+          i18n"RemoteListProperty",
+          i18n"Sorting and lazy loading belong to the data source. The TableView only asks for those capabilities."
         ) {
           codeBlock("scala", """ListProperty.remote[Book, BookQuery](
   loader = ListProperty.RemoteLoader { query =>
@@ -425,8 +427,8 @@ onScroll:
         }
 
         apiSection(
-          "Async Route Usage",
-          "Die Route ist nur die SSR-Hülle: Sie lädt die erste Page vor dem Rendern, damit SSR und Hydration denselben Anfangszustand teilen."
+          i18n"Async route usage",
+          i18n"The route is only the SSR shell: it loads the first page before rendering so SSR and hydration share the same initial state."
         ) {
           codeBlock("scala", """asyncRoute("/table-view") {
   val books = TableViewPage.createRemoteBooks(pageSize = 50)
@@ -442,7 +444,7 @@ onScroll:
     }
   }
 
-  private def logicCard(title: String, body: String): Unit = {
+  private def logicCard(title: String, body: RuntimeMessage): Unit = {
     vbox {
       classes = "showcase-result"
       style { gap = "8px"; flex = "1 1 260px" }
@@ -452,7 +454,7 @@ onScroll:
       }
       div {
         style { color = "var(--aj-ink-muted)" }
-        text = body
+        text = DemoI18n.text(body)
       }
     }
   }

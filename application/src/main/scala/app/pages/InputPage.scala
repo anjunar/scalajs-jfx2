@@ -41,14 +41,14 @@ object InputPage {
           val name = Property("")
           vbox {
             style { maxWidth = "420px" }
-            inputContainer("Enter name...") {
+            inputContainer(DemoI18n.text(i18n"Enter name...")) {
               standaloneInput("name") {
                 addDisposable(stringValueProperty.observe(name.set))
               }
             }
             div {
               classes = "showcase-result"
-              val labelText = name.map(v => s"Input: $v")
+              val labelText = name.flatMap(v => DemoI18n.text(i18n"Input: $v"))
               text = labelText
             }
           }
@@ -65,8 +65,8 @@ inputContainer("Name eingeben...") {
 }""")
         }
         componentShowcase(
-          "Domain-Bound Form",
-          "Formulare können direkt an Domänen-Objekte gebunden werden. Reflection verbindet Feldnamen mit Properties."
+          i18n"Domain-bound form",
+          i18n"Forms can bind directly to domain objects. Reflection connects field names with properties."
         ) {
           import jfx.form.Form.form
           import jfx.form.SubForm.subForm
@@ -82,23 +82,23 @@ inputContainer("Name eingeben...") {
             vbox {
               style { gap = "15px" }
 
-              inputContainer("Vollständiger Name") {
+              inputContainer(DemoI18n.text(i18n"Full name")) {
                 input("name") {}
               }
 
-              inputContainer("E-Mail") {
+              inputContainer(DemoI18n.text(i18n"E-mail")) {
                 input("email") {}
               }
 
               subForm("address") {
                 vbox {
                   style { gap = "10px"; padding = "10px"; border = "1px solid #eee"; borderRadius = "4px" }
-                  div { text = "Adresse (SubForm)"; style { fontWeight = "bold" } }
+                  div { text = DemoI18n.text(i18n"Address (SubForm)"); style { fontWeight = "bold" } }
                   
-                  inputContainer("Straße") {
+                  inputContainer(DemoI18n.text(i18n"Street")) {
                     input("street") {}
                   }
-                  inputContainer("Stadt") {
+                  inputContainer(DemoI18n.text(i18n"City")) {
                     input("city") {}
                   }
                 }
@@ -106,14 +106,14 @@ inputContainer("Name eingeben...") {
 
               hbox {
                 style { gap = "10px" }
-                button("Validieren") {
+                button(DemoI18n.text(i18n"Validate")) {
                   onClick { _ =>
                     import jfx.form.Form.controls
                     val hasErrors = controls(using f).get.map(_.validate(forceVisible = true)).exists(_.nonEmpty)
                     if (hasErrors) {
-                      dom.window.alert("Formular enthält Fehler!")
+                      dom.window.alert(DemoI18n.resolveNow(i18n"The form contains errors."))
                     } else {
-                      dom.window.alert("Alles ok!")
+                      dom.window.alert(DemoI18n.resolveNow(i18n"Everything is fine."))
                     }
                   }
                 }
@@ -121,15 +121,15 @@ inputContainer("Name eingeben...") {
 
               div {
                 classes = "showcase-result"
-                val info = user.name.map(n => s"Aktueller User: $n (${user.email.get}) wohnt in ${user.address.get.city.get}")
+                val info = user.name.flatMap(n => DemoI18n.text(i18n"Current user: ${I18n.named("name", n)} (${I18n.named("email", user.email.get)}) lives in ${I18n.named("city", user.address.get.city.get)}"))
                 text = info
               }
             }
           }
         }
         apiSection(
-          "Domain Binding",
-          "Durch die Übergabe eines Objekts an 'form' suchen sich die Inputs automatisch die passenden Properties."
+          i18n"Domain binding",
+          i18n"Passing an object to form lets inputs find the matching properties automatically."
         ) {
           codeBlock("scala", """val user = new User()
 form(user) {
@@ -142,14 +142,14 @@ form(user) {
         }
 
         insightGrid(
-          ("Binding", "Wertfluss bleibt sichtbar", "Das Feld schreibt in ein Property oder registriert sich im Form-Kontext."),
-          ("Validierung", "Fehler gehören ans Feld", "Regeln sitzen dort, wo ein Leser sie erwartet, statt in einer entfernten Submit-Methode."),
-          ("Submit", "Formen sammeln Verhalten", "Der Formular-Kontext macht Validieren, Leeren und Auslesen als gemeinsame Operation lesbar.")
+          (i18n"Binding", i18n"Value flow stays visible", i18n"The field writes into a Property or registers itself in the form context."),
+          (i18n"Validation", i18n"Errors belong to the field", i18n"Rules sit where a reader expects them, not in a distant submit method."),
+          (i18n"Submit", i18n"Forms collect behavior", i18n"The form context makes validation, clearing, and reading visible as shared operations.")
         )
 
         apiSection(
-          "Form & DI Usage",
-          "Für größere Formulare ist der Form-Kontext die ruhigere Struktur."
+          i18n"Form and DI usage",
+          i18n"For larger forms, the form context is the calmer structure."
         ) {
           codeBlock("scala", """import jfx.form.Form.{form, controls}
 form {
