@@ -1,9 +1,11 @@
 package app.pages
 
+import app.DemoI18n
 import jfx.core.component.Component.*
 import jfx.core.state.Property
 import jfx.form.ComboBox
 import jfx.form.ComboBox.*
+import jfx.i18n.*
 import jfx.layout.Div.div
 import jfx.layout.HBox.hbox
 import jfx.layout.VBox.vbox
@@ -13,25 +15,25 @@ case class Member(name: String, role: String, avatarColor: String)
 
 object ComboBoxPage {
   def render() = {
-    showcasePage("ComboBox", "Die elegante Auswahl aus einer Menge von Möglichkeiten.") {
+    showcasePage(i18n"ComboBox", i18n"The elegant choice from a set of possibilities.") {
       vbox {
         style { gap = "34px" }
 
         sectionIntro(
-          "Auswahl",
-          "Eine ComboBox muss Orientierung geben, nicht nur Optionen verstecken.",
-          "Der Showcase nutzt echte Daten, eigene Renderer und eine Footer-Aktion. So wird sichtbar, wie Wertdarstellung, Listenzeile und Identität zusammenspielen."
+          i18n"Selection",
+          i18n"A ComboBox must provide orientation, not just hide options.",
+          i18n"The showcase uses real data, custom renderers, and a footer action. That makes it clear how value display, row rendering, and identity work together."
         )
 
         metricStrip(
-          "items" -> "Die verfügbare Menge bleibt eine klar übergebene Sequenz.",
-          "converter" -> "Der Textwert kann unabhängig vom Objektmodell entstehen.",
-          "identityBy" -> "Selektion bleibt stabil, auch wenn Objekte neu geliefert werden."
+          i18n"items" -> i18n"The available set remains a clearly passed sequence.",
+          i18n"converter" -> i18n"The text value can be derived independently from the object model.",
+          i18n"identityBy" -> i18n"Selection stays stable even when objects are delivered again."
         )
 
         componentShowcase(
-          "Team-Mitglieder Selektor",
-          "Ein realistischer Renderer mit Avatar, Rolle, Auswahlzustand und Footer-Link."
+          i18n"Team member selector",
+          i18n"A realistic renderer with avatar, role, selection state, and footer link."
         ) {
           val members = Seq(
             Member("Alice Scala", "Software Architect", "#6366f1"),
@@ -43,13 +45,13 @@ object ComboBoxPage {
           vbox {
             style { gap = "16px"; maxWidth = "400px" }
             
-            div {
-              style { fontWeight = "600"; fontSize = "14px"; color = "var(--aj-ink-soft)" }
-              text = "Projekt-Verantwortlichen wählen"
-            }
+              div {
+                style { fontWeight = "600"; fontSize = "14px"; color = "var(--aj-ink-soft)" }
+                text = DemoI18n.text(i18n"Choose the project owner")
+              }
 
             comboBox[Member]("team-selector") {
-              placeholder = "Mitglied suchen..."
+              placeholder = "Search member..."
               items = members
               rowHeight = 60.0
               dropdownHeight = 300.0
@@ -92,7 +94,7 @@ object ComboBoxPage {
                   div {
                     addClass("material-icons")
                     style { color = "var(--aj-accent)"; fontSize = "20px" }
-                    text = "check"
+                    text = DemoI18n.text(i18n"check")
                     visible = isSelected
                   }
                 }
@@ -117,7 +119,7 @@ object ComboBoxPage {
               footerRenderer {
                 div {
                   addClass("jfx-combo-box__footer-link")
-                  text = "Team-Einstellungen"
+                  text = DemoI18n.text(i18n"Team settings")
                 }
               }
             }
@@ -125,17 +127,17 @@ object ComboBoxPage {
         }
 
         insightGrid(
-          ("Renderer", "Zeile und Wert dürfen verschieden sein", "Die Dropdown-Zeile kann reich sein, während der geschlossene Wert kompakt bleibt."),
-          ("Cursor", "Stabile Identität schützt die Auswahl", "identityBy beschreibt, wann ein Eintrag derselbe fachliche Eintrag bleibt."),
-          ("Lesbarkeit", "Konfiguration bleibt im Block", "Placeholder, Daten, Höhen und Renderer liegen in einer Komponente zusammen.")
+          (i18n"Renderer", i18n"Row and value may differ", i18n"The dropdown row can be rich while the closed value stays compact."),
+          (i18n"Cursor", i18n"Stable identity protects selection", i18n"identityBy describes when an entry remains the same domain entry."),
+          (i18n"Readability", i18n"Configuration stays inside the block", i18n"Placeholder, data, heights, and renderers live together in one component.")
         )
 
         apiSection(
-          "Usage",
-          "Die wichtigsten Entscheidungen stehen direkt im comboBox-Block."
+          i18n"Usage",
+          i18n"The important decisions stay right inside the comboBox block."
         ) {
           codeBlock("scala", """|comboBox[Member]("team-selector") {
-                                |  placeholder = "Mitglied wählen..."
+                                |  placeholder = "Choose member..."
                                 |  items = myMemberList
                                 |
                                 |  itemRenderer { (member, isSelected) =>

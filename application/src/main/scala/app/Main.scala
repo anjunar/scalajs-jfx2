@@ -187,7 +187,7 @@ object Main {
               }
               div {
                 classes = "app-toolbar__version"
-                text = DemoI18n.text(i18n"v2.0.0-alpha")
+                text = DemoI18n.text(i18n"v2.0.0")
               }
             }
 

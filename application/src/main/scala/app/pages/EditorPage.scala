@@ -4,6 +4,8 @@ import app.components.Showcase.*
 import jfx.action.Button.button
 import jfx.core.component.Component.*
 import jfx.core.state.Property
+import app.DemoI18n
+import jfx.i18n.*
 import jfx.form.Editor.*
 import jfx.form.editor.plugins.{basePlugin, codePlugin, headingPlugin, imagePlugin, linkPlugin, listPlugin, tablePlugin}
 import jfx.layout.Div.div
@@ -15,28 +17,28 @@ import scala.scalajs.js
 object EditorPage {
   def render(): Unit = {
     val initialEditorText =
-      "Dieser Text kommt bereits aus dem SSR-Fallback und wird nach der Hydration von Lexical übernommen."
+      "This text already comes from the SSR fallback and is adopted by Lexical after hydration."
     val mirroredEditorValue = Property[js.Any | Null](initialEditorText)
 
-    showcasePage("Editor", "Lexical als SSR-sichere Client-Island.") {
+    showcasePage(i18n"Editor", i18n"Lexical as an SSR-safe client island.") {
       vbox {
         style { gap = "34px" }
 
         sectionIntro(
-          "Lexical Island",
-          "Der Editor rendert sofort Inhalt und wird erst im Browser zu Lexical.",
-          "JFX2 behandelt den Editor als ClientSideComponent: SSR bekommt einen stabilen Fallback mit gleichem Shell-Aufbau, Hydration ersetzt die Arbeitsfläche durch Lexical, und externe Property-Änderungen fließen wieder in den Editor zurück."
+          i18n"Lexical island",
+          i18n"The editor renders content immediately and only becomes Lexical in the browser.",
+          i18n"JFX2 treats the editor as a ClientSideComponent: SSR gets a stable fallback with the same shell layout, hydration replaces the surface with Lexical, and external property changes flow back into the editor."
         )
 
         metricStrip(
-          "SSR" -> "Text ist schon vor Hydration sichtbar.",
-          "Toolbar" -> "Plugins liefern ihre Controls über den Renderer.",
-          "Readonly" -> "editable = false blendet Toolbar aus und sperrt Lexical."
+          i18n"SSR" -> i18n"Text is visible before hydration.",
+          i18n"Toolbar" -> i18n"Plugins deliver their controls through the renderer.",
+          i18n"Readonly" -> i18n"editable = false hides the toolbar and locks Lexical."
         )
 
         componentShowcase(
-          "Live Editor Playground",
-          "Schreiben, Toolbar nutzen und unten direkt den readonly Spiegel sehen."
+          i18n"Live editor playground",
+          i18n"Write, use the toolbar, and see the readonly mirror directly below."
         ) {
           vbox {
             style { gap = "16px" }
@@ -44,7 +46,7 @@ object EditorPage {
             editor("editor-playground", standalone = true) {
               val writableEditor = summon[jfx.form.Editor]
               value = mirroredEditorValue.get
-              placeholder = "Schreibfläche wird clientseitig aktiviert"
+              placeholder = "The writing surface activates on the client"
               style {
                 width = "100%"
                 minHeight = "340px"
@@ -61,19 +63,19 @@ object EditorPage {
             hbox {
               style { gap = "10px"; flexWrap = "wrap" }
 
-              button("SSR Beispieltext") {
+              button(DemoI18n.text(i18n"SSR sample text")) {
                 onClick { _ =>
                   mirroredEditorValue.set(initialEditorText)
                 }
               }
 
-              button("Kurzer Text") {
+              button(DemoI18n.text(i18n"Short text")) {
                 onClick { _ =>
                   mirroredEditorValue.set("Kurzer externer Property-Update. Der Editor übernimmt ihn nach der Hydration.")
                 }
               }
 
-              button("Readonly Inhalt setzen") {
+              button(DemoI18n.text(i18n"Set readonly content")) {
                 onClick { _ =>
                   mirroredEditorValue.set("Dieser Wert wurde außerhalb des Editors gesetzt und wird in beide Instanzen synchronisiert.")
                 }
@@ -83,8 +85,8 @@ object EditorPage {
         }
 
         componentShowcase(
-          "Readonly Mirror",
-          "Dieselbe Editor-Komponente, aber mit editable = false: keine Toolbar, kein editierbarer Root, gleicher Inhalt."
+          i18n"Readonly mirror",
+          i18n"The same editor component, but with editable = false: no toolbar, no editable root, same content."
         ) {
           editor("editor-readonly", standalone = true) {
             val readonlyEditor = summon[jfx.form.Editor]
@@ -103,33 +105,33 @@ object EditorPage {
         }
 
         componentShowcase(
-          "SSR Fallback Contract",
-          "Was serverseitig gerendert wird, muss dem ersten Client-Render strukturell entsprechen."
+          i18n"SSR fallback contract",
+          i18n"What is rendered on the server must structurally match the first client render."
         ) {
           hbox {
             style { gap = "14px"; flexWrap = "wrap"; alignItems = "stretch" }
             detailCard(
-              "Shell bleibt stabil",
-              "Fallback und Client-Version nutzen dieselbe jfx-editor Shell mit Toolbar-Bereich und Surface-Frame."
+              "Shell stays stable",
+              "Fallback and client version use the same jfx-editor shell with toolbar area and surface frame."
             )
             detailCard(
-              "Toolbar flackert nicht",
-              "Readonly rendert die Toolbar serverseitig bereits ausgeblendet, damit Hydration keine Struktur überraschen muss."
+              "Toolbar does not flicker",
+              "Readonly renders the toolbar hidden on the server so hydration does not have to surprise the structure."
             )
             detailCard(
-              "Text bleibt sichtbar",
-              "Plain Text oder Lexical JSON wird im SSR zu Preview-Text extrahiert und nach Hydration in Lexical übernommen."
+              "Text stays visible",
+              "Plain text or Lexical JSON is extracted into preview text during SSR and then adopted by Lexical after hydration."
             )
             detailCard(
-              "Externe Werte",
-              "valueProperty-Updates werden nach dem Mount über parseEditorState zurück in Lexical synchronisiert."
+              "External values",
+              "valueProperty updates are synchronized back into Lexical after mount via parseEditorState."
             )
           }
         }
 
         componentShowcase(
-          "Plugin Set",
-          "Der Showcase lädt alle portierten Plugins, damit Toolbar und Dialoge gemeinsam sichtbar sind."
+          i18n"Plugin set",
+          i18n"The showcase loads all ported plugins so toolbar and dialogs are visible together."
         ) {
           hbox {
             style { gap = "14px"; flexWrap = "wrap"; alignItems = "stretch" }
@@ -144,14 +146,14 @@ object EditorPage {
         }
 
         insightGrid(
-          ("Island", "JavaScript erst im Browser", "SSR ruft Lexical nicht auf und bleibt damit frei von document/window Zugriffen."),
-          ("Fallback", "Kein leerer Editor", "Der Nutzer und Crawler sehen Inhalt, auch bevor Lexical gemountet ist."),
-          ("Editable", "Ein Control-Vertrag", "Der Editor folgt demselben editable-Pattern wie Input, ComboBox und Cropper.")
+          (i18n"Island", i18n"JavaScript only in the browser", i18n"SSR does not call Lexical and stays free of document/window access."),
+          (i18n"Fallback", i18n"No empty editor", i18n"Users and crawlers see content even before Lexical is mounted."),
+          (i18n"Editable", i18n"One control contract", i18n"The editor follows the same editable pattern as Input, ComboBox, and Cropper.")
         )
 
         apiSection(
-          "DSL Syntax",
-          "Der Editor bleibt ein normales Form-Control mit Value, Placeholder, Editable und Plugins."
+          i18n"DSL syntax",
+          i18n"The editor remains a normal form control with value, placeholder, editable state, and plugins."
         ) {
           codeBlock("scala", """editor("content", standalone = true) {
   value = "Dieser Text ist schon im SSR sichtbar."
@@ -174,8 +176,8 @@ editor("readonly", standalone = true) {
         }
 
         apiSection(
-          "Client Island Flow",
-          "Die Komponente trennt SSR-Fallback, Client-Mount und Lexical-Synchronisierung."
+          i18n"Client island flow",
+          i18n"The component separates SSR fallback, client mount, and Lexical synchronization."
         ) {
           codeBlock("text", """SSR:
   renderFallbackContent()

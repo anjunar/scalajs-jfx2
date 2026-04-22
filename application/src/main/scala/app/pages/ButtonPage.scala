@@ -2,6 +2,8 @@ package app.pages
 
 import jfx.action.Button.button
 import jfx.core.component.Component.*
+import app.DemoI18n
+import jfx.i18n.*
 import jfx.layout.Div.div
 import jfx.layout.HBox.hbox
 import jfx.layout.VBox.vbox
@@ -10,58 +12,58 @@ import app.components.Showcase.*
 
 object ButtonPage {
   def render() = {
-    showcasePage("Button", "Der Puls deiner Anwendung.") {
+    showcasePage(i18n"Button", i18n"The pulse of your app.") {
       vbox {
         style { gap = "34px" }
 
         sectionIntro(
-          "Interaktion",
-          "Ein Button ist klein, aber er trägt Verantwortung.",
-          "In JFX2 bleibt die Aktion im Template sichtbar: Label, Ereignis und Umgebung stehen direkt beieinander. Das macht einfache Buttons leicht lesbar und komplexere Workflows später gut erweiterbar."
+          i18n"Interaction",
+          i18n"A button is small, but it carries responsibility.",
+          i18n"In JFX2 the action stays visible in the template: label, event, and surrounding context sit next to each other. That keeps simple buttons easy to read and leaves room for more complex workflows later."
         )
 
         componentShowcase(
-          "Standard Button",
-          "Ein fokussierter Klickpunkt mit direkter Event-Anbindung. Ideal für klare, abgeschlossene Aktionen."
+          i18n"Standard button",
+          i18n"A focused click target with direct event binding. Ideal for clear, self-contained actions."
         ) {
           div { 
             style { marginBottom = "12px"; opacity = "0.8" }
-            text = "Buttons sind das Herzstück der Interaktion. Sie sind nicht nur Klick-Ziele, sondern bringen deine App zum Leben."
+            text = DemoI18n.text(i18n"Buttons are the heart of interaction. They are not just click targets; they bring your app to life.")
           }
-          button("Klick mich und erwecke mich zum Leben") {
-            onClick { _ => dom.window.alert("Ich wurde geklickt! Die Magie beginnt.") }
+          button(DemoI18n.text(i18n"Click me and bring me to life")) {
+            onClick { _ => dom.window.alert("I was clicked! The magic begins.") }
           }
         }
 
         componentShowcase(
-          "Aktionsgruppe",
-          "Mehrere Buttons dürfen nah beieinander liegen, solange ihre Absicht unterscheidbar bleibt."
+          i18n"Action group",
+          i18n"Several buttons may sit close together as long as their intent remains distinguishable."
         ) {
           hbox {
             classes = "showcase-action-row"
-            button("Speichern") {
-              onClick { _ => dom.window.alert("Gespeichert.") }
+            button(DemoI18n.text(i18n"Save")) {
+              onClick { _ => dom.window.alert("Saved.") }
             }
-            button("Prüfen") {
-              onClick { _ => dom.window.alert("Alles geprüft.") }
+            button(DemoI18n.text(i18n"Check")) {
+              onClick { _ => dom.window.alert("Checked.") }
             }
-            button("Zurücksetzen") {
-              onClick { _ => dom.window.alert("Zurückgesetzt.") }
+            button(DemoI18n.text(i18n"Reset")) {
+              onClick { _ => dom.window.alert("Reset.") }
             }
           }
         }
 
         insightGrid(
-          ("Zustand", "Der Button sagt, was passiert", "Ein gutes Label beschreibt die nächste Aktion, nicht die technische Implementierung dahinter."),
-          ("Ereignis", "onClick bleibt lokal", "Die DSL macht den Auslöser und die Reaktion an derselben Stelle sichtbar."),
-          ("Feedback", "Aktionen brauchen Antwort", "Nach dem Klick sollte die Oberfläche eine sichtbare Reaktion geben: Meldung, Status, Navigation oder Datenupdate.")
+          (i18n"State", i18n"The button says what happens", i18n"A good label describes the next action, not the technical implementation behind it."),
+          (i18n"Event", i18n"onClick stays local", i18n"The DSL keeps trigger and reaction visible in the same place."),
+          (i18n"Feedback", i18n"Actions need a response", i18n"After the click, the interface should show something visible: a message, status, navigation, or data update.")
         )
 
         apiSection(
-          "Die Einfachheit der DSL",
-          "Der Kern bleibt bewusst knapp: Button erzeugen, Handler binden, fertig."
+          i18n"The simplicity of the DSL",
+          i18n"The core stays intentionally small: create the button, bind the handler, done."
         ) {
-          codeBlock("scala", "button(\"Klick mich\") {\n  onClick { _ => println(\"Geklickt\") }\n}")
+          codeBlock("scala", "button(\"Click me\") {\n  onClick { _ => println(\"Clicked\") }\n}")
         }
       }
     }

@@ -1,6 +1,8 @@
 package app.pages
 
+import app.DemoI18n
 import jfx.core.component.Component.*
+import jfx.i18n.*
 import jfx.layout.Div.div
 import jfx.layout.HBox.hbox
 import jfx.layout.VBox.vbox
@@ -8,84 +10,84 @@ import app.components.Showcase.*
 
 object LayoutPage {
   def render() = {
-    showcasePage("Layout & Struktur", "Die Architektur deines digitalen Raumes.") {
+    showcasePage(i18n"Layout & structure", i18n"The architecture of your digital space.") {
       vbox {
         style { gap = "34px" }
 
         sectionIntro(
-          "Komposition",
-          "Layout ist die Grammatik der Oberfläche.",
-          "VBox und HBox sind absichtlich schlicht. Sie erzwingen keine fremde Abstraktion, sondern machen die räumliche Struktur direkt im Template sichtbar."
+          i18n"Composition",
+          i18n"Layout is the grammar of the surface.",
+          i18n"VBox and HBox are deliberately simple. They do not force an external abstraction; they make spatial structure visible directly in the template."
         )
 
         metricStrip(
-          "VBox" -> "Vertikale Ordnung für Formulare, Panels und Seiten.",
-          "HBox" -> "Horizontale Gruppen für Toolbar, Aktionen und kurze Zeilen.",
-          "Div" -> "Neutrale Fläche für semantische oder visuelle Spezialisierung."
+          i18n"VBox" -> i18n"Vertical order for forms, panels, and pages.",
+          i18n"HBox" -> i18n"Horizontal groups for toolbars, actions, and short rows.",
+          i18n"Div" -> i18n"Neutral space for semantic or visual specialization."
         )
 
         componentShowcase(
-          "App-Shell Skizze",
-          "Ein dichteres Layout zeigt, wie aus wenigen Bausteinen Navigation, Inhalt und Detailbereich entstehen."
+          i18n"App shell sketch",
+          i18n"A denser layout shows how navigation, content, and detail areas emerge from a few building blocks."
         ) {
           hbox {
             classes = "layout-shell-demo"
             vbox {
               classes = "layout-shell-demo__rail"
-              div { classes = "layout-shell-demo__brand"; text = "JFX2" }
-              div { classes = "layout-shell-demo__nav is-active"; text = "Komponenten" }
-              div { classes = "layout-shell-demo__nav"; text = "Formulare" }
-              div { classes = "layout-shell-demo__nav"; text = "Daten" }
+              div { classes = "layout-shell-demo__brand"; text = DemoI18n.text(i18n"JFX2") }
+              div { classes = "layout-shell-demo__nav is-active"; text = DemoI18n.text(i18n"Components") }
+              div { classes = "layout-shell-demo__nav"; text = DemoI18n.text(i18n"Forms") }
+              div { classes = "layout-shell-demo__nav"; text = DemoI18n.text(i18n"Data") }
             }
             vbox {
               classes = "layout-shell-demo__content"
-              div { classes = "layout-shell-demo__headline"; text = "Showcase Fläche" }
-              div { classes = "layout-shell-demo__copy"; text = "Links führt die Navigation, rechts bleibt Raum für die aktive Komponente und ihre Erklärung." }
+              div { classes = "layout-shell-demo__headline"; text = DemoI18n.text(i18n"Showcase surface") }
+              div { classes = "layout-shell-demo__copy"; text = DemoI18n.text(i18n"Navigation leads from the left, while the right side keeps room for the active component and its explanation.") }
               hbox {
                 classes = "layout-shell-demo__tiles"
-                div { classes = "layout-shell-demo__tile"; text = "Live Demo" }
-                div { classes = "layout-shell-demo__tile"; text = "API" }
-                div { classes = "layout-shell-demo__tile"; text = "Hinweise" }
+                div { classes = "layout-shell-demo__tile"; text = DemoI18n.text(i18n"Live demo") }
+                div { classes = "layout-shell-demo__tile"; text = DemoI18n.text(i18n"API") }
+                div { classes = "layout-shell-demo__tile"; text = DemoI18n.text(i18n"Notes") }
               }
             }
           }
         }
 
         componentShowcase(
-          "Elegantes Box-Layout",
-          "Das Grundprinzip bleibt klein und nachvollziehbar: Container schachteln, Abstand setzen, Inhalt platzieren."
+          i18n"Elegant box layout",
+          i18n"The core idea stays small and legible: nest containers, set spacing, place content."
         ) {
           vbox {
             style { gap = "10px" }
             hbox {
               style { gap = "10px" }
-              div { classes = "demo-box"; text = "H1" }
-              div { classes = "demo-box"; text = "H2" }
+              div { classes = "demo-box"; text = DemoI18n.text(i18n"H1") }
+              div { classes = "demo-box"; text = DemoI18n.text(i18n"H2") }
             }
             vbox {
               style { gap = "5px" }
-              div { classes = "demo-box"; text = "V1" }
-              div { classes = "demo-box"; text = "V2" }
+              div { classes = "demo-box"; text = DemoI18n.text(i18n"V1") }
+              div { classes = "demo-box"; text = DemoI18n.text(i18n"V2") }
             }
           }
         }
 
         insightGrid(
-          ("Lesbarkeit", "Die Struktur liest sich von außen nach innen", "Erst kommt die Seite, dann die Zone, dann die konkrete Zeile oder Spalte."),
-          ("Stabilität", "Abstände bleiben an Containern", "Gap und Padding beschreiben den Raum, nicht jedes einzelne Kind."),
-          ("Erweiterung", "Neue Bereiche bleiben lokal", "Ein späteres Panel fügt sich als weiterer Container ein, ohne bestehende Elemente umzubauen.")
+          (i18n"Readability", i18n"The structure reads from the outside in", i18n"First comes the page, then the zone, then the concrete row or column."),
+          (i18n"Stability", i18n"Spacing belongs to containers", i18n"Gap and padding describe the space, not every individual child."),
+          (i18n"Extension", i18n"New areas stay local", i18n"A later panel slots in as another container without reshaping existing elements.")
         )
 
         apiSection(
-          "VBox & HBox Usage",
-          "Die Layout-DSL bleibt nahe am mentalen Modell einer UI-Skizze."
+          i18n"VBox & HBox usage",
+          i18n"The layout DSL stays close to the mental model of a UI sketch."
         ) {
           codeBlock("scala", """vbox {
   style { gap = "10px" }
   
   hbox {
-    div { text = "Left" }
-    div { text = "Right" }
+    div { text = DemoI18n.text(i18n"Left") }
+    div { text = DemoI18n.text(i18n"Right") }
   }
 }""")
         }

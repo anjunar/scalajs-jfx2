@@ -7,6 +7,8 @@ import jfx.core.component.Component
 import jfx.core.component.Component.*
 import jfx.core.meta.PackageClassLoader
 import jfx.core.state.Property
+import app.DemoI18n
+import jfx.i18n.*
 import jfx.form.Form
 import jfx.form.Form.{controls, form}
 import jfx.form.Input.input
@@ -28,8 +30,8 @@ object DomainPage {
     val mapper = new JsonMapper()
     val user = sampleUser()
     val jsonText = Property("")
-    val roundtripText = Property("Noch nicht ausgeführt.")
-    val validationText = Property("Noch nicht validiert.")
+    val roundtripText = Property("Not yet run.")
+    val validationText = Property("Not yet validated.")
     val modelHeadline = Property("")
 
     def refreshJson(): Unit = {
@@ -52,25 +54,25 @@ object DomainPage {
     val propertyCount = descriptors.map(_.resolved.properties.length).sum
     val annotationCount = descriptors.flatMap(_.resolved.properties).map(_.annotations.length).sum
 
-    showcasePage("Domain", "Reflection, Binding und JSON als ein System.") {
+    showcasePage(i18n"Domain", i18n"Reflection, binding, and JSON as one system.") {
       vbox {
         style { gap = "34px" }
 
         sectionIntro(
-          "Domain Layer",
-          "Das Modell ist nicht nur Daten, sondern Metadaten mit Verhalten.",
-          "JFX2 registriert Domain-Klassen mit Reflection-Descriptoren. Daraus entstehen automatische Form-Bindings, Validatoren aus Annotationen und ein JSON-Mapping, das Properties und Listen korrekt auspackt."
+          i18n"Domain layer",
+          i18n"The model is not just data, but metadata with behavior.",
+          i18n"JFX2 registers domain classes through reflection descriptors. From that come automatic form bindings, validators from annotations, and JSON mapping that unwraps properties and lists correctly."
         )
 
         metricStrip(
-          descriptors.length.toString -> "registrierte Klassen",
-          propertyCount.toString -> "reflektierte Properties",
-          annotationCount.toString -> "Validator-Annotationen"
+          descriptors.length.toString -> "registered classes",
+          propertyCount.toString -> "reflected properties",
+          annotationCount.toString -> "validator annotations"
         )
 
         componentShowcase(
-          "Live Domain Cockpit",
-          "Ein User-Modell, gebunden an Form-Controls. Änderungen fließen direkt in Properties und JSON."
+          i18n"Live domain cockpit",
+          i18n"A user model bound to form controls. Changes flow directly into properties and JSON."
         ) {
           form(user) {
             val userForm = summon[Form[User]]
@@ -85,7 +87,7 @@ object DomainPage {
                   style { gap = "8px" }
                   div {
                     style { fontSize = "13px"; fontWeight = "700"; color = "var(--aj-ink-muted)" }
-                    text = "Aktuelles Modell"
+                    text = DemoI18n.text(i18n"Current model")
                   }
                   div {
                     style { fontSize = "22px"; fontWeight = "800" }
@@ -105,12 +107,12 @@ object DomainPage {
                   style { gap = "14px"; flex = "1 1 260px" }
                   div {
                     style { fontWeight = "800" }
-                    text = "User"
+                  text = DemoI18n.text(i18n"User")
                   }
-                  inputContainer("Name") {
+                  inputContainer(DemoI18n.text(i18n"Name")) {
                     input("name") {}
                   }
-                  inputContainer("E-Mail") {
+                  inputContainer(DemoI18n.text(i18n"Email")) {
                     input("email") {}
                   }
                 }
@@ -127,12 +129,12 @@ object DomainPage {
                     }
                     div {
                       style { fontWeight = "800" }
-                      text = "Adresse"
+                    text = DemoI18n.text(i18n"Address")
                     }
-                    inputContainer("Straße") {
+                    inputContainer(DemoI18n.text(i18n"Street")) {
                       input("street") {}
                     }
-                    inputContainer("Stadt") {
+                    inputContainer(DemoI18n.text(i18n"City")) {
                       input("city") {}
                     }
                   }
@@ -142,29 +144,29 @@ object DomainPage {
               hbox {
                 style { gap = "10px"; flexWrap = "wrap" }
 
-                button("Validieren") {
+                button(DemoI18n.text(i18n"Validate")) {
                   onClick { _ =>
                     val errors = controls(using userForm).iterator.flatMap(_.validate(forceVisible = true)).toSeq
                     validationText.set(
-                      if (errors.isEmpty) "Alles sauber: Die Annotationen erzeugen keine Validierungsfehler."
-                      else s"${errors.length} Fehler: ${errors.mkString(", ")}"
+                      if (errors.isEmpty) "All clean: the annotations produced no validation errors."
+                      else s"${errors.length} errors: ${errors.mkString(", ")}"
                     )
                   }
                 }
 
-                button("Roundtrip JSON") {
+                button(DemoI18n.text(i18n"Roundtrip JSON")) {
                   onClick { _ =>
                     val result = Try {
                       val json = mapper.serialize(user)
                       val copy = mapper.deserialize[User](json)
-                      s"Roundtrip OK: ${copy.name.get} aus ${copy.address.get.city.get}"
-                    }.getOrElse("Roundtrip fehlgeschlagen.")
+                      s"Roundtrip OK: ${copy.name.get} from ${copy.address.get.city.get}"
+                    }.getOrElse("Roundtrip failed.")
                     roundtripText.set(result)
                     refreshJson()
                   }
                 }
 
-                button("Kaputte Daten") {
+                button(DemoI18n.text(i18n"Broken data")) {
                   onClick { _ =>
                     user.name.set("Al")
                     user.email.set("kein-mail-format")
@@ -174,11 +176,11 @@ object DomainPage {
                   }
                 }
 
-                button("Beispiel zurücksetzen") {
+                button(DemoI18n.text(i18n"Reset example")) {
                   onClick { _ =>
                     fillUser(user)
-                    validationText.set("Noch nicht validiert.")
-                    roundtripText.set("Noch nicht ausgeführt.")
+                    validationText.set("Not yet validated.")
+                    roundtripText.set("Not yet run.")
                     refreshJson()
                   }
                 }
@@ -198,15 +200,15 @@ object DomainPage {
         }
 
         componentShowcase(
-          "JSON Mapping",
-          "Properties und ListProperties werden beim Serialisieren als normale JSON-Werte sichtbar."
+          i18n"JSON mapping",
+          i18n"Properties and ListProperties appear as normal JSON values during serialization."
         ) {
           codePanel("json", jsonText)
         }
 
         componentShowcase(
-          "Reflection Registry",
-          "Die registrierten Domain-Klassen liefern Namen, Typen, Accessors und Annotationen."
+          i18n"Reflection registry",
+          i18n"The registered domain classes provide names, types, accessors, and annotations."
         ) {
           hbox {
             style {
@@ -219,14 +221,14 @@ object DomainPage {
         }
 
         insightGrid(
-          ("Descriptor", "Struktur wird explizit", "Klassen, Properties und Typen sind zur Laufzeit lesbar, ohne String-Magie im Formular."),
-          ("Annotation", "Regeln bleiben am Modell", "Validation entsteht aus den Annotationen der Domain-Properties."),
-          ("Mapper", "JSON bleibt schlicht", "Property[String] wird zu String, ListProperty[Email] wird zu Array.")
+          (i18n"Descriptor", i18n"Structure stays explicit", i18n"Classes, properties, and types remain readable at runtime without string magic in the form."),
+          (i18n"Annotation", i18n"Rules stay on the model", i18n"Validation arises from the annotations on the domain properties."),
+          (i18n"Mapper", i18n"JSON stays simple", i18n"Property[String] becomes String, ListProperty[Email] becomes Array.")
         )
 
         apiSection(
-          "DSL Usage",
-          "Domain-Binding entsteht über Namen: input(\"email\") bindet an user.email."
+          i18n"DSL usage",
+          i18n"Domain binding is name-based: input(\"email\") binds to user.email."
         ) {
           codeBlock("scala", """val user = new User()
 form(user) {
@@ -353,8 +355,8 @@ val copy = mapper.deserialize[User](json)""")
       val annotations = property.annotations.toSeq.map(annotationLabel)
       div {
         style { color = "var(--aj-ink-muted)"; fontSize = "12px" }
-        text =
-          if (annotations.isEmpty) "keine Annotationen"
+          text =
+          if (annotations.isEmpty) "no annotations"
           else annotations.mkString(" · ")
       }
     }

@@ -1,8 +1,10 @@
 package app.pages
 
+import app.DemoI18n
 import jfx.action.Button.button
 import jfx.core.component.Component.*
 import jfx.core.state.{ListProperty, Property}
+import jfx.i18n.*
 import jfx.form.Input.{input, standaloneInput, stringValueProperty, errorsProperty, validators}
 import jfx.form.InputContainer.inputContainer
 import jfx.form.validators.{EmailValidator, NotBlankValidator}
@@ -16,44 +18,44 @@ import app.components.Showcase.*
 
 object InputPage {
   def render() = {
-    showcasePage("Formulare & Input", "Der fließende Dialog mit deinen Nutzern.") {
+    showcasePage(i18n"Forms & input", i18n"The flowing dialog with your users.") {
       vbox {
         style { gap = "34px" }
 
         sectionIntro(
-          "Formfluss",
-          "Dateneingabe soll sich wie ein geordnetes Gespräch anfühlen.",
-          "InputContainer, Input und Properties trennen Darstellung, Wert und Validierung, bleiben im Template aber direkt zusammen lesbar. So sieht man sofort, welche Felder existieren und wie sie reagieren."
+          i18n"Form flow",
+          i18n"Data entry should feel like a structured conversation.",
+          i18n"InputContainer, Input, and Properties separate presentation, value, and validation while staying readable together in the template. You can see immediately which fields exist and how they react."
         )
 
         metricStrip(
-          "Property" -> "Der sichtbare Wert kann reaktiv weitergegeben werden.",
-          "Validator" -> "Fehlerregeln bleiben nah am Feld.",
-          "Form" -> "Mehrere Controls teilen einen Kontext für Submit und Reset."
+          i18n"Property" -> i18n"The visible value can flow reactively.",
+          i18n"Validator" -> i18n"Error rules stay close to the field.",
+          i18n"Form" -> i18n"Several controls share one context for submit and reset."
         )
 
         componentShowcase(
-          "Einfache Texteingabe",
-          "Standalone-Inputs sind ideal für Suchfelder, kurze Filter oder kleine Dialoge ohne kompletten Form-Kontext."
+          i18n"Simple text input",
+          i18n"Standalone inputs are ideal for search fields, short filters, or small dialogs without a full form context."
         ) {
           val name = Property("")
           vbox {
             style { maxWidth = "420px" }
-            inputContainer("Name eingeben...") {
+            inputContainer("Enter name...") {
               standaloneInput("name") {
                 addDisposable(stringValueProperty.observe(name.set))
               }
             }
             div {
               classes = "showcase-result"
-              val labelText = name.map(v => s"Eingabe: $v")
+              val labelText = name.map(v => s"Input: $v")
               text = labelText
             }
           }
         }
         apiSection(
-          "Standalone Usage",
-          "Das Property bleibt explizit. Dadurch ist sofort klar, wohin der Wert fliesst."
+          i18n"Standalone usage",
+          i18n"The property remains explicit. That makes it immediately clear where the value flows."
         ) {
           codeBlock("scala", """val name = Property("")
 inputContainer("Name eingeben...") {

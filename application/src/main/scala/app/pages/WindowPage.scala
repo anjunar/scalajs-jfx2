@@ -1,8 +1,10 @@
 package app.pages
 
+import app.DemoI18n
 import jfx.action.Button.button
 import jfx.core.component.Component
 import jfx.core.component.Component.*
+import jfx.i18n.*
 import jfx.layout.Div.div
 import jfx.layout.VBox.vbox
 import jfx.layout.Viewport
@@ -12,82 +14,82 @@ import app.components.Showcase.*
 
 object WindowPage {
   def render() = {
-    showcasePage("Window & Viewport", "Architektur des Raums.") {
+    showcasePage(i18n"Window & viewport", i18n"Architecture of space.") {
       vbox {
         style { gap = "34px" }
 
         sectionIntro(
-          "Raumverwaltung",
-          "Der Viewport ist die Bühne für Dinge, die über der Seite liegen.",
-          "Benachrichtigungen, Fenster und Overlays brauchen eine zentrale Ordnung. JFX2 sammelt diese Aufgaben im Viewport, damit einzelne Seiten nicht selbst globale UI-Schichten verwalten müssen."
+          i18n"Space management",
+          i18n"The viewport is the stage for things that live above the page.",
+          i18n"Notifications, windows, and overlays need a central order. JFX2 gathers these concerns in the viewport so pages do not have to manage global UI layers on their own."
         )
 
         metricStrip(
-          "Notify" -> "Kurze Rückmeldungen ohne Kontextverlust.",
-          "Window" -> "Fokussierte Arbeitsflächen über der Seite.",
-          "Overlay" -> "Ankergebundene Flächen für Auswahl und Details."
+          i18n"Notify" -> i18n"Short feedback without losing context.",
+          i18n"Window" -> i18n"Focused work surfaces above the page.",
+          i18n"Overlay" -> i18n"Anchor-bound surfaces for selection and details."
         )
         
         componentShowcase(
-          "Viewport",
-          "Vier Benachrichtigungstypen zeigen, wie globale Rückmeldung aus einer Seite heraus ausgelöst wird."
+          i18n"Viewport",
+          i18n"Four notification types show how global feedback is triggered from a page."
         ) {
           div {
             style { marginBottom = "12px"; opacity = "0.8" }
-            text = "Der Viewport ist das stille Zentrum, das Fenster, Benachrichtigungen und Overlays trägt. Er ordnet das Chaos und gibt ihm eine Bühne."
+            text = DemoI18n.text(i18n"The viewport is the quiet center that carries windows, notifications, and overlays. It brings order to the chaos and gives it a stage.")
           }
           
           vbox {
              style { gap = "12px" }
              
-             button("Info Benachrichtigung") {
+             button(DemoI18n.text(i18n"Info notification")) {
                onClick { _ => 
-                 Viewport.notify("Die Stille ist der Ursprung aller Form.", NotificationKind.Info)
+                 Viewport.notify("Silence is the origin of every form.", NotificationKind.Info)
                }
              }
 
-             button("Erfolg Benachrichtigung") {
+             button(DemoI18n.text(i18n"Success notification")) {
                onClick { _ => 
-                 Viewport.notify("Die Struktur ist nun tragfähig.", NotificationKind.Success)
+                 Viewport.notify("The structure is now sound.", NotificationKind.Success)
                }
              }
 
-             button("Warnung Benachrichtigung") {
+             button(DemoI18n.text(i18n"Warning notification")) {
                onClick { _ => 
-                 Viewport.notify("Achtung: Die Form könnte sich verhärten.", NotificationKind.Warning)
+                 Viewport.notify("Warning: the form may be hardening.", NotificationKind.Warning)
                }
              }
 
-             button("Fehler Benachrichtigung") {
+             button(DemoI18n.text(i18n"Error notification")) {
                onClick { _ => 
-                 Viewport.notify("Ein Riss im Fundament wurde entdeckt.", NotificationKind.Error)
+                 Viewport.notify("A crack in the foundation was discovered.", NotificationKind.Error)
                }
              }
           }
         }
 
         componentShowcase(
-          "Fenster",
-          "Ein Fenster bleibt im globalen Viewport, während die Seite darunter ihren Zustand behält."
+          i18n"Window",
+          i18n"A window remains in the global viewport while the page underneath keeps its state."
         ) {
           div {
             style { marginBottom = "12px"; opacity = "0.8" }
-            text = "Fenster sind bewegliche Inseln im Viewport. Sie erlauben Fokus, ohne den Kontext zu verlieren."
+            text = DemoI18n.text(i18n"Windows are movable islands in the viewport. They allow focus without losing context.")
           }
 
-          button("Fenster öffnen") {
+          button(DemoI18n.text(i18n"Open window")) {
             onClick { _ =>
               Viewport.addWindow(new WindowConf(
-                title = "Ein Raum für Gedanken",
+                title = "A room for thoughts",
                 width = 400,
                 height = 300,
                 component = () => {
                   vbox {
                     style { padding = "20px"; gap = "12px" }
-                    div { text = "Hier ist Platz für deine Ideen." }
-                    button("Notiz bestätigen") {
+                    div { text = DemoI18n.text(i18n"There is room for your ideas here.") }
+                    button(DemoI18n.text(i18n"Confirm note")) {
                        onClick { _ =>
-                         Viewport.notify("Die Notiz im Fenster wurde bestätigt.", NotificationKind.Success)
+                         Viewport.notify("The note in the window was confirmed.", NotificationKind.Success)
                        }
                     }
                   }
@@ -104,8 +106,8 @@ object WindowPage {
         )
 
         apiSection(
-          "Nutzung",
-          "Die Seite bindet den Viewport einmal ein und sendet danach nur noch klare Absichten."
+          i18n"Usage",
+          i18n"The page binds the viewport once and then only sends clear intents."
         ) {
           codeBlock("scala", """// Viewport in der App-Shell platzieren
 viewport {
@@ -113,11 +115,11 @@ viewport {
 }
 
 // Benachrichtigung senden
-Viewport.notify("Hallo Welt", NotificationKind.Success)
+Viewport.notify("Hello world", NotificationKind.Success)
 
 // Fenster hinzufügen
 Viewport.addWindow(new WindowConf(
-  title = "Mein Fenster",
+  title = "My window",
   component = () => new MyContent()
 ))""")
         }

@@ -1,33 +1,35 @@
 package app.pages
 
 import app.DemoI18n
-import jfx.core.component.Component.*
+import app.components.Showcase.*
 import jfx.action.Button.*
+import jfx.core.component.Component.*
+import jfx.core.state.ReadOnlyProperty
+import jfx.i18n.*
 import jfx.layout.Div.div
 import jfx.layout.VBox.vbox
-import app.components.Showcase.*
 
 object OverviewPage {
   def render() = {
-    showcasePage("Willkommen bei JFX2", "Deinem neuen Zuhause für reaktive UIs in Scala.js.") {
+    showcasePage(i18n"Welcome to JFX2", i18n"Your new home for reactive UIs in Scala.js.") {
       vbox {
         style { gap = "34px" }
 
         sectionIntro(
-          "Vision",
-          "Eine Dokumentation, die wie eine echte Werkbank wirkt.",
-          "Der Showcase soll nicht nur beweisen, dass Komponenten rendern. Er soll zeigen, wie JFX2 gedacht ist: deklarativ, serverseitig stabil, im Browser reaktiv und so lesbar, dass man nach sechs Monaten noch freundlich nickt."
+          i18n"Vision",
+          i18n"A documentation site that feels like a real workbench.",
+          i18n"The showcase should not just prove that components render. It should show how JFX2 is meant to feel: declarative, server-stable, reactive in the browser, and readable enough that you can still nod to it six months later."
         )
 
         metricStrip(
-          "SSR" -> "Server-HTML und Client-Hydration teilen dieselbe Struktur.",
-          "DSL" -> "Templates bleiben deklarativ und frei von DOM-Handarbeit.",
-          "Live" -> "Jede Seite zeigt ein nutzbares Beispiel statt trockener API-Listen."
+          i18n"SSR" -> i18n"Server HTML and client hydration share the same structure.",
+          i18n"DSL" -> i18n"Templates stay declarative and free of DOM handwork.",
+          i18n"Live" -> i18n"Every page shows a usable example instead of a dry API list."
         )
 
         componentShowcase(
-          "Message-centered I18n",
-          "Der englische Ursprung steht im Scala-Code. Der Katalog haengt mehrere Sprachen an genau diese eine Message."
+          i18n"Message-centered I18n",
+          i18n"The English source lives in Scala code. The catalog attaches multiple languages to exactly that one message."
         ) {
           vbox {
             classes = "i18n-demo"
@@ -66,28 +68,28 @@ object OverviewPage {
         }
 
         insightGrid(
-          ("01", "Lesbarkeit zuerst", "Komponenten werden so gezeigt, dass ihr Zweck, ihr Zustand und ihre Einbettung sofort erfassbar sind."),
-          ("02", "Hydration im Blick", "Beispiele vermeiden versteckte DOM-Abweichungen und halten virtuelle Container nachvollziehbar."),
-          ("03", "Wachsendes System", "Neue Komponenten bekommen Platz für Kontext, Varianten, API und Architekturhinweise.")
+          (i18n"01", i18n"Readability first", i18n"Components are shown so their purpose, state, and placement are immediately clear."),
+          (i18n"02", i18n"Hydration in view", i18n"Examples avoid hidden DOM drift and keep virtual containers understandable."),
+          (i18n"03", i18n"A growing system", i18n"New components get room for context, variants, API, and architectural hints.")
         )
 
         patternList(
-          "Was du in den Komponentenseiten findest",
-          "Eine kurze Einordnung, wann die Komponente sinnvoll ist.",
-          "Mindestens ein echter Live-Zustand mit Daten oder Interaktion.",
-          "Konkrete DSL-Beispiele, die nah am Produktionscode bleiben.",
-          "Hinweise zu Stabilität, Cursor, SSR oder reaktiven Properties."
+          i18n"What you find on the component pages",
+          i18n"A short explanation of when the component makes sense.",
+          i18n"At least one real live state with data or interaction.",
+          i18n"Concrete DSL examples that stay close to production code.",
+          i18n"Notes about stability, cursor behavior, SSR, or reactive properties."
         )
 
         noteBlock(
-          "Nächster Schritt",
-          "Wähle links eine Komponente. Jede Seite ist jetzt dichter aufgebaut und lässt Platz für weitere Bausteine, ohne den roten Faden zu verlieren."
+          i18n"Next step",
+          i18n"Pick a component on the left. Each page is now denser and still leaves room for more building blocks without losing the thread."
         )
       }
     }
   }
 
-  private def i18nSample(source: String, resolved: jfx.core.state.ReadOnlyProperty[String]): Unit = {
+  private def i18nSample(source: String, resolved: ReadOnlyProperty[String]): Unit = {
     vbox {
       classes = "i18n-demo__sample"
       div { classes = "i18n-demo__label"; text = "Source" }

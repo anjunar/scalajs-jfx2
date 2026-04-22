@@ -1,16 +1,16 @@
 package jfx.form
 
 import jfx.core.component.{Box, Component}
-import jfx.core.state.{Property, ReadOnlyProperty}
-import jfx.dsl.DslRuntime
 import jfx.core.component.Component.*
-import org.scalajs.dom
-
+import jfx.core.state.{Property, ReadOnlyProperty}
 import jfx.layout.Div.div
 import jfx.layout.HorizontalLine.horizontalLine
 
 object InputContainer {
-  def inputContainer(placeholderText: String)(init: => Unit): Box = {
+  def inputContainer(placeholderText: String)(init: => Unit): Box =
+    inputContainer(Property(placeholderText))(init)
+
+  def inputContainer(placeholderText: ReadOnlyProperty[String])(init: => Unit): Box = {
     div {
       addClass("jfx-input-container")
       val container = summon[Box]
@@ -25,7 +25,7 @@ object InputContainer {
 
       val contentSlot = div {
         addClass("jfx-input-container__control")
-        init // Render child control here
+        init
       }
 
       val divider = horizontalLine {
@@ -38,14 +38,15 @@ object InputContainer {
         text = errorsTextProp
       }
 
-      // Bind states
       val controls = contentSlot.children.collect { case c: Control[?] => c }
       if (controls.nonEmpty) {
         val control = controls.head
-        
-        if (control.placeholderProperty.get.trim.isEmpty && placeholderText.trim.nonEmpty) {
-          control.placeholderProperty.set(placeholderText)
-        }
+
+        container.addDisposable(placeholderText.observe { value =>
+          if (control.placeholderProperty.get.trim.isEmpty && value.trim.nonEmpty) {
+            control.placeholderProperty.set(value)
+          }
+        })
 
         container.addDisposable(control.valueProperty.observe { value =>
           val empty = value == null || value.toString.trim.isEmpty

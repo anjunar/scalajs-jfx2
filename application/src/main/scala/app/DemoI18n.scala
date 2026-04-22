@@ -80,7 +80,7 @@ object DemoI18n {
       de(i18n"Live Documentation", "Live Documentation"),
       de(i18n"Light", "Light"),
       de(i18n"Dark", "Dark"),
-      de(i18n"v2.0.0-alpha", "v2.0.0-alpha"),
+      de(i18n"v2.0.0", "v2.0.0"),
       de(i18n"© $year Anjunar. Pure Scala.js Architecture.", "© {year} Anjunar. Pure Scala.js Architektur."),
       de(Messages.deleteDocument, "Dokument löschen"),
       de(RuntimeMessage(invitationKey, Messages.invitation("Mira", "Architecture").args), "Benutzer {user} hat dich zu {group} eingeladen"),
