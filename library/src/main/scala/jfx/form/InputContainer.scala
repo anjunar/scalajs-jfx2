@@ -17,8 +17,9 @@ object InputContainer {
 
       val labelDiv = div {
         addClass("jfx-input-container__label")
-        div {
+        Box.box("span") {
           addClass("placeholder")
+          addClass("jfx-input-container__placeholder")
           text = placeholderText
         }
       }
@@ -38,14 +39,12 @@ object InputContainer {
         text = errorsTextProp
       }
 
-      val controls = contentSlot.children.collect { case c: Control[?] => c }
+      val controls = collectControls(contentSlot)
       if (controls.nonEmpty) {
         val control = controls.head
 
         container.addDisposable(placeholderText.observe { value =>
-          if (control.placeholderProperty.get.trim.isEmpty && value.trim.nonEmpty) {
-            control.placeholderProperty.set(value)
-          }
+          control.placeholderProperty.set(value)
         })
 
         container.addDisposable(control.valueProperty.observe { value =>
@@ -74,4 +73,10 @@ object InputContainer {
       }
     }
   }
+
+  private def collectControls(component: Component): Seq[Control[?]] =
+    component.children.flatMap {
+      case control: Control[?] => Seq(control)
+      case child               => collectControls(child)
+    }
 }

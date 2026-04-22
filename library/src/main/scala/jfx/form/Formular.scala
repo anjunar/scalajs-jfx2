@@ -136,7 +136,7 @@ trait Formular[M] extends FormContext with Editable {
     }
 
     if (accessValidators.nonEmpty) {
-      console.log(s"Binding control '$controlName' with ${accessValidators.size} validators: ${accessValidators.map(_.getClass.getSimpleName).mkString(", ")}")
+//      console.log(s"Binding control '$controlName' with ${accessValidators.size} validators: ${accessValidators.map(_.getClass.getSimpleName).mkString(", ")}")
     }
 
     syncControlValidators(control, accessValidators)

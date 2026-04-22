@@ -19,7 +19,7 @@ class Input(override val name: String, override val standalone: Boolean = false)
     
     onInput { _ =>
       if (editableProperty.get) {
-        org.scalajs.dom.console.log(s"Input '$name' changed to: $nativeValue")
+//        org.scalajs.dom.console.log(s"Input '$name' changed to: $nativeValue")
         setDirty(true)
         valueProperty.set(nativeValue)
       } else {
@@ -67,7 +67,7 @@ class Input(override val name: String, override val standalone: Boolean = false)
 
   private def bindNativePlaceholder(): Unit = {
     addDisposable(placeholderProperty.observe { placeholder =>
-      nativeInput.foreach(_.placeholder = if (placeholder == null) "" else placeholder)
+      host.setAttribute("placeholder", if (placeholder == null) "" else placeholder)
     })
   }
 
@@ -84,10 +84,11 @@ class Input(override val name: String, override val standalone: Boolean = false)
 }
 
 object Input {
-  def input(name: String)(init: Input ?=> Unit): Input = {
-    DslRuntime.build(new Input(name))(init)
+  def input(name: String, standalone: Boolean = false)(init: Input ?=> Unit): Input = {
+    DslRuntime.build(new Input(name, standalone))(init)
   }
 
+  @deprecated("Use input(name, standalone = true) instead.", "2.0.0")
   def standaloneInput(name: String)(init: Input ?=> Unit): Input = {
     DslRuntime.build(new Input(name, true))(init)
   }

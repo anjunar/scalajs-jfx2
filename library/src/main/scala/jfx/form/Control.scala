@@ -36,7 +36,7 @@ trait Control[V] extends Component with Editable {
     if (forceVisible || dirtyProperty.get) {
       if (forceVisible) setDirty(true)
       if (errors.nonEmpty) {
-        org.scalajs.dom.console.log(s"Control '$name' invalid: ${errors.mkString(", ")}")
+//        org.scalajs.dom.console.log(s"Control '$name' invalid: ${errors.mkString(", ")}")
       }
       errorsProperty.setAll(errors)
     } else {

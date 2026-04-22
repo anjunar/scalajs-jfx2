@@ -10,6 +10,9 @@ class HydrationCursor(val root: dom.Node, startIndex: Int = 0) extends Cursor {
   private val childNodes = root.childNodes
   private var index = startIndex
 
+  private def browserText(value: String): String =
+    value.replace("\r\n", "\n").replace('\r', '\n')
+
   override def position: Option[Int] = Some(index)
 
   private def skipWhitespaces(): Unit = {
@@ -31,7 +34,7 @@ class HydrationCursor(val root: dom.Node, startIndex: Int = 0) extends Cursor {
 
     matched match {
       case Some(el) =>
-        dom.console.log(s"Hydrated <$tagName> at $ctx")
+//        dom.console.log(s"Hydrated <$tagName> at $ctx")
         index += 1
         new DomHostElement(tagName, el)
         
@@ -56,12 +59,12 @@ class HydrationCursor(val root: dom.Node, startIndex: Int = 0) extends Cursor {
 
     matched match {
       case Some(t) =>
-        if (t.textContent != initial) {
+        if (browserText(t.textContent) != browserText(initial)) {
           dom.console.warn(s"Hydration Text Mismatch: Expected '$initial' but found '${t.textContent}'. $ctx")
           t.textContent = initial
         }
         val display = if (initial.length > 20) initial.substring(0, 20) + "..." else initial
-        dom.console.log(s"Hydrated text('$display') at $ctx")
+//        dom.console.log(s"Hydrated text('$display') at $ctx")
         index += 1
         new HostNode {
           override def renderHtml(indent: Int): String = t.textContent
@@ -69,7 +72,9 @@ class HydrationCursor(val root: dom.Node, startIndex: Int = 0) extends Cursor {
         }
         
       case None =>
-        dom.console.warn(s"Hydration Mismatch: Expected text('$initial') but found ${existing.map(_.nodeName).getOrElse("nothing")}. $ctx")
+        if (initial.nonEmpty) {
+          dom.console.warn(s"Hydration Mismatch: Expected text('$initial') but found ${existing.map(_.nodeName).getOrElse("nothing")}. $ctx")
+        }
         val t = dom.document.createTextNode(initial)
         if (index < childNodes.length) root.insertBefore(t, childNodes.item(index))
         else root.appendChild(t)

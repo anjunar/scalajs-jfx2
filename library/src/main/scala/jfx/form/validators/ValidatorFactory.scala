@@ -10,7 +10,7 @@ object ValidatorFactory {
   }
 
   def createValidator(annotation: Annotation): Option[jfx.form.validators.Validator[Any]] = {
-    org.scalajs.dom.console.log(s"Creating validator for annotation: ${annotation.annotationClassName}")
+//    org.scalajs.dom.console.log(s"Creating validator for annotation: ${annotation.annotationClassName}")
     annotation.annotationClassName match {
       case "jfx.form.validators.NotNull" =>
         val message = annotation.parameters.getOrElse("message", "Darf nicht null sein").asInstanceOf[String]

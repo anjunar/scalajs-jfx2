@@ -5,7 +5,7 @@ import jfx.action.Button.button
 import jfx.core.component.Component.*
 import jfx.core.state.{ListProperty, Property}
 import jfx.i18n.*
-import jfx.form.Input.{input, standaloneInput, stringValueProperty, errorsProperty, validators}
+import jfx.form.Input.{input, stringValueProperty, errorsProperty, validators}
 import jfx.form.InputContainer.inputContainer
 import jfx.form.validators.{EmailValidator, NotBlankValidator}
 import jfx.layout.Div.div
@@ -42,7 +42,7 @@ object InputPage {
           vbox {
             style { maxWidth = "420px" }
             inputContainer(DemoI18n.text(i18n"Enter name...")) {
-              standaloneInput("name") {
+              input("name", standalone = true) {
                 addDisposable(stringValueProperty.observe(name.set))
               }
             }
@@ -59,7 +59,7 @@ object InputPage {
         ) {
           codeBlock("scala", """val name = Property("")
 inputContainer("Name eingeben...") {
-  standaloneInput("name") {
+  input("name", standalone = true) {
     addDisposable(stringValueProperty.observe(name.set))
   }
 }""")
