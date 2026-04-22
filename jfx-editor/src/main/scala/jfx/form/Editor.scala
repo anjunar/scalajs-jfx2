@@ -26,7 +26,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
   private var placeholderElement: HTMLElement | Null = null
   private var editorUnregister: js.Function0[Unit] | Null = null
   private var editorDomCleanup: (() => Unit) | Null = null
-  private var lastSeenStateJson: String | Null = null
+  private var lastSeenValueJson: String | Null = null
   private var fallbackRendered = false
   private var toolbarRendered = false
   private val editorRegistrations = mutable.ArrayBuffer.empty[js.Function0[Unit]]
@@ -219,7 +219,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
     mountLexical()
   }
 
-  private[jfx] def registerPlugin(plugin: EditorPlugin): Unit =
+  private[form] def registerPlugin(plugin: EditorPlugin): Unit =
     if (!pluginComponents.exists(_.name == plugin.name)) {
       pluginComponents += plugin
     }
@@ -238,7 +238,6 @@ class Editor(val name: String, override val standalone: Boolean = false)
     registerDomListeners(surface.nn)
 
     val initialValue = valueProperty.get
-    val initialStateJson = toLexicalJson(initialValue)
 
     val builder =
       new LexicalBuilder()
@@ -248,7 +247,9 @@ class Editor(val name: String, override val standalone: Boolean = false)
         .withNodes(defaultNodes())
         .withModules(collectModules()*)
 
-    initialStateJson.foreach(builder.withInitialState)
+    if (initialValue != null) {
+      builder.withInitialState(initialValue)
+    }
 
     val editor = builder.build(surface.nn)
     lexicalEditor = editor
@@ -262,8 +263,8 @@ class Editor(val name: String, override val standalone: Boolean = false)
     surface.nn.setAttribute("aria-multiline", "true")
     syncEditableSurface(editableProperty.get)
 
-    if (initialStateJson.nonEmpty) {
-      lastSeenStateJson = initialStateJson.orNull
+    if (initialValue != null) {
+      lastSeenValueJson = js.JSON.stringify(initialValue)
     } else {
       publishEditorState(editor, markDirty = false)
     }
@@ -379,31 +380,32 @@ class Editor(val name: String, override val standalone: Boolean = false)
     }
 
   private def publishEditorState(editor: LexicalEditor, markDirty: Boolean): Unit = {
-    val json = editorStateJson(editor)
-    if (lastSeenStateJson != null && lastSeenStateJson == json) {
+    val state = editor.getEditorState().toJSON()
+    val json = js.JSON.stringify(state)
+    if (lastSeenValueJson != null && lastSeenValueJson == json) {
       return
     }
 
-    lastSeenStateJson = json
+    lastSeenValueJson = json
 
     if (markDirty) {
       setDirty(true)
     }
 
-    valueProperty.set(json.asInstanceOf[js.Any])
+    valueProperty.set(state)
   }
 
   private def syncExternalValue(value: js.Any | Null): Unit =
     if (lexicalEditor != null) {
-      val nextStateJson = toLexicalJson(value).getOrElse(emptyStateJson())
-      if (lastSeenStateJson != null && lastSeenStateJson == nextStateJson) {
+      val json = if (value == null) null else js.JSON.stringify(value)
+      if (lastSeenValueJson == json) {
         return
       }
 
-      lastSeenStateJson = nextStateJson
+      lastSeenValueJson = json
 
       try {
-        val state = lexicalEditor.nn.parseEditorState(nextStateJson)
+        val state = lexicalEditor.nn.parseEditorState(value.asInstanceOf[js.Dynamic])
         lexicalEditor.nn.setEditorState(state, js.Dynamic.literal())
         refreshPlaceholder()
       } catch {
@@ -432,56 +434,18 @@ class Editor(val name: String, override val standalone: Boolean = false)
     empty
   }
 
-  private def editorStateJson(editor: LexicalEditor): String =
-    js.JSON.stringify(editor.getEditorState().toJSON())
-
-  private def toLexicalJson(value: js.Any | Null): Option[String] =
-    if (value == null || js.isUndefined(value.asInstanceOf[js.Any])) {
-      None
-    } else {
-      val asString =
-        if (js.typeOf(value.asInstanceOf[js.Any]) == "string") {
-          value.asInstanceOf[String]
-        } else {
-          js.JSON.stringify(value.asInstanceOf[js.Any])
-        }
-
-      Option(asString)
-        .map(_.trim)
-        .filter(_.nonEmpty)
-        .map { text =>
-          if (looksLikeJson(text)) text
-          else plainTextStateJson(text)
-        }
-    }
-
   private def extractPreviewText(value: js.Any | Null): Option[String] =
     if (value == null || js.isUndefined(value.asInstanceOf[js.Any])) {
       None
     } else if (js.typeOf(value.asInstanceOf[js.Any]) == "string") {
       val text = value.asInstanceOf[String].trim
-      if (text.isEmpty) None
-      else if (looksLikeJson(text)) extractTextFromLexicalJson(text).orElse(Some(text))
-      else Some(text)
+      if (text.isEmpty) None else Some(text)
     } else {
-      extractTextFromLexicalJson(js.JSON.stringify(value.asInstanceOf[js.Any]))
-    }
-
-  private def looksLikeJson(value: String): Boolean =
-    value.startsWith("{") || value.startsWith("[")
-
-  private def extractTextFromLexicalJson(json: String): Option[String] =
-    try {
-      val parsed = js.JSON.parse(json)
-      val root = parsed.asInstanceOf[js.Dynamic].selectDynamic("root").asInstanceOf[js.Any]
-      val source =
-        if (jsValueExists(root)) root
-        else parsed.asInstanceOf[js.Any]
       val parts = mutable.ArrayBuffer.empty[String]
+      val root = value.asInstanceOf[js.Dynamic].selectDynamic("root")
+      val source = if (jsValueExists(root.asInstanceOf[js.Any])) root.asInstanceOf[js.Any] else value.asInstanceOf[js.Any]
       collectText(source, parts)
       Option(parts.mkString(" ").trim).filter(_.nonEmpty)
-    } catch {
-      case _: Throwable => None
     }
 
   private def collectText(value: js.Any, parts: mutable.ArrayBuffer[String]): Unit =
@@ -504,42 +468,6 @@ class Editor(val name: String, override val standalone: Boolean = false)
 
   private def jsValueExists(value: js.Any): Boolean =
     value != null && !js.isUndefined(value)
-
-  private def plainTextStateJson(text: String): String =
-    js.JSON.stringify(
-      js.Dynamic.literal(
-        root = js.Dynamic.literal(
-          children = js.Array(
-            js.Dynamic.literal(
-              children = js.Array(
-                js.Dynamic.literal(
-                  detail = 0,
-                  format = 0,
-                  mode = "normal",
-                  style = "",
-                  text = text,
-                  `type` = "text",
-                  version = 1
-                )
-              ),
-              direction = null,
-              format = "",
-              indent = 0,
-              `type` = "paragraph",
-              version = 1
-            )
-          ),
-          direction = null,
-          format = "",
-          indent = 0,
-          `type` = "root",
-          version = 1
-        )
-      )
-    )
-
-  private def emptyStateJson(): String =
-    plainTextStateJson("")
 
   private def defaultNodes(): js.Array[js.Any] =
     js.Array(
