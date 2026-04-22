@@ -130,6 +130,61 @@
     color: var(--aj-ink-muted);
 }
 
+.app-toolbar__scala-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 34px;
+    padding: 0 8px;
+    border: 1px solid var(--aj-line-soft);
+    border-radius: 999px;
+    background: var(--aj-surface-muted);
+}
+
+.app-toolbar__scala-link:hover,
+.app-toolbar__scala-link:focus-visible {
+    background: var(--aj-surface-hover);
+    outline: none;
+}
+
+.app-toolbar__scala-link:focus-visible {
+    box-shadow: var(--aj-shadow-focus);
+}
+
+.app-toolbar__scala-badge {
+    width: 122px;
+    height: 20px;
+    border-radius: 4px;
+    background: transparent;
+}
+
+.app-toolbar__github {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 0 13px;
+    border: 1px solid var(--aj-line-soft);
+    border-radius: 999px;
+    background: var(--aj-surface-muted);
+    color: var(--aj-ink-soft);
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+}
+
+.app-toolbar__github:hover,
+.app-toolbar__github:focus-visible {
+    background: var(--aj-surface-hover);
+    color: var(--aj-ink);
+    outline: none;
+}
+
+.app-toolbar__github:focus-visible {
+    box-shadow: var(--aj-shadow-focus);
+}
+
 .app-toolbar__chooser {
     gap: 4px;
     padding: 4px;
@@ -570,5 +625,20 @@ div.hbox.layout-shell-demo {
     .app-toolbar__choice {
         min-height: 28px;
         padding: 0 9px;
+    }
+
+    .app-toolbar__github {
+        min-height: 30px;
+        padding: 0 10px;
+    }
+
+    .app-toolbar__scala-link {
+        height: 30px;
+        padding: 0 6px;
+    }
+
+    .app-toolbar__scala-badge {
+        width: 112px;
+        height: 18px;
     }
 }

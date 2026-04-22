@@ -2,8 +2,10 @@ package app
 
 import jfx.action.Button.*
 import jfx.browser.Browser
+import jfx.control.Image.*
 import jfx.control.Link.*
 import jfx.control.{TableColumn, TableView}
+import jfx.core.component.Box.box
 import jfx.core.component.Component.*
 import jfx.core.state.{ListProperty, Property}
 import jfx.dsl.*
@@ -162,6 +164,24 @@ object Main {
                 text = DemoI18n.text(i18n"Live Documentation")
               }
               div { classes = "spacer"; style { flex = "1" } }
+              box("a") {
+                classes = "app-toolbar__scala-link"
+                attribute("href", "https://www.scala-js.org/")
+                attribute("target", "_blank")
+                attribute("rel", "noopener noreferrer")
+                image {
+                  classes = "app-toolbar__scala-badge"
+                  src = "https://img.shields.io/badge/Scala.js-1.21.0-DC322F.svg?logo=scala&logoColor=white"
+                  alt = "Scala.js 1.21.0"
+                }
+              }
+              box("a") {
+                classes = "app-toolbar__github"
+                attribute("href", "https://github.com/anjunar/scalajs-jfx2")
+                attribute("target", "_blank")
+                attribute("rel", "noopener noreferrer")
+                text = DemoI18n.text(i18n"GitHub")
+              }
               hbox {
                 classes = "app-toolbar__chooser app-toolbar__language"
                 button() {
