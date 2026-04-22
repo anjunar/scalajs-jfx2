@@ -16,7 +16,16 @@ const scalaJsFastOptMain = resolve(
     "main.js"
 );
 
-export default defineConfig({
+const scalaJsFullOptMain = resolve(
+    __dirname,
+    "application",
+    "target",
+    "scala-3.8.3",
+    "scalajs-jfx2-demo-opt",
+    "main.js"
+);
+
+export default defineConfig(({ command }) => ({
     base: "/scalajs-jfx2/",
     root: "application/src/main/webapp",
     server: {
@@ -31,13 +40,35 @@ export default defineConfig({
     },
     plugins: [
         tailwindcss(),
+        scalaJsProductionBundle(scalaJsFullOptMain),
         scalaJsDevFallback(scalaJsFastOptMain),
-        scalaJSPlugin({
+        command === "serve" && scalaJSPlugin({
             cwd: ".",
             projectID: "scalajs-jfx2-demo",
         }),
-    ]
-});
+    ].filter(Boolean)
+}));
+
+function scalaJsProductionBundle(scalaJsMainFile) {
+    const moduleLabel = "scalajs:main.js";
+    let isBuild = false;
+
+    return {
+        name: "jfx:scalajs-production-bundle",
+        enforce: "pre",
+
+        configResolved(config) {
+            isBuild = config.command === "build";
+        },
+
+        resolveId(source) {
+            if (isBuild && source === moduleLabel) {
+                return scalaJsMainFile;
+            }
+            return null;
+        },
+    };
+}
 
 function scalaJsDevFallback(scalaJsMainFile) {
     const virtualId = "\0jfx:missing-scalajs-main";

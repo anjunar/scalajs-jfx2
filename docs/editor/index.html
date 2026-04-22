@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <base href="/scalajs-jfx2/" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Editor | scalajs-jfx2</title>
+    <meta name="description" content="Lexical-backed editor integration as a normal JFX2 form control." />
+    <meta
+      name="keywords"
+      content="Scala.js, Scala UI framework, reactive UI, JavaFX DSL, typed forms, client-side routing, lifecycle management"
+    />
+    <meta name="author" content="Patrick Bittner" />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#eee9e1" />
+    <link rel="canonical" href="https://anjunar.github.io/scalajs-jfx2/editor/" />
+    <link rel="icon" type="image/svg+xml" href="/scalajs-jfx2/favicon.svg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="scalajs-jfx2" />
+    <meta property="og:title" content="Editor | scalajs-jfx2" />
+    <meta property="og:description" content="Lexical-backed editor integration as a normal JFX2 form control." />
+    <meta property="og:url" content="https://anjunar.github.io/scalajs-jfx2/editor/" />
+    <meta property="og:image" content="https://anjunar.github.io/scalajs-jfx2/og-image.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Editor | scalajs-jfx2" />
+    <meta name="twitter:description" content="Lexical-backed editor integration as a normal JFX2 form control." />
+    <meta name="twitter:image" content="https://anjunar.github.io/scalajs-jfx2/og-image.svg" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareSourceCode",
+        "name": "scalajs-jfx2",
+        "description": "Scala.js UI library with declarative components, SSR, hydration, typed controls, runtime metadata, and source-first I18n.",
+        "programmingLanguage": "Scala",
+        "runtimePlatform": "Scala.js",
+        "license": "https://opensource.org/licenses/MIT",
+        "codeRepository": "https://github.com/anjunar/scalajs-jfx2",
+        "url": "https://anjunar.github.io/scalajs-jfx2/",
+        "author": {
+          "@type": "Person",
+          "name": "Patrick Bittner",
+          "url": "https://github.com/anjunar"
+        }
+      }
+    </script>
+    <script>
+      (() => {
+        try {
+          const key = 'scalajs-jfx2.theme'
+          const stored = localStorage.getItem(key)
+          const preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+          const theme = stored === 'dark' || stored === 'light' ? stored : preferred
+          document.documentElement.dataset.theme = theme
+          const meta = document.querySelector('meta[name="theme-color"]')
+          if (meta) meta.content = theme === 'dark' ? '#171918' : '#eee9e1'
+        } catch (error) {
+          document.documentElement.dataset.theme = 'light'
+        }
+      })()
+    </script>
+    <script type="module" crossorigin src="/scalajs-jfx2/assets/index-CQOlv4Ga.js"></script>
+    <link rel="stylesheet" crossorigin href="/scalajs-jfx2/assets/index-DVExeS_P.css">
+  </head>
+  <body>
+    <div id="root"><div class="app-shell"><div class="jfx-drawer jfx-drawer--start jfx-drawer--open app-shell-drawer" style="display: flex; width: 100%; position: relative; height: 100%"><div class="jfx-drawer__panel-shell" style="width: min(92vw, 280px); position: relative; height: 100%"><div class="jfx-drawer__panel" style="overflow: hidden; width: 280px; height: 100%"><div class="jfx-drawer__navigation" style="flex-direction: column; display: flex; height: 100%"><div class="app-sidebar"><div class="app-sidebar__header"><div class="app-sidebar__logo">JFX2 API</div></div><div class="app-sidebar__nav"><div class="app-sidebar__section-title">Welcome</div><a href="/" class="app-nav-link"><div class="app-nav-link__label">Discover</div><div class="app-nav-link__sub">The JFX2 vision</div></a><div class="app-sidebar__section-title">Interaction</div><a href="/button" class="app-nav-link"><div class="app-nav-link__label">Actions</div><div class="app-nav-link__sub">The pulse of the app</div></a><a href="/image" class="app-nav-link"><div class="app-nav-link__label">Images</div><div class="app-nav-link__sub">Visual identity</div></a><a href="/image-cropper" class="app-nav-link"><div class="app-nav-link__label">ImageCropper</div><div class="app-nav-link__sub">Upload &amp; crop</div></a><div class="app-sidebar__section-title">Conversation</div><a href="/input" class="app-nav-link"><div class="app-nav-link__label">Forms</div><div class="app-nav-link__sub">Natural dialogue</div></a><a href="/combo-box" class="app-nav-link"><div class="app-nav-link__label">ComboBox</div><div class="app-nav-link__sub">Elegant selection</div></a><a href="/editor" class="app-nav-link"><div class="app-nav-link__label">Editor</div><div class="app-nav-link__sub">Lexical playground</div></a><div class="app-sidebar__section-title">Architecture</div><a href="/layout" class="app-nav-link"><div class="app-nav-link__label">Layout</div><div class="app-nav-link__sub">Room for design</div></a><a href="/window" class="app-nav-link"><div class="app-nav-link__label">Windows</div><div class="app-nav-link__sub">Room for focus</div></a><div class="app-sidebar__section-title">Knowledge</div><a href="/table-view" class="app-nav-link"><div class="app-nav-link__label">Data</div><div class="app-nav-link__sub">Breathing and flowing</div></a><a href="/virtual-list" class="app-nav-link"><div class="app-nav-link__label">VirtualList</div><div class="app-nav-link__sub">Endless expanses</div></a><a href="/domain" class="app-nav-link"><div class="app-nav-link__label">Domain</div><div class="app-nav-link__sub">Mapping &amp; reflection</div></a></div><div class="app-sidebar__footer">Built with JFX2</div></div></div></div></div><div class="jfx-drawer__scrim"></div><div class="jfx-drawer__content" style="flex-direction: column; flex: 1; display: flex; height: 100%; min-width: 0"><div class="app-main"><div class="app-toolbar"><button class="app-toolbar__menu-toggle material-icons">menu</button><div class="app-toolbar__title">Live Documentation</div><div class="spacer" style="flex: 1"></div><div class="hbox app-toolbar__chooser app-toolbar__language"><button class="app-toolbar__choice">EN</button></div><div class="hbox app-toolbar__chooser app-toolbar__theme"><button class="is-active app-toolbar__choice">Light</button><button class="app-toolbar__choice">Dark</button></div><div class="app-toolbar__version">v2.0.0</div></div><div class="jfx-viewport" style="overflow: auto; flex: 1"><div class="app-content-viewport"><div class="vbox showcase-page"><div class="vbox showcase-page__header"><div class="showcase-page__eyebrow">JFX2 Showcase</div><div class="showcase-page__title">Editor</div><div class="showcase-page__subtitle">Lexical as an SSR-safe client island.</div></div><div class="showcase-page__content"><div class="vbox" style="gap: 34px"><div class="vbox showcase-section-intro"><div class="showcase-section-intro__kicker">Lexical island</div><div class="showcase-section-intro__title">The editor renders content immediately and only becomes Lexical in the browser.</div><div class="showcase-section-intro__body">JFX2 treats the editor as a ClientSideComponent: SSR gets a stable fallback with the same shell layout, hydration replaces the surface with Lexical, and external property changes flow back into the editor.</div></div><div class="showcase-metric-strip"><div class="vbox showcase-metric"><div class="showcase-metric__value">SSR</div><div class="showcase-metric__label">Text is visible before hydration.</div></div><div class="vbox showcase-metric"><div class="showcase-metric__value">Toolbar</div><div class="showcase-metric__label">Plugins deliver their controls through the renderer.</div></div><div class="vbox showcase-metric"><div class="showcase-metric__value">Readonly</div><div class="showcase-metric__label">editable = false hides the toolbar and locks Lexical.</div></div></div><div class="vbox component-showcase"><div class="vbox component-showcase__header"><div class="component-showcase__title">Live editor playground</div><div class="component-showcase__summary">Write, use the toolbar, and see the readonly mirror directly below.</div></div><div class="component-showcase__render"><div class="vbox" style="gap: 16px"><div class="editor jfx-editor-host" style="width: 100%; min-height: 340px"><div class="jfx-editor"><div class="jfx-editor__shell"><div class="jfx-editor__toolbar" style="display: "><div class="lexical-ribbon-wrapper"><div class="lexical-ribbon-tabs"><div class="lexical-ribbon-tab active">Home</div><div class="lexical-ribbon-tab">Insert</div></div><div class="lexical-ribbon-content"><div class="lexical-ribbon-tab-content" style="display: flex"><div class="lexical-ribbon-section"><div class="lexical-ribbon-buttons-container"><div class="lexical-ribbon-button" style="cursor: not-allowed; opacity: 0.58"><span class="material-icons">undo</span></div><div class="lexical-ribbon-button" style="cursor: not-allowed; opacity: 0.58"><span class="material-icons">redo</span></div></div><div class="lexical-ribbon-section-label">Actions</div></div><div class="lexical-ribbon-section"><div class="lexical-ribbon-buttons-container"><div class="lexical-ribbon-button" style="cursor: not-allowed; opacity: 0.58"><span class="material-icons">format_bold</span></div><div class="lexical-ribbon-button" style="cursor: not-allowed; opacity: 0.58"><span class="material-icons">format_italic</span></div><div class="lexical-ribbon-button" style="cursor: not-allowed; opacity: 0.58"><span class="material-icons">format_underlined</span></div><div class="lexical-ribbon-button" style="cursor: not-allowed; opacity: 0.58"><span class="material-icons">format_strikethrough</span></div><div class="lexical-ribbon-button" style="cursor: not-allowed; opacity: 0.58">Format: Normal Text</div></div><div class="lexical-ribbon-section-label">Formatting</div></div><div class="lexical-ribbon-section"><div class="lexical-ribbon-buttons-container"><div class="lexical-ribbon-button" style="cursor: not-allowed; opacity: 0.58"><span class="material-icons">format_list_bulleted</span></div><div class="lexical-ribbon-button" style="cursor: not-allowed; opacity: 0.58"><span class="material-icons">format_list_numbered</span></div></div><div class="lexical-ribbon-section-label">Lists</div></div></div><div class="lexical-ribbon-tab-content" style="display: none"><div class="lexical-ribbon-section"><div class="lexical-ribbon-buttons-container"><div class="lexical-ribbon-button" style="cursor: not-allowed; opacity: 0.58"><span class="material-icons">code</span></div></div><div class="lexical-ribbon-section-label">Code</div></div><div class="lexical-ribbon-section"><div class="lexical-ribbon-buttons-container"><div class="lexical-ribbon-button" style="cursor: not-allowed; opacity: 0.58"><span class="material-icons">link</span></div></div><div class="lexical-ribbon-section-label">Links</div></div><div class="lexical-ribbon-section"><div class="lexical-ribbon-buttons-container"><div class="lexical-ribbon-button" style="cursor: not-allowed; opacity: 0.58"><span class="material-icons">image</span></div></div><div class="lexical-ribbon-section-label">Media</div></div><div class="lexical-ribbon-section"><div class="lexical-ribbon-buttons-container"><div class="lexical-ribbon-button" style="cursor: not-allowed; opacity: 0.58"><span class="material-icons">table_chart</span></div><div class="lexical-ribbon-button" style="cursor: not-allowed; opacity: 0.58"><span class="material-icons">delete</span></div></div><div class="lexical-ribbon-section-label">Table</div></div></div></div></div></div><div class="jfx-editor__surface-wrap"><section class="jfx-editor__surface-frame"><div role="textbox" class="jfx-editor__surface lexical-editor-input">This text already comes from the SSR fallback and is adopted by Lexical after hydration.</div></section><div class="jfx-editor__placeholder" style="display: none">The writing surface activates on the client</div></div></div></div></div><div class="hbox" style="gap: 10px; flex-wrap: wrap"><button>SSR sample text</button><button>Short text</button><button>Set readonly content</button></div></div></div></div><div class="vbox component-showcase"><div class="vbox component-showcase__header"><div class="component-showcase__title">Readonly mirror</div><div class="component-showcase__summary">The same editor component, but with editable = false: no toolbar, no editable root, same content.</div></div><div class="component-showcase__render"><div class="editor jfx-editor-host" style="width: 100%; min-height: 220px"><div class="jfx-editor"><div class="jfx-editor__shell"><div class="jfx-editor__toolbar" style="display: none"></div><div class="jfx-editor__surface-wrap"><section class="jfx-editor__surface-frame"><div role="textbox" class="jfx-editor__surface lexical-editor-input lexical-read-only">This text already comes from the SSR fallback and is adopted by Lexical after hydration.</div></section><div class="jfx-editor__placeholder" style="display: none">Readonly</div></div></div></div></div></div></div><div class="vbox component-showcase"><div class="vbox component-showcase__header"><div class="component-showcase__title">SSR fallback contract</div><div class="component-showcase__summary">What is rendered on the server must structurally match the first client render.</div></div><div class="component-showcase__render"><div class="hbox" style="gap: 14px; align-items: stretch; flex-wrap: wrap"><div class="vbox showcase-result" style="flex: 1 1 240px; gap: 8px"><div style="font-weight: 800">Shell stays stable</div><div style="color: var(--aj-ink-muted)">Fallback and client version use the same jfx-editor shell with toolbar area and surface frame.</div></div><div class="vbox showcase-result" style="flex: 1 1 240px; gap: 8px"><div style="font-weight: 800">Toolbar does not flicker</div><div style="color: var(--aj-ink-muted)">Readonly renders the toolbar hidden on the server so hydration does not have to surprise the structure.</div></div><div class="vbox showcase-result" style="flex: 1 1 240px; gap: 8px"><div style="font-weight: 800">Text stays visible</div><div style="color: var(--aj-ink-muted)">Plain text or Lexical JSON is extracted into preview text during SSR and then adopted by Lexical after hydration.</div></div><div class="vbox showcase-result" style="flex: 1 1 240px; gap: 8px"><div style="font-weight: 800">External values</div><div style="color: var(--aj-ink-muted)">valueProperty updates are synchronized back into Lexical after mount via parseEditorState.</div></div></div></div></div><div class="vbox component-showcase"><div class="vbox component-showcase__header"><div class="component-showcase__title">Plugin set</div><div class="component-showcase__summary">The showcase loads all ported plugins so toolbar and dialogs are visible together.</div></div><div class="component-showcase__render"><div class="hbox" style="gap: 14px; align-items: stretch; flex-wrap: wrap"><div class="vbox showcase-result" style="flex: 1 1 180px; gap: 8px"><div style="font-weight: 800">Base</div><div style="color: var(--aj-ink-muted)">Bold, Italic, Underline und Basis-Kommandos.</div></div><div class="vbox showcase-result" style="flex: 1 1 180px; gap: 8px"><div style="font-weight: 800">Heading</div><div style="color: var(--aj-ink-muted)">Absätze und Überschriften über Dropdown.</div></div><div class="vbox showcase-result" style="flex: 1 1 180px; gap: 8px"><div style="font-weight: 800">List</div><div style="color: var(--aj-ink-muted)">Bullet- und Numbered-List Kommandos.</div></div><div class="vbox showcase-result" style="flex: 1 1 180px; gap: 8px"><div style="font-weight: 800">Link</div><div style="color: var(--aj-ink-muted)">Dialog-Service für Link-Einfügen.</div></div><div class="vbox showcase-result" style="flex: 1 1 180px; gap: 8px"><div style="font-weight: 800">Image</div><div style="color: var(--aj-ink-muted)">Image-Dialog als Editor-Plugin.</div></div><div class="vbox showcase-result" style="flex: 1 1 180px; gap: 8px"><div style="font-weight: 800">Table</div><div style="color: var(--aj-ink-muted)">Tabellen-Knoten und Toolbar-Aktion.</div></div><div class="vbox showcase-result" style="flex: 1 1 180px; gap: 8px"><div style="font-weight: 800">Code</div><div style="color: var(--aj-ink-muted)">Code-Block Plugin als Spezialknoten.</div></div></div></div></div><div class="showcase-insight-grid"><div class="vbox showcase-insight showcase-insight--0"><div class="showcase-insight__label">Island</div><div class="showcase-insight__title">JavaScript only in the browser</div><div class="showcase-insight__body">SSR does not call Lexical and stays free of document/window access.</div></div><div class="vbox showcase-insight showcase-insight--1"><div class="showcase-insight__label">Fallback</div><div class="showcase-insight__title">No empty editor</div><div class="showcase-insight__body">Users and crawlers see content even before Lexical is mounted.</div></div><div class="vbox showcase-insight showcase-insight--2"><div class="showcase-insight__label">Editable</div><div class="showcase-insight__title">One control contract</div><div class="showcase-insight__body">The editor follows the same editable pattern as Input, ComboBox, and Cropper.</div></div></div><div class="vbox api-section"><div class="vbox api-section__header"><div class="api-section__title">DSL syntax</div><div class="api-section__summary">The editor remains a normal form control with value, placeholder, editable state, and plugins.</div></div><div class="api-section__content"><div class="vbox code-block"><div class="code-block__lang">scala</div><div class="code-block__content">editor("content", standalone = true) {
+  value = "Dieser Text ist schon im SSR sichtbar."
+  placeholder = "Text schreiben..."
+  style { minHeight = "340px" }
+
+  basePlugin()
+  headingPlugin()
+  listPlugin()
+  linkPlugin()
+  imagePlugin()
+  tablePlugin()
+  codePlugin()
+}
+
+editor("readonly", standalone = true) {
+  value = mirroredEditorValue.get
+  editable = false
+}</div></div></div></div><div class="vbox api-section"><div class="vbox api-section__header"><div class="api-section__title">Client island flow</div><div class="api-section__summary">The component separates SSR fallback, client mount, and Lexical synchronization.</div></div><div class="api-section__content"><div class="vbox code-block"><div class="code-block__lang">text</div><div class="code-block__content">SSR:
+  renderFallbackContent()
+  Preview-Text aus valueProperty
+  Toolbar sichtbar nur wenn editable = true
+
+Hydration:
+  mountClient()
+  mountLexical()
+  renderToolbar(editor)
+  installPlugins(editor)
+
+Property Update:
+  valueProperty.observeWithoutInitial(syncExternalValue)
+  lexicalEditor.parseEditorState(...)
+  lexicalEditor.setEditorState(...)</div></div></div></div></div></div></div></div></div><div class="app-footer"><div class="app-footer__text">© 2026 Anjunar. Pure Scala.js Architecture.</div></div></div></div></div></div></div>
+  </body>
+</html>

@@ -7,10 +7,13 @@
     "dev": "vite",
     "dev:ssr": "node server/ssr-dev-server.mjs",
     "build": "vite build",
+    "build:scala": "sbtn-x86_64-pc-win32.exe scalajs-jfx2-demo/fullOptJS",
+    "build:static": "vite build && node server/prerender-pages.mjs",
+    "build:pages": "npm run build:scala && npm run build:static",
     "preview": "vite preview",
     "ssr": "node server/ssr-dev-server.mjs",
     "ssr:prod": "node server/ssr-server.mjs",
-    "ssr:build": "npm run build && npm run ssr:prod"
+    "ssr:build": "npm run build:scala && npm run build && npm run ssr:prod"
   },
   "dependencies": {
     "@anjunar/scalajs-lexical": "^1.0.8",

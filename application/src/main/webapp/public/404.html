@@ -4,18 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="robots" content="noindex" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Redirecting | scalajs-jfx</title>
-    <script>
-      const base = "/scalajs-jfx/";
-      const current = window.location.pathname;
-      if (current.startsWith(base)) {
-        window.location.replace(base);
-      } else {
-        window.location.replace(base);
-      }
-    </script>
+    <base href="/scalajs-jfx2/" />
+    <title>scalajs-jfx2</title>
+    <script type="module" src="src/main.js"></script>
   </head>
   <body>
-    <p>Redirecting to scalajs-jfx.</p>
+    <div id="root"></div>
   </body>
 </html>

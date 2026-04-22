@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <base href="/scalajs-jfx2/" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Domain Metadata | scalajs-jfx2</title>
+    <meta name="description" content="Runtime class descriptors, reflected properties, validators, forms, and JSON mapping." />
+    <meta
+      name="keywords"
+      content="Scala.js, Scala UI framework, reactive UI, JavaFX DSL, typed forms, client-side routing, lifecycle management"
+    />
+    <meta name="author" content="Patrick Bittner" />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#eee9e1" />
+    <link rel="canonical" href="https://anjunar.github.io/scalajs-jfx2/domain/" />
+    <link rel="icon" type="image/svg+xml" href="/scalajs-jfx2/favicon.svg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="scalajs-jfx2" />
+    <meta property="og:title" content="Domain Metadata | scalajs-jfx2" />
+    <meta property="og:description" content="Runtime class descriptors, reflected properties, validators, forms, and JSON mapping." />
+    <meta property="og:url" content="https://anjunar.github.io/scalajs-jfx2/domain/" />
+    <meta property="og:image" content="https://anjunar.github.io/scalajs-jfx2/og-image.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Domain Metadata | scalajs-jfx2" />
+    <meta name="twitter:description" content="Runtime class descriptors, reflected properties, validators, forms, and JSON mapping." />
+    <meta name="twitter:image" content="https://anjunar.github.io/scalajs-jfx2/og-image.svg" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareSourceCode",
+        "name": "scalajs-jfx2",
+        "description": "Scala.js UI library with declarative components, SSR, hydration, typed controls, runtime metadata, and source-first I18n.",
+        "programmingLanguage": "Scala",
+        "runtimePlatform": "Scala.js",
+        "license": "https://opensource.org/licenses/MIT",
+        "codeRepository": "https://github.com/anjunar/scalajs-jfx2",
+        "url": "https://anjunar.github.io/scalajs-jfx2/",
+        "author": {
+          "@type": "Person",
+          "name": "Patrick Bittner",
+          "url": "https://github.com/anjunar"
+        }
+      }
+    </script>
+    <script>
+      (() => {
+        try {
+          const key = 'scalajs-jfx2.theme'
+          const stored = localStorage.getItem(key)
+          const preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+          const theme = stored === 'dark' || stored === 'light' ? stored : preferred
+          document.documentElement.dataset.theme = theme
+          const meta = document.querySelector('meta[name="theme-color"]')
+          if (meta) meta.content = theme === 'dark' ? '#171918' : '#eee9e1'
+        } catch (error) {
+          document.documentElement.dataset.theme = 'light'
+        }
+      })()
+    </script>
+    <script type="module" crossorigin src="/scalajs-jfx2/assets/index-CQOlv4Ga.js"></script>
+    <link rel="stylesheet" crossorigin href="/scalajs-jfx2/assets/index-DVExeS_P.css">
+  </head>
+  <body>
+    <div id="root"><div class="app-shell"><div class="jfx-drawer jfx-drawer--start jfx-drawer--open app-shell-drawer" style="display: flex; width: 100%; position: relative; height: 100%"><div class="jfx-drawer__panel-shell" style="width: min(92vw, 280px); position: relative; height: 100%"><div class="jfx-drawer__panel" style="overflow: hidden; width: 280px; height: 100%"><div class="jfx-drawer__navigation" style="flex-direction: column; display: flex; height: 100%"><div class="app-sidebar"><div class="app-sidebar__header"><div class="app-sidebar__logo">JFX2 API</div></div><div class="app-sidebar__nav"><div class="app-sidebar__section-title">Welcome</div><a href="/" class="app-nav-link"><div class="app-nav-link__label">Discover</div><div class="app-nav-link__sub">The JFX2 vision</div></a><div class="app-sidebar__section-title">Interaction</div><a href="/button" class="app-nav-link"><div class="app-nav-link__label">Actions</div><div class="app-nav-link__sub">The pulse of the app</div></a><a href="/image" class="app-nav-link"><div class="app-nav-link__label">Images</div><div class="app-nav-link__sub">Visual identity</div></a><a href="/image-cropper" class="app-nav-link"><div class="app-nav-link__label">ImageCropper</div><div class="app-nav-link__sub">Upload &amp; crop</div></a><div class="app-sidebar__section-title">Conversation</div><a href="/input" class="app-nav-link"><div class="app-nav-link__label">Forms</div><div class="app-nav-link__sub">Natural dialogue</div></a><a href="/combo-box" class="app-nav-link"><div class="app-nav-link__label">ComboBox</div><div class="app-nav-link__sub">Elegant selection</div></a><a href="/editor" class="app-nav-link"><div class="app-nav-link__label">Editor</div><div class="app-nav-link__sub">Lexical playground</div></a><div class="app-sidebar__section-title">Architecture</div><a href="/layout" class="app-nav-link"><div class="app-nav-link__label">Layout</div><div class="app-nav-link__sub">Room for design</div></a><a href="/window" class="app-nav-link"><div class="app-nav-link__label">Windows</div><div class="app-nav-link__sub">Room for focus</div></a><div class="app-sidebar__section-title">Knowledge</div><a href="/table-view" class="app-nav-link"><div class="app-nav-link__label">Data</div><div class="app-nav-link__sub">Breathing and flowing</div></a><a href="/virtual-list" class="app-nav-link"><div class="app-nav-link__label">VirtualList</div><div class="app-nav-link__sub">Endless expanses</div></a><a href="/domain" class="app-nav-link"><div class="app-nav-link__label">Domain</div><div class="app-nav-link__sub">Mapping &amp; reflection</div></a></div><div class="app-sidebar__footer">Built with JFX2</div></div></div></div></div><div class="jfx-drawer__scrim"></div><div class="jfx-drawer__content" style="flex-direction: column; flex: 1; display: flex; height: 100%; min-width: 0"><div class="app-main"><div class="app-toolbar"><button class="app-toolbar__menu-toggle material-icons">menu</button><div class="app-toolbar__title">Live Documentation</div><div class="spacer" style="flex: 1"></div><div class="hbox app-toolbar__chooser app-toolbar__language"><button class="app-toolbar__choice">EN</button></div><div class="hbox app-toolbar__chooser app-toolbar__theme"><button class="is-active app-toolbar__choice">Light</button><button class="app-toolbar__choice">Dark</button></div><div class="app-toolbar__version">v2.0.0</div></div><div class="jfx-viewport" style="overflow: auto; flex: 1"><div class="app-content-viewport"><div class="vbox showcase-page"><div class="vbox showcase-page__header"><div class="showcase-page__eyebrow">JFX2 Showcase</div><div class="showcase-page__title">Domain</div><div class="showcase-page__subtitle">Reflection, binding, and JSON as one system.</div></div><div class="showcase-page__content"><div class="vbox" style="gap: 34px"><div class="vbox showcase-section-intro"><div class="showcase-section-intro__kicker">Domain layer</div><div class="showcase-section-intro__title">The model is not just data, but metadata with behavior.</div><div class="showcase-section-intro__body">JFX2 registers domain classes through reflection descriptors. From that come automatic form bindings, validators from annotations, and JSON mapping that unwraps properties and lists correctly.</div></div><div class="showcase-metric-strip"><div class="vbox showcase-metric"><div class="showcase-metric__value">3</div><div class="showcase-metric__label">registered classes</div></div><div class="vbox showcase-metric"><div class="showcase-metric__value">10</div><div class="showcase-metric__label">reflected properties</div></div><div class="vbox showcase-metric"><div class="showcase-metric__value">6</div><div class="showcase-metric__label">validator annotations</div></div></div><div class="vbox component-showcase"><div class="vbox component-showcase__header"><div class="component-showcase__title">Live domain cockpit</div><div class="component-showcase__summary">A user model bound to form controls. Changes flow directly into properties and JSON.</div></div><div class="component-showcase__render"><form><div class="vbox" style="gap: 22px"><div class="showcase-result"><div class="vbox" style="gap: 8px"><div style="color: var(--aj-ink-muted); font-weight: 700; font-size: 13px">Current model</div><div style="font-weight: 800; font-size: 22px">Max Mustermann · max@example.com · Musterstadt</div></div></div><div class="hbox" style="gap: 18px; align-items: stretch; flex-wrap: wrap"><div class="vbox" style="flex: 1 1 260px; gap: 14px"><div style="font-weight: 800">User</div><div class="jfx-input-container"><div class="jfx-input-container__label"><div class="placeholder">Name</div></div><div class="jfx-input-container__control"><input name="name"></input></div><hr class="jfx-input-container__divider"></hr><div class="jfx-input-container__errors"></div></div><div class="jfx-input-container"><div class="jfx-input-container__label"><div class="placeholder">Email</div></div><div class="jfx-input-container__control"><input name="email"></input></div><hr class="jfx-input-container__divider"></hr><div class="jfx-input-container__errors"></div></div></div><fieldset><div class="vbox" style="border: 1px solid var(--aj-surface-muted); border-radius: 14px; padding: 16px; background: var(--aj-surface); flex: 1 1 260px; gap: 14px"><div style="font-weight: 800">Address</div><div class="jfx-input-container"><div class="jfx-input-container__label"><div class="placeholder">Street</div></div><div class="jfx-input-container__control"><input name="street"></input></div><hr class="jfx-input-container__divider"></hr><div class="jfx-input-container__errors"></div></div><div class="jfx-input-container"><div class="jfx-input-container__label"><div class="placeholder">City</div></div><div class="jfx-input-container__control"><input name="city"></input></div><hr class="jfx-input-container__divider"></hr><div class="jfx-input-container__errors"></div></div></div></fieldset></div><div class="hbox" style="gap: 10px; flex-wrap: wrap"><button>Validate</button><button>Roundtrip JSON</button><button>Broken data</button><button>Reset example</button></div><div class="hbox" style="gap: 14px; flex-wrap: wrap"><div class="showcase-result" style="flex: 1 1 260px"><div class="vbox" style="gap: 8px"><div style="font-weight: 800">Validation</div><div style="color: var(--aj-ink-muted)">Not yet validated.</div></div></div><div class="showcase-result" style="flex: 1 1 260px"><div class="vbox" style="gap: 8px"><div style="font-weight: 800">Mapper</div><div style="color: var(--aj-ink-muted)">Not yet run.</div></div></div></div></div></form></div></div><div class="vbox component-showcase"><div class="vbox component-showcase__header"><div class="component-showcase__title">JSON mapping</div><div class="component-showcase__summary">Properties and ListProperties appear as normal JSON values during serialization.</div></div><div class="component-showcase__render"><div class="vbox code-block"><div class="code-block__lang">json</div><div class="code-block__content">{
+  "name": "Max Mustermann",
+  "email": "max@example.com",
+  "address": {
+    "city": "Musterstadt",
+    "street": "Musterstraße 1"
+  },
+  "emails": [
+    {
+      "value": "max@example.com"
+    },
+    {
+      "value": "team@example.com"
+    }
+  ]
+}</div></div></div></div><div class="vbox component-showcase"><div class="vbox component-showcase__header"><div class="component-showcase__title">Reflection registry</div><div class="component-showcase__summary">The registered domain classes provide names, types, accessors, and annotations.</div></div><div class="component-showcase__render"><div class="hbox" style="gap: 18px; align-items: stretch; flex-wrap: wrap"><div class="vbox showcase-result" style="flex: 1 1 280px; gap: 12px"><div style="font-weight: 800; font-size: 18px">Address</div><div style="color: var(--aj-ink-muted); font-size: 13px">app.domain.Address</div><div class="vbox" style="gap: 8px"><div class="vbox" style="border: 1px solid var(--aj-surface-muted); border-radius: 10px; padding: 10px; background: var(--aj-canvas); gap: 6px"><div class="hbox" style="gap: 8px; align-items: baseline; flex-wrap: wrap"><div style="font-weight: 700">city</div><div style="color: var(--aj-ink-muted); font-size: 12px">Property[String]</div></div><div style="color: var(--aj-ink-muted); font-size: 12px">NotBlank(message=Stadt darf nicht leer sein)</div></div><div class="vbox" style="border: 1px solid var(--aj-surface-muted); border-radius: 10px; padding: 10px; background: var(--aj-canvas); gap: 6px"><div class="hbox" style="gap: 8px; align-items: baseline; flex-wrap: wrap"><div style="font-weight: 700">street</div><div style="color: var(--aj-ink-muted); font-size: 12px">Property[String]</div></div><div style="color: var(--aj-ink-muted); font-size: 12px">NotBlank(message=Straße darf nicht leer sein)</div></div><div class="vbox" style="border: 1px solid var(--aj-surface-muted); border-radius: 10px; padding: 10px; background: var(--aj-canvas); gap: 6px"><div class="hbox" style="gap: 8px; align-items: baseline; flex-wrap: wrap"><div style="font-weight: 700">##</div><div style="color: var(--aj-ink-muted); font-size: 12px">Int</div></div><div style="color: var(--aj-ink-muted); font-size: 12px">no annotations</div></div></div></div><div class="vbox showcase-result" style="flex: 1 1 280px; gap: 12px"><div style="font-weight: 800; font-size: 18px">Email</div><div style="color: var(--aj-ink-muted); font-size: 13px">app.domain.Email</div><div class="vbox" style="gap: 8px"><div class="vbox" style="border: 1px solid var(--aj-surface-muted); border-radius: 10px; padding: 10px; background: var(--aj-canvas); gap: 6px"><div class="hbox" style="gap: 8px; align-items: baseline; flex-wrap: wrap"><div style="font-weight: 700">value</div><div style="color: var(--aj-ink-muted); font-size: 12px">Property[String]</div></div><div style="color: var(--aj-ink-muted); font-size: 12px">EmailConstraint</div></div><div class="vbox" style="border: 1px solid var(--aj-surface-muted); border-radius: 10px; padding: 10px; background: var(--aj-canvas); gap: 6px"><div class="hbox" style="gap: 8px; align-items: baseline; flex-wrap: wrap"><div style="font-weight: 700">##</div><div style="color: var(--aj-ink-muted); font-size: 12px">Int</div></div><div style="color: var(--aj-ink-muted); font-size: 12px">no annotations</div></div></div></div><div class="vbox showcase-result" style="flex: 1 1 280px; gap: 12px"><div style="font-weight: 800; font-size: 18px">User</div><div style="color: var(--aj-ink-muted); font-size: 13px">app.domain.User</div><div class="vbox" style="gap: 8px"><div class="vbox" style="border: 1px solid var(--aj-surface-muted); border-radius: 10px; padding: 10px; background: var(--aj-canvas); gap: 6px"><div class="hbox" style="gap: 8px; align-items: baseline; flex-wrap: wrap"><div style="font-weight: 700">name</div><div style="color: var(--aj-ink-muted); font-size: 12px">Property[String]</div></div><div style="color: var(--aj-ink-muted); font-size: 12px">NotBlank · Size(min=3, message=Name muss mindestens 3 Zeichen lang sein)</div></div><div class="vbox" style="border: 1px solid var(--aj-surface-muted); border-radius: 10px; padding: 10px; background: var(--aj-canvas); gap: 6px"><div class="hbox" style="gap: 8px; align-items: baseline; flex-wrap: wrap"><div style="font-weight: 700">email</div><div style="color: var(--aj-ink-muted); font-size: 12px">Property[String]</div></div><div style="color: var(--aj-ink-muted); font-size: 12px">EmailConstraint</div></div><div class="vbox" style="border: 1px solid var(--aj-surface-muted); border-radius: 10px; padding: 10px; background: var(--aj-canvas); gap: 6px"><div class="hbox" style="gap: 8px; align-items: baseline; flex-wrap: wrap"><div style="font-weight: 700">address</div><div style="color: var(--aj-ink-muted); font-size: 12px">Property[Address]</div></div><div style="color: var(--aj-ink-muted); font-size: 12px">no annotations</div></div><div class="vbox" style="border: 1px solid var(--aj-surface-muted); border-radius: 10px; padding: 10px; background: var(--aj-canvas); gap: 6px"><div class="hbox" style="gap: 8px; align-items: baseline; flex-wrap: wrap"><div style="font-weight: 700">emails</div><div style="color: var(--aj-ink-muted); font-size: 12px">ListProperty[Email]</div></div><div style="color: var(--aj-ink-muted); font-size: 12px">no annotations</div></div><div class="vbox" style="border: 1px solid var(--aj-surface-muted); border-radius: 10px; padding: 10px; background: var(--aj-canvas); gap: 6px"><div class="hbox" style="gap: 8px; align-items: baseline; flex-wrap: wrap"><div style="font-weight: 700">##</div><div style="color: var(--aj-ink-muted); font-size: 12px">Int</div></div><div style="color: var(--aj-ink-muted); font-size: 12px">no annotations</div></div></div></div></div></div></div><div class="showcase-insight-grid"><div class="vbox showcase-insight showcase-insight--0"><div class="showcase-insight__label">Descriptor</div><div class="showcase-insight__title">Structure stays explicit</div><div class="showcase-insight__body">Classes, properties, and types remain readable at runtime without string magic in the form.</div></div><div class="vbox showcase-insight showcase-insight--1"><div class="showcase-insight__label">Annotation</div><div class="showcase-insight__title">Rules stay on the model</div><div class="showcase-insight__body">Validation arises from the annotations on the domain properties.</div></div><div class="vbox showcase-insight showcase-insight--2"><div class="showcase-insight__label">Mapper</div><div class="showcase-insight__title">JSON stays simple</div><div class="showcase-insight__body">Property[String] becomes String, ListProperty[Email] becomes Array.</div></div></div><div class="vbox api-section"><div class="vbox api-section__header"><div class="api-section__title">DSL usage</div><div class="api-section__summary">Domain binding is name-based: input(\"email\") binds to user.email.</div></div><div class="api-section__content"><div class="vbox code-block"><div class="code-block__lang">scala</div><div class="code-block__content">val user = new User()
+form(user) {
+  inputContainer("Name") {
+    input("name") {}
+  }
+
+  subForm("address") {
+    inputContainer("Stadt") {
+      input("city") {}
+    }
+  }
+}
+
+val mapper = new JsonMapper()
+val json = mapper.serialize(user)
+val copy = mapper.deserialize[User](json)</div></div></div></div></div></div></div></div></div><div class="app-footer"><div class="app-footer__text">© 2026 Anjunar. Pure Scala.js Architecture.</div></div></div></div></div></div></div>
+  </body>
+</html>
