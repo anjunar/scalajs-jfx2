@@ -18,7 +18,7 @@ final case class LinkDialogContext(
 class LinkPlugin extends EditorPlugin {
   override val name: String = "link"
 
-  var dialogTitle: String = "Link einfuegen"
+  var dialogTitle: String = "Insert link"
   var urlLabel: String = "URL"
   var urlPlaceholder: String = "https://example.com"
   var defaultUrl: String = ""

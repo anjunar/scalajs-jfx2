@@ -598,6 +598,9 @@ object Editor {
   def placeholder_=(using e: Editor)(value: String): Unit =
     e.placeholder = value
 
+  def placeholder_=(using e: Editor)(value: ReadOnlyProperty[String]): Unit =
+    e.placeholder = value
+
   def editable(using e: Editor): Boolean =
     e.editableProperty.get
 

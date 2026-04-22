@@ -58,7 +58,7 @@ object InputPage {
           i18n"The property remains explicit. That makes it immediately clear where the value flows."
         ) {
           codeBlock("scala", """val name = Property("")
-inputContainer("Name eingeben...") {
+inputContainer("Enter name...") {
   input("name", standalone = true) {
     addDisposable(stringValueProperty.observe(name.set))
   }
@@ -133,10 +133,10 @@ inputContainer("Name eingeben...") {
         ) {
           codeBlock("scala", """val user = new User()
 form(user) {
-  input("name") // Bindet an user.name (Property[String])
+  input("name") // Binds to user.name (Property[String])
   
   subForm("address") {
-    input("city") // Bindet an user.address.city
+    input("city") // Binds to user.address.city
   }
 }""")
         }
@@ -153,7 +153,7 @@ form(user) {
         ) {
           codeBlock("scala", """import jfx.form.Form.{form, controls}
 form {
-  inputContainer("E-Mail") {
+  inputContainer("Email") {
     input("email") { 
       validators += EmailValidator()
     }

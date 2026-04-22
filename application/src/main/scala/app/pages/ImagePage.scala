@@ -30,7 +30,7 @@ object ImagePage {
             style { gap = "20px"; alignItems = "center" }
             image {
               src = "https://images.unsplash.com/photo-1518791841217-8f162f1e1131?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80"
-              alt = "A cute cat"
+              alt = DemoI18n.text(i18n"A cute cat")
               style { borderRadius = "8px"; width = "200px"; height = "auto"; boxShadow = "0 4px 12px rgba(0,0,0,0.1)" }
             }
             div {
@@ -51,16 +51,16 @@ object ImagePage {
             
             image {
               src = currentSrc
-              alt = "Dynamic image"
+              alt = DemoI18n.text(i18n"Dynamic image")
               style { borderRadius = "50%"; width = "150px"; height = "150px"; objectFit = "cover"; border = "3px solid var(--aj-accent)" }
             }
 
             hbox {
               style { gap = "10px" }
-              jfx.action.Button.button("Cat 1") {
+              jfx.action.Button.button(DemoI18n.text(i18n"Cat 1")) {
                 onClick { _ => currentSrc.set("https://images.unsplash.com/photo-1543852786-1cf6624b9987?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80") }
               }
-              jfx.action.Button.button("Cat 2") {
+              jfx.action.Button.button(DemoI18n.text(i18n"Cat 2")) {
                 onClick { _ => currentSrc.set("https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=300&q=80") }
               }
             }
@@ -73,7 +73,7 @@ object ImagePage {
         ) {
           codeBlock("scala", """image {
   src = "path/to/image.jpg"
-  alt = "Beschreibung"
+  alt = "Description"
   style { width = "100%" }
 }
 

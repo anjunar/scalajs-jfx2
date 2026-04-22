@@ -2,7 +2,7 @@ package jfx.form
 
 import jfx.core.component.Component
 import jfx.core.component.Component.*
-import jfx.core.state.{Disposable, ListProperty, Property}
+import jfx.core.state.{Disposable, ListProperty, Property, ReadOnlyProperty}
 import jfx.domain.{Media, Thumbnail}
 import jfx.dsl.DslRuntime
 import jfx.control.Image.*
@@ -37,7 +37,7 @@ class ImageCropper(val name: String, override val standalone: Boolean = false) e
 
   var thumbnailMaxWidth: Int = 160
   var thumbnailMaxHeight: Int = 160
-  var windowTitle: String = "Bild zuschneiden"
+  var windowTitle: String = "Crop image"
 
   private var fileInput: ImageCropperFileInput = null
   private val previewSrcProperty: Property[String] = Property("")
@@ -74,17 +74,17 @@ class ImageCropper(val name: String, override val standalone: Boolean = false) e
       }
 
       button() {
-        text = valueProperty.map(v => if (v != null) "Bild ersetzen" else "Bild wählen")
+        text = valueProperty.map(v => if (v != null) "Replace image" else "Choose image")
         visible = editableProperty
         onClick { _ => if (fileInput != null) fileInput.click() }
       }
 
-      button("Zuschneiden") {
+      button("Crop") {
         visible = editableProperty.flatMap(e => sourceProperty.map(s => e && s != null))
         onClick { _ => currentSource().foreach(openCropWindow) }
       }
 
-      button("Leeren") {
+      button("Clear") {
         visible = editableProperty.flatMap(e => valueProperty.map(v => e && v != null))
         onClick { _ => 
           setDirty(true)
@@ -136,7 +136,7 @@ class ImageCropper(val name: String, override val standalone: Boolean = false) e
           padding = "16px"
           color = "var(--aj-ink-muted)"
         }
-        text = placeholderProperty.map(p => if (p.trim.isEmpty) "Kein Bild ausgewählt" else p)
+        text = placeholderProperty.map(p => if (p.trim.isEmpty) "No image selected" else p)
       }
     }
 
@@ -264,7 +264,7 @@ class ImageCropper(val name: String, override val standalone: Boolean = false) e
   }
 
   private def placeholderText(value: String): String =
-    Option(value).map(_.trim).filter(_.nonEmpty).getOrElse("Kein Bild ausgewählt")
+    Option(value).map(_.trim).filter(_.nonEmpty).getOrElse("No image selected")
 
   private def previewSrc(media: Media): Option[String] = {
     if (media == null) return None
@@ -392,13 +392,13 @@ private final class ImageCropperDialog(
       addClass("toolbar")
       style { gap = "10px"; padding = "10px" }
       
-      button("Übernehmen") {
+      button("Apply") {
         onClick { _ =>
           field.applyCropSession(session, cropToMedia())
         }
       }
 
-      button("Zurücksetzen") {
+      button("Reset") {
         onClick { _ =>
           if (loadedImage != null && mainCanvas != null) {
             crop = defaultCrop()
@@ -408,7 +408,7 @@ private final class ImageCropperDialog(
         }
       }
 
-      button("Schließen") {
+      button("Close") {
         onClick { _ =>
           field.cancelCropSession(session)
           field.closeCropWindow(session)
@@ -825,6 +825,7 @@ object ImageCropper {
 
   def placeholder(using c: ImageCropper): String = c.placeholder
   def placeholder_=(using c: ImageCropper)(value: String): Unit = c.placeholder = value
+  def placeholder_=(using c: ImageCropper)(value: ReadOnlyProperty[String]): Unit = c.placeholder = value
 
   def editable(using c: ImageCropper): Boolean = c.editable
   def editable_=(using c: ImageCropper)(value: Boolean): Unit = c.editable = value
@@ -865,6 +866,8 @@ object ImageCropper {
 
   def windowTitle(using c: ImageCropper): String = c.windowTitle
   def windowTitle_=(using c: ImageCropper)(value: String): Unit = c.windowTitle = value
+  def windowTitle_=(using c: ImageCropper)(value: ReadOnlyProperty[String]): Unit =
+    c.addDisposable(value.observe(next => c.windowTitle = Option(next).getOrElse("")))
 
   def addValidator(validator: Validator)(using c: ImageCropper): Unit =
     c.addValidator(validator)

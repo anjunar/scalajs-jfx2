@@ -3,7 +3,7 @@ package app.pages
 import app.components.Showcase.*
 import jfx.action.Button.button
 import jfx.core.component.Component.*
-import jfx.core.state.Property
+import jfx.core.state.{Property, ReadOnlyProperty}
 import app.DemoI18n
 import jfx.i18n.*
 import jfx.form.Editor.*
@@ -17,7 +17,7 @@ import scala.scalajs.js
 object EditorPage {
   def render(): Unit = {
     val initialEditorText =
-      "This text already comes from the SSR fallback and is adopted by Lexical after hydration."
+      DemoI18n.resolveNow(i18n"This text already comes from the SSR fallback and is adopted by Lexical after hydration.")
     val mirroredEditorValue = Property[js.Any | Null](initialEditorText)
 
     showcasePage(i18n"Editor", i18n"Lexical as an SSR-safe client island.") {
@@ -46,7 +46,7 @@ object EditorPage {
             editor("editor-playground", standalone = true) {
               val writableEditor = summon[jfx.form.Editor]
               value = mirroredEditorValue.get
-              placeholder = "The writing surface activates on the client"
+              placeholder = DemoI18n.text(i18n"The writing surface activates on the client")
               style {
                 width = "100%"
                 minHeight = "340px"
@@ -71,13 +71,13 @@ object EditorPage {
 
               button(DemoI18n.text(i18n"Short text")) {
                 onClick { _ =>
-                  mirroredEditorValue.set("Kurzer externer Property-Update. Der Editor übernimmt ihn nach der Hydration.")
+                  mirroredEditorValue.set(DemoI18n.resolveNow(i18n"Short external property update. The editor adopts it after hydration."))
                 }
               }
 
               button(DemoI18n.text(i18n"Set readonly content")) {
                 onClick { _ =>
-                  mirroredEditorValue.set("Dieser Wert wurde außerhalb des Editors gesetzt und wird in beide Instanzen synchronisiert.")
+                  mirroredEditorValue.set(DemoI18n.resolveNow(i18n"This value was set outside the editor and is synchronized to both instances."))
                 }
               }
             }
@@ -92,7 +92,7 @@ object EditorPage {
             val readonlyEditor = summon[jfx.form.Editor]
             value = mirroredEditorValue.get
             editable = false
-            placeholder = "Readonly"
+            placeholder = DemoI18n.text(i18n"Readonly")
             style {
               width = "100%"
               minHeight = "220px"
@@ -111,20 +111,20 @@ object EditorPage {
           hbox {
             style { gap = "14px"; flexWrap = "wrap"; alignItems = "stretch" }
             detailCard(
-              "Shell stays stable",
-              "Fallback and client version use the same jfx-editor shell with toolbar area and surface frame."
+              DemoI18n.text(i18n"Shell stays stable"),
+              DemoI18n.text(i18n"Fallback and client version use the same jfx-editor shell with toolbar area and surface frame.")
             )
             detailCard(
-              "Toolbar does not flicker",
-              "Readonly renders the toolbar hidden on the server so hydration does not have to surprise the structure."
+              DemoI18n.text(i18n"Toolbar does not flicker"),
+              DemoI18n.text(i18n"Readonly renders the toolbar hidden on the server so hydration does not have to surprise the structure.")
             )
             detailCard(
-              "Text stays visible",
-              "Plain text or Lexical JSON is extracted into preview text during SSR and then adopted by Lexical after hydration."
+              DemoI18n.text(i18n"Text stays visible"),
+              DemoI18n.text(i18n"Plain text or Lexical JSON is extracted into preview text during SSR and then adopted by Lexical after hydration.")
             )
             detailCard(
-              "External values",
-              "valueProperty updates are synchronized back into Lexical after mount via parseEditorState."
+              DemoI18n.text(i18n"External values"),
+              DemoI18n.text(i18n"valueProperty updates are synchronized back into Lexical after mount via parseEditorState.")
             )
           }
         }
@@ -135,13 +135,13 @@ object EditorPage {
         ) {
           hbox {
             style { gap = "14px"; flexWrap = "wrap"; alignItems = "stretch" }
-            pluginCard("Base", "Bold, Italic, Underline und Basis-Kommandos.")
-            pluginCard("Heading", "Absätze und Überschriften über Dropdown.")
-            pluginCard("List", "Bullet- und Numbered-List Kommandos.")
-            pluginCard("Link", "Dialog-Service für Link-Einfügen.")
-            pluginCard("Image", "Image-Dialog als Editor-Plugin.")
-            pluginCard("Table", "Tabellen-Knoten und Toolbar-Aktion.")
-            pluginCard("Code", "Code-Block Plugin als Spezialknoten.")
+            pluginCard(DemoI18n.text(i18n"Base"), DemoI18n.text(i18n"Bold, italic, underline, and basic commands."))
+            pluginCard(DemoI18n.text(i18n"Heading"), DemoI18n.text(i18n"Paragraphs and headings through a dropdown."))
+            pluginCard(DemoI18n.text(i18n"List"), DemoI18n.text(i18n"Bullet and numbered list commands."))
+            pluginCard(DemoI18n.text(i18n"Link"), DemoI18n.text(i18n"Dialog service for inserting links."))
+            pluginCard(DemoI18n.text(i18n"Image"), DemoI18n.text(i18n"Image dialog as an editor plugin."))
+            pluginCard(DemoI18n.text(i18n"Table"), DemoI18n.text(i18n"Table nodes and toolbar actions."))
+            pluginCard(DemoI18n.text(i18n"Code"), DemoI18n.text(i18n"Code block plugin as a specialized node."))
           }
         }
 
@@ -157,7 +157,7 @@ object EditorPage {
         ) {
           codeBlock("scala", """editor("content", standalone = true) {
   value = "Dieser Text ist schon im SSR sichtbar."
-  placeholder = "Text schreiben..."
+  placeholder = "Write text..."
   style { minHeight = "340px" }
 
   basePlugin()
@@ -209,7 +209,7 @@ Property Update:
     codePlugin()
   }
 
-  private def detailCard(title: String, body: String): Unit = {
+  private def detailCard(title: ReadOnlyProperty[String], body: ReadOnlyProperty[String]): Unit = {
     vbox {
       classes = "showcase-result"
       style { gap = "8px"; flex = "1 1 240px" }
@@ -224,7 +224,7 @@ Property Update:
     }
   }
 
-  private def pluginCard(name: String, body: String): Unit = {
+  private def pluginCard(name: ReadOnlyProperty[String], body: ReadOnlyProperty[String]): Unit = {
     vbox {
       classes = "showcase-result"
       style { gap = "8px"; flex = "1 1 180px" }

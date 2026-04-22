@@ -4,31 +4,31 @@ import java.time.{Instant, LocalDate, LocalDateTime, OffsetDateTime, ZonedDateTi
 import java.util.Date
 import scala.util.matching.Regex
 
-final case class NotNullValidator[V](message: String = "Darf nicht null sein") extends Validator[V] {
+final case class NotNullValidator[V](message: String = "Must not be null") extends Validator[V] {
   override def validate(value: V): Option[String] =
     if (value == null) Some(message)
     else None
 }
 
-final case class NullValidator[V](message: String = "Muss null sein") extends Validator[V] {
+final case class NullValidator[V](message: String = "Must be null") extends Validator[V] {
   override def validate(value: V): Option[String] =
     if (value == null) None
     else Some(message)
 }
 
-final case class AssertTrueValidator(message: String = "Muss wahr sein") extends Validator[Boolean] {
+final case class AssertTrueValidator(message: String = "Must be true") extends Validator[Boolean] {
   override def validate(value: Boolean): Option[String] =
     if (value) None
     else Some(message)
 }
 
-final case class AssertFalseValidator(message: String = "Muss falsch sein") extends Validator[Boolean] {
+final case class AssertFalseValidator(message: String = "Must be false") extends Validator[Boolean] {
   override def validate(value: Boolean): Option[String] =
     if (!value) None
     else Some(message)
 }
 
-final case class NotEmptyValidator[V](message: String = "Darf nicht leer sein") extends Validator[V] {
+final case class NotEmptyValidator[V](message: String = "Must not be empty") extends Validator[V] {
   override def validate(value: V): Option[String] =
     if (value == null) Some(message)
     else ValidatorSupport.sizeOf(value) match {
@@ -38,7 +38,7 @@ final case class NotEmptyValidator[V](message: String = "Darf nicht leer sein") 
     }
 }
 
-final case class NotBlankValidator(message: String = "Darf nicht leer oder nur Leerzeichen sein") extends Validator[String] {
+final case class NotBlankValidator(message: String = "Must not be blank") extends Validator[String] {
   override def validate(value: String): Option[String] =
     if (value == null || value.trim.isEmpty) Some(message)
     else None
@@ -68,10 +68,10 @@ final case class SizeValidator[V](
 
   private def resolveMessage(): String =
     if (message != null && message.trim.nonEmpty) message
-    else if (min == max) s"Muss genau $min Zeichen/Eintraege haben"
-    else if (max == Int.MaxValue) s"Muss mindestens $min Zeichen/Eintraege haben"
-    else if (min == 0) s"Darf hoechstens $max Zeichen/Eintraege haben"
-    else s"Muss zwischen $min und $max Zeichen/Eintraege haben"
+    else if (min == max) s"Must contain exactly $min characters/items"
+    else if (max == Int.MaxValue) s"Must contain at least $min characters/items"
+    else if (min == 0) s"Must contain at most $max characters/items"
+    else s"Must contain between $min and $max characters/items"
 }
 
 final case class MinValidator[V](value: Long, message: String | Null = null) extends Validator[V] {
@@ -80,7 +80,7 @@ final case class MinValidator[V](value: Long, message: String | Null = null) ext
 
   private def resolveMessage(): String =
     if (ValidatorSupport.hasText(message)) message
-    else s"Muss größer oder gleich $value sein"
+    else s"Must be greater than or equal to $value"
 }
 
 final case class MaxValidator[V](value: Long, message: String | Null = null) extends Validator[V] {
@@ -89,7 +89,7 @@ final case class MaxValidator[V](value: Long, message: String | Null = null) ext
 
   private def resolveMessage(): String =
     if (ValidatorSupport.hasText(message)) message
-    else s"Muss kleiner oder gleich $value sein"
+    else s"Must be less than or equal to $value"
 }
 
 final case class DecimalMinValidator[V](
@@ -106,8 +106,8 @@ final case class DecimalMinValidator[V](
 
   private def resolveMessage(): String =
     if (ValidatorSupport.hasText(message)) message
-    else if (inclusive) s"Muss größer oder gleich $value sein"
-    else s"Muss größer als $value sein"
+    else if (inclusive) s"Must be greater than or equal to $value"
+    else s"Must be greater than $value"
 }
 
 final case class DecimalMaxValidator[V](
@@ -124,26 +124,26 @@ final case class DecimalMaxValidator[V](
 
   private def resolveMessage(): String =
     if (ValidatorSupport.hasText(message)) message
-    else if (inclusive) s"Muss kleiner oder gleich $value sein"
-    else s"Muss kleiner als $value sein"
+    else if (inclusive) s"Must be less than or equal to $value"
+    else s"Must be less than $value"
 }
 
-final case class PositiveValidator[V](message: String = "Muss positiv sein") extends Validator[V] {
+final case class PositiveValidator[V](message: String = "Must be positive") extends Validator[V] {
   override def validate(candidate: V): Option[String] =
     ValidatorSupport.validateDecimalConstraint(candidate, _ > 0, message)
 }
 
-final case class PositiveOrZeroValidator[V](message: String = "Muss positiv oder 0 sein") extends Validator[V] {
+final case class PositiveOrZeroValidator[V](message: String = "Must be positive or zero") extends Validator[V] {
   override def validate(candidate: V): Option[String] =
     ValidatorSupport.validateDecimalConstraint(candidate, _ >= 0, message)
 }
 
-final case class NegativeValidator[V](message: String = "Muss negativ sein") extends Validator[V] {
+final case class NegativeValidator[V](message: String = "Must be negative") extends Validator[V] {
   override def validate(candidate: V): Option[String] =
     ValidatorSupport.validateDecimalConstraint(candidate, _ < 0, message)
 }
 
-final case class NegativeOrZeroValidator[V](message: String = "Muss negativ oder 0 sein") extends Validator[V] {
+final case class NegativeOrZeroValidator[V](message: String = "Must be negative or zero") extends Validator[V] {
   override def validate(candidate: V): Option[String] =
     ValidatorSupport.validateDecimalConstraint(candidate, _ <= 0, message)
 }
@@ -175,12 +175,12 @@ final case class DigitsValidator[V](
 
   private def resolveMessage(): String =
     if (ValidatorSupport.hasText(message)) message
-    else s"Zulaessig sind hoechstens $integer Vorkommastellen und $fraction Nachkommastellen"
+    else s"At most $integer integer digits and $fraction fractional digits are allowed"
 }
 
 final case class PatternValidator(
                                    regex: Regex,
-                                   message: String = "Hat ein ungültiges Format"
+                                   message: String = "Has an invalid format"
                                  ) extends Validator[String] {
   override def validate(value: String): Option[String] =
     if (value == null) None
@@ -189,7 +189,7 @@ final case class PatternValidator(
 }
 
 final case class EmailValidator(
-                                 message: String = "Muss eine gültige E-Mail-Adresse sein",
+                                 message: String = "Must be a valid email address",
                                  regex: Regex = ValidatorSupport.defaultEmailRegex
                                ) extends Validator[String] {
   override def validate(value: String): Option[String] =
@@ -198,22 +198,22 @@ final case class EmailValidator(
     else Some(message)
 }
 
-final case class PastValidator[V](message: String = "Muss in der Vergangenheit liegen") extends Validator[V] {
+final case class PastValidator[V](message: String = "Must be in the past") extends Validator[V] {
   override def validate(value: V): Option[String] =
     ValidatorSupport.validateTemporalConstraint(value, isPast = true, inclusive = false, message)
 }
 
-final case class PastOrPresentValidator[V](message: String = "Muss in der Vergangenheit oder Gegenwart liegen") extends Validator[V] {
+final case class PastOrPresentValidator[V](message: String = "Must be in the past or present") extends Validator[V] {
   override def validate(value: V): Option[String] =
     ValidatorSupport.validateTemporalConstraint(value, isPast = true, inclusive = true, message)
 }
 
-final case class FutureValidator[V](message: String = "Muss in der Zukunft liegen") extends Validator[V] {
+final case class FutureValidator[V](message: String = "Must be in the future") extends Validator[V] {
   override def validate(value: V): Option[String] =
     ValidatorSupport.validateTemporalConstraint(value, isPast = false, inclusive = false, message)
 }
 
-final case class FutureOrPresentValidator[V](message: String = "Muss in der Zukunft oder Gegenwart liegen") extends Validator[V] {
+final case class FutureOrPresentValidator[V](message: String = "Must be in the future or present") extends Validator[V] {
   override def validate(value: V): Option[String] =
     ValidatorSupport.validateTemporalConstraint(value, isPast = false, inclusive = true, message)
 }

@@ -26,9 +26,9 @@ object VirtualListViewPage {
         )
 
         metricStrip(
-          "1000" -> "records in the showcase",
-          "44-120px" -> "variable row heights for real layout tension",
-          "Viewport" -> "Only what the user needs right now is rendered"
+          DemoI18n.resolveNow(i18n"1000") -> DemoI18n.resolveNow(i18n"records in the showcase"),
+          DemoI18n.resolveNow(i18n"44-120px") -> DemoI18n.resolveNow(i18n"variable row heights for real layout tension"),
+          DemoI18n.resolveNow(i18n"Viewport") -> DemoI18n.resolveNow(i18n"Only what the user needs right now is rendered")
         )
 
         componentShowcase(
@@ -39,7 +39,7 @@ object VirtualListViewPage {
           val data = (1 to 1000).map { i =>
             val h = if (i % 5 == 0) 120.0 else if (i % 3 == 0) 80.0 else 44.0
             val c = if (h > 100) "#fecaca" else if (h > 50) "#fed7aa" else "transparent"
-            ShowcaseItem(s"Datensatz #$i", h, c)
+            ShowcaseItem(DemoI18n.resolveNow(i18n"Record #$i"), h, c)
           }
           items.setAll(data)
 
@@ -57,7 +57,7 @@ object VirtualListViewPage {
                   padding = "0 16px"
                   borderBottom = "1px solid var(--aj-line-faint)"
                 }
-                text = if (item != null) s"$index - ${item.title}" else s"$index - Loading..."
+                text = if (item != null) s"$index - ${item.title}" else s"$index - ${DemoI18n.resolveNow(i18n"Loading...")}"
               }
             }
           }

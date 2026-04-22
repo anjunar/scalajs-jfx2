@@ -13,15 +13,15 @@ object ValidatorFactory {
 //    org.scalajs.dom.console.log(s"Creating validator for annotation: ${annotation.annotationClassName}")
     annotation.annotationClassName match {
       case "jfx.form.validators.NotNull" =>
-        val message = annotation.parameters.getOrElse("message", "Darf nicht null sein").asInstanceOf[String]
+        val message = annotation.parameters.getOrElse("message", "Must not be null").asInstanceOf[String]
         Some(NotNullValidator[Any](message))
 
       case "jfx.form.validators.NotEmpty" =>
-        val message = annotation.parameters.getOrElse("message", "Darf nicht leer sein").asInstanceOf[String]
+        val message = annotation.parameters.getOrElse("message", "Must not be empty").asInstanceOf[String]
         Some(NotEmptyValidator[Any](message))
 
       case "jfx.form.validators.NotBlank" =>
-        val message = annotation.parameters.getOrElse("message", "Darf nicht leer oder nur Leerzeichen sein").asInstanceOf[String]
+        val message = annotation.parameters.getOrElse("message", "Must not be blank").asInstanceOf[String]
         Some(NotBlankValidator(message).asInstanceOf[jfx.form.validators.Validator[Any]])
 
       case "jfx.form.validators.Size" =>
@@ -52,11 +52,11 @@ object ValidatorFactory {
 
       case "jfx.form.validators.Pattern" =>
         val regex = annotation.parameters.getOrElse("regex", "").asInstanceOf[String]
-        val message = annotation.parameters.getOrElse("message", "Hat ein ungültiges Format").asInstanceOf[String]
+        val message = annotation.parameters.getOrElse("message", "Has an invalid format").asInstanceOf[String]
         Some(PatternValidator(new Regex(regex), message).asInstanceOf[jfx.form.validators.Validator[Any]])
 
       case "jfx.form.validators.EmailConstraint" =>
-        val message = annotation.parameters.getOrElse("message", "Muss eine gültige E-Mail-Adresse sein").asInstanceOf[String]
+        val message = annotation.parameters.getOrElse("message", "Must be a valid email address").asInstanceOf[String]
         Some(EmailValidator(message).asInstanceOf[jfx.form.validators.Validator[Any]])
 
       case _ => None

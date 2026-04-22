@@ -9,7 +9,7 @@ import scala.scalajs.js
 class ImagePlugin extends EditorPlugin {
   override val name: String = "image"
 
-  var dialogTitle: String = "Bild einfuegen"
+  var dialogTitle: String = "Insert image"
   var defaultWidthPx: Int = 680
   var previewMaxHeightPx: Int = 320
 
@@ -70,7 +70,7 @@ class ImagePlugin extends EditorPlugin {
     }
 
     val altLabel = document.createElement("label").asInstanceOf[HTMLElement]
-    altLabel.textContent = "Alt Text"
+    altLabel.textContent = "Alt text"
 
     val altInput = document.createElement("input").asInstanceOf[HTMLInputElement]
     altInput.placeholder = "Description"

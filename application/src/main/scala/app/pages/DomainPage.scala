@@ -30,8 +30,8 @@ object DomainPage {
     val mapper = new JsonMapper()
     val user = sampleUser()
     val jsonText = Property("")
-    val roundtripText = Property("Not yet run.")
-    val validationText = Property("Not yet validated.")
+    val roundtripText = Property(DemoI18n.resolveNow(i18n"Not yet run."))
+    val validationText = Property(DemoI18n.resolveNow(i18n"Not yet validated."))
     val modelHeadline = Property("")
 
     def refreshJson(): Unit = {
@@ -65,9 +65,9 @@ object DomainPage {
         )
 
         metricStrip(
-          descriptors.length.toString -> "registered classes",
-          propertyCount.toString -> "reflected properties",
-          annotationCount.toString -> "validator annotations"
+          descriptors.length.toString -> DemoI18n.resolveNow(i18n"registered classes"),
+          propertyCount.toString -> DemoI18n.resolveNow(i18n"reflected properties"),
+          annotationCount.toString -> DemoI18n.resolveNow(i18n"validator annotations")
         )
 
         componentShowcase(
@@ -107,7 +107,7 @@ object DomainPage {
                   style { gap = "14px"; flex = "1 1 260px" }
                   div {
                     style { fontWeight = "800" }
-                  text = DemoI18n.text(i18n"User")
+                    text = DemoI18n.text(i18n"User")
                   }
                   inputContainer(DemoI18n.text(i18n"Name")) {
                     input("name") {}
@@ -129,7 +129,7 @@ object DomainPage {
                     }
                     div {
                       style { fontWeight = "800" }
-                    text = DemoI18n.text(i18n"Address")
+                      text = DemoI18n.text(i18n"Address")
                     }
                     inputContainer(DemoI18n.text(i18n"Street")) {
                       input("street") {}
@@ -148,7 +148,7 @@ object DomainPage {
                   onClick { _ =>
                     val errors = controls(using userForm).iterator.flatMap(_.validate(forceVisible = true)).toSeq
                     validationText.set(
-                      if (errors.isEmpty) "All clean: the annotations produced no validation errors."
+                      if (errors.isEmpty) DemoI18n.resolveNow(i18n"All clean: the annotations produced no validation errors.")
                       else s"${errors.length} errors: ${errors.mkString(", ")}"
                     )
                   }
@@ -159,8 +159,8 @@ object DomainPage {
                     val result = Try {
                       val json = mapper.serialize(user)
                       val copy = mapper.deserialize[User](json)
-                      s"Roundtrip OK: ${copy.name.get} from ${copy.address.get.city.get}"
-                    }.getOrElse("Roundtrip failed.")
+                      DemoI18n.resolveNow(i18n"Roundtrip OK: ${I18n.named("name", copy.name.get)} from ${I18n.named("city", copy.address.get.city.get)}")
+                    }.getOrElse(DemoI18n.resolveNow(i18n"Roundtrip failed."))
                     roundtripText.set(result)
                     refreshJson()
                   }
@@ -179,8 +179,8 @@ object DomainPage {
                 button(DemoI18n.text(i18n"Reset example")) {
                   onClick { _ =>
                     fillUser(user)
-                    validationText.set("Not yet validated.")
-                    roundtripText.set("Not yet run.")
+                    validationText.set(DemoI18n.resolveNow(i18n"Not yet validated."))
+                    roundtripText.set(DemoI18n.resolveNow(i18n"Not yet run."))
                     refreshJson()
                   }
                 }
@@ -192,8 +192,8 @@ object DomainPage {
                   flexWrap = "wrap"
                 }
 
-                statusCard("Validation", validationText)
-                statusCard("Mapper", roundtripText)
+                statusCard(DemoI18n.resolveNow(i18n"Validation"), validationText)
+                statusCard(DemoI18n.resolveNow(i18n"Mapper"), roundtripText)
               }
             }
           }
@@ -237,7 +237,7 @@ form(user) {
   }
 
   subForm("address") {
-    inputContainer("Stadt") {
+    inputContainer("City") {
       input("city") {}
     }
   }

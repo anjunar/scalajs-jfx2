@@ -207,6 +207,7 @@ object ComboBox {
 
   def placeholder(using c: ComboBox[?]): String = c.placeholderProperty.get
   def placeholder_=(using c: ComboBox[?])(v: String): Unit = c.placeholderProperty.set(v)
+  def placeholder_=(using c: ComboBox[?])(v: ReadOnlyProperty[String]): Unit = c.placeholder = v
 
   def editable(using c: ComboBox[?]): Boolean = c.editableProperty.get
   def editable_=(using c: ComboBox[?])(v: Boolean): Unit = c.editableProperty.set(v)

@@ -51,7 +51,7 @@ object ComboBoxPage {
               }
 
             comboBox[Member]("team-selector") {
-              placeholder = "Search member..."
+              placeholder = DemoI18n.text(i18n"Search member...")
               items = members
               rowHeight = 60.0
               dropdownHeight = 300.0

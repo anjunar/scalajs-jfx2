@@ -2,11 +2,11 @@ package jfx.form.validators
 
 import scala.annotation.StaticAnnotation
 
-final case class NotNull(message: String = "Darf nicht null sein") extends StaticAnnotation
+final case class NotNull(message: String = "Must not be null") extends StaticAnnotation
 
-final case class NotEmpty(message: String = "Darf nicht leer sein") extends StaticAnnotation
+final case class NotEmpty(message: String = "Must not be empty") extends StaticAnnotation
 
-final case class NotBlank(message: String = "Darf nicht leer oder nur Leerzeichen sein") extends StaticAnnotation
+final case class NotBlank(message: String = "Must not be blank") extends StaticAnnotation
 
 final case class Size(
   min: Int = 0,
@@ -26,7 +26,7 @@ final case class Digits(
 
 final case class Pattern(
   regex: String,
-  message: String = "Hat ein ungültiges Format"
+  message: String = "Has an invalid format"
 ) extends StaticAnnotation
 
-final case class EmailConstraint(message: String = "Muss eine gültige E-Mail-Adresse sein") extends StaticAnnotation
+final case class EmailConstraint(message: String = "Must be a valid email address") extends StaticAnnotation

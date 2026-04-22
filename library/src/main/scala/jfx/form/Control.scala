@@ -23,6 +23,8 @@ trait Control[V] extends Component with Editable {
 
   def placeholder: String = placeholderProperty.get
   def placeholder_=(value: String): Unit = placeholderProperty.set(value)
+  def placeholder_=(value: ReadOnlyProperty[String]): Unit =
+    addDisposable(value.observe(next => placeholderProperty.set(Option(next).getOrElse(""))))
 
   def setFocused(value: Boolean): Unit = focusedProperty.set(value)
   def setDirty(value: Boolean): Unit = dirtyProperty.set(value)

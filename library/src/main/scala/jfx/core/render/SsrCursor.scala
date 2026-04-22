@@ -15,8 +15,8 @@ class SsrCursor(
 
   override def claimElement(tagName: String): HostElement = {
     val el = new SsrHostElement(tagName)
-    // Wir fügen hier NICHTS automatisch ein. 
-    // Das erledigt DslRuntime über syncChildAddition -> host.insertChild
+    // Nothing is inserted automatically here.
+    // DslRuntime handles this via syncChildAddition -> host.insertChild
     if (target.isEmpty && index.isEmpty) {
       rootElements += el
     }

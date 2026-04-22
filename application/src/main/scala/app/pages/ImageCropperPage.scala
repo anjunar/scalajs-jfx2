@@ -1,9 +1,11 @@
 package app.pages
 
+import app.DemoI18n
 import app.components.Showcase.*
 import jfx.control.Image.*
 import jfx.core.component.Component.*
 import jfx.core.state.Property
+import jfx.i18n.*
 import jfx.domain.Media
 import jfx.form.ImageCropper.*
 import jfx.layout.Div.div
@@ -12,19 +14,19 @@ import jfx.layout.VBox.vbox
 
 object ImageCropperPage {
   def render(): Unit = {
-    showcasePage("Image Cropper", "Bilder hochladen, zuschneiden und als Media speichern.") {
+    showcasePage(i18n"Image Cropper", i18n"Upload images, crop them, and store them as Media.") {
       vbox {
         style { gap = "34px" }
 
         sectionIntro(
-          "Upload & Zuschnitt",
-          "Der Cropper ist ein eigenes Formular-Control.",
-          "ImageCropper kapselt Dateiauswahl, Crop-Dialog, Thumbnail-Erzeugung und Media-Binding. Damit bleibt die Image-Komponente schlicht und der interaktive Upload bekommt seinen eigenen Spielplatz."
+          i18n"Upload & crop",
+          i18n"The cropper is its own form control.",
+          i18n"ImageCropper bundles file selection, crop dialog, thumbnail creation, and Media binding. That keeps the Image component simple and gives the interactive upload its own playground."
         )
 
         componentShowcase(
-          "Profilbild zuschneiden",
-          "Quadratischer Zuschnitt mit Live-Vorschau des erzeugten Thumbnails."
+          i18n"Crop profile image",
+          i18n"Square cropping with a live preview of the generated thumbnail."
         ) {
           val mediaProperty = Property[Media](null)
 
@@ -32,12 +34,12 @@ object ImageCropperPage {
             style { gap = "20px" }
 
             imageCropper("profile-image", standalone = true) {
-              placeholder = "Profilbild auswählen"
+              placeholder = DemoI18n.text(i18n"Choose profile image")
               aspectRatio = Some(1.0)
               outputMaxWidth = Some(400)
               thumbnailMaxWidth = 160
               thumbnailMaxHeight = 160
-              windowTitle = "Profilbild zuschneiden"
+              windowTitle = DemoI18n.text(i18n"Crop profile image")
               style { height = "320px" }
               addDisposable(valueProperty.observe(mediaProperty.set))
             }
@@ -49,7 +51,7 @@ object ImageCropperPage {
 
                 image {
                   src = mediaProperty.map(mediaToThumbnailSrc)
-                  alt = "Zugeschnittenes Profilbild"
+                  alt = DemoI18n.text(i18n"Cropped profile image")
                   style {
                     width = "112px"
                     height = "112px"
@@ -64,17 +66,17 @@ object ImageCropperPage {
                   style { gap = "6px"; flex = "1 1 220px" }
                   div {
                     style { fontWeight = "bold" }
-                    text = "Ergebnis"
+                    text = DemoI18n.text(i18n"Result")
                   }
                   div {
                     style { color = "var(--aj-ink-muted)" }
                     text = mediaProperty.map { media =>
-                      if (media == null) "Noch kein Bild ausgewählt."
+                      if (media == null) DemoI18n.resolveNow(i18n"No image selected yet.")
                       else {
                         val thumb = media.thumbnail.get
                         val contentType = Option(thumb.contentType.get).filter(_.nonEmpty).getOrElse("image/png")
                         val dataSize = Option(thumb.data.get).map(_.length).getOrElse(0)
-                        s"$contentType, Thumbnail-Daten: $dataSize Zeichen"
+                        s"$contentType, thumbnail data: $dataSize characters"
                       }
                     }
                   }
@@ -85,11 +87,11 @@ object ImageCropperPage {
         }
 
         componentShowcase(
-          "Breites Seitenverhältnis",
-          "Der gleiche Cropper kann direkt für Header- oder Bannerbilder konfiguriert werden."
+          i18n"Wide aspect ratio",
+          i18n"The same cropper can be configured directly for header or banner images."
         ) {
           imageCropper("banner-image", standalone = true) {
-            placeholder = "Bannerbild auswählen"
+            placeholder = DemoI18n.text(i18n"Choose banner image")
             aspectRatio = Some(16.0 / 9.0)
             previewMaxWidth = 640
             previewMaxHeight = 360
@@ -97,33 +99,33 @@ object ImageCropperPage {
             outputMaxHeight = Some(540)
             thumbnailMaxWidth = 320
             thumbnailMaxHeight = 180
-            windowTitle = "Banner zuschneiden"
+            windowTitle = DemoI18n.text(i18n"Crop banner image")
             style { height = "260px" }
           }
         }
 
         componentShowcase(
-          "Readonly Zustand",
-          "Wie andere Controls folgt auch der Cropper der gemeinsamen editable-DSL."
+          i18n"Readonly state",
+          i18n"Like the other controls, the cropper follows the shared editable DSL."
         ) {
           imageCropper("locked-image", standalone = true) {
-            placeholder = "Readonly: Upload und Zuschnitt sind deaktiviert"
+            placeholder = DemoI18n.text(i18n"Readonly: upload and cropping are disabled")
             editable = false
             style { height = "180px" }
           }
         }
 
         apiSection(
-          "DSL Syntax",
-          "Der Cropper bleibt ein normales Control und kann im Formular gebunden werden."
+          i18n"DSL syntax",
+          i18n"The cropper remains a normal control and can be bound in a form."
         ) {
           codeBlock("scala", """imageCropper("profileImage", standalone = true) {
-  placeholder = "Profilbild auswählen"
+  placeholder = "Choose profile image"
   aspectRatio = Some(1.0)
   outputMaxWidth = Some(400)
   thumbnailMaxWidth = 160
   thumbnailMaxHeight = 160
-  windowTitle = "Profilbild zuschneiden"
+  windowTitle = "Crop profile image"
 }
 
 imageCropper("readonly", standalone = true) {

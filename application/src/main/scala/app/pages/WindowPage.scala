@@ -14,14 +14,14 @@ import app.components.Showcase.*
 
 object WindowPage {
   def render() = {
-    showcasePage(i18n"Window & viewport", i18n"Architecture of space.") {
+    showcasePage(i18n"Window & viewport", i18n"The architecture of space.") {
       vbox {
         style { gap = "34px" }
 
         sectionIntro(
           i18n"Space management",
           i18n"The viewport is the stage for things that live above the page.",
-          i18n"Notifications, windows, and overlays need a central order. JFX2 gathers these concerns in the viewport so pages do not have to manage global UI layers on their own."
+          i18n"Notifications, windows, and overlays need a central order. JFX2 gathers those concerns in the viewport so pages do not have to manage global UI layers on their own."
         )
 
         metricStrip(
@@ -44,25 +44,25 @@ object WindowPage {
              
              button(DemoI18n.text(i18n"Info notification")) {
                onClick { _ => 
-                 Viewport.notify("Silence is the origin of every form.", NotificationKind.Info)
+                 Viewport.notify(DemoI18n.resolveNow(i18n"Silence is the origin of every form."), NotificationKind.Info)
                }
              }
 
              button(DemoI18n.text(i18n"Success notification")) {
                onClick { _ => 
-                 Viewport.notify("The structure is now sound.", NotificationKind.Success)
+                 Viewport.notify(DemoI18n.resolveNow(i18n"The structure is now sound."), NotificationKind.Success)
                }
              }
 
              button(DemoI18n.text(i18n"Warning notification")) {
                onClick { _ => 
-                 Viewport.notify("Warning: the form may be hardening.", NotificationKind.Warning)
+                 Viewport.notify(DemoI18n.resolveNow(i18n"Warning: the form may be hardening."), NotificationKind.Warning)
                }
              }
 
              button(DemoI18n.text(i18n"Error notification")) {
                onClick { _ => 
-                 Viewport.notify("A crack in the foundation was discovered.", NotificationKind.Error)
+                 Viewport.notify(DemoI18n.resolveNow(i18n"A crack in the foundation was discovered."), NotificationKind.Error)
                }
              }
           }
@@ -80,7 +80,7 @@ object WindowPage {
           button(DemoI18n.text(i18n"Open window")) {
             onClick { _ =>
               Viewport.addWindow(new WindowConf(
-                title = "A room for thoughts",
+                title = DemoI18n.resolveNow(i18n"A room for thoughts"),
                 width = 400,
                 height = 300,
                 component = () => {
@@ -89,7 +89,7 @@ object WindowPage {
                     div { text = DemoI18n.text(i18n"There is room for your ideas here.") }
                     button(DemoI18n.text(i18n"Confirm note")) {
                        onClick { _ =>
-                         Viewport.notify("The note in the window was confirmed.", NotificationKind.Success)
+                         Viewport.notify(DemoI18n.resolveNow(i18n"The note in the window was confirmed."), NotificationKind.Success)
                        }
                     }
                   }
@@ -100,24 +100,24 @@ object WindowPage {
         }
 
         insightGrid(
-          ("Zentrum", "Globale UI gehört an einen Ort", "Viewport.windows und Viewport.notifications bilden den Zustand der obersten UI-Schicht."),
-          ("Fokus", "Fenster erhalten Z-Index und Aktivität", "Der Viewport kann Fenster berühren, ordnen und schließen, ohne Seitenlogik zu duplizieren."),
-          ("Lesbarkeit", "Seiten lösen nur Absichten aus", "Die Seite sagt notify oder addWindow, der Viewport kümmert sich um Darstellung und Lebenszyklus.")
+          (i18n"Center", i18n"Global UI belongs in one place", i18n"Viewport.windows and Viewport.notifications form the state of the top UI layer."),
+          (i18n"Focus", i18n"Windows keep Z-index and activity", i18n"The viewport can touch, arrange, and close windows without duplicating page logic."),
+          (i18n"Readability", i18n"Pages only trigger intents", i18n"The page says notify or addWindow, the viewport handles presentation and lifecycle.")
         )
 
         apiSection(
           i18n"Usage",
           i18n"The page binds the viewport once and then only sends clear intents."
         ) {
-          codeBlock("scala", """// Viewport in der App-Shell platzieren
+          codeBlock("scala", """// Place the viewport in the app shell
 viewport {
   router(routes)
 }
 
-// Benachrichtigung senden
+// Send notification
 Viewport.notify("Hello world", NotificationKind.Success)
 
-// Fenster hinzufügen
+// Add window
 Viewport.addWindow(new WindowConf(
   title = "My window",
   component = () => new MyContent()

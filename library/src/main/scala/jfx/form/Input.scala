@@ -2,7 +2,7 @@ package jfx.form
 
 import jfx.core.component.Component
 import jfx.core.component.Component.*
-import jfx.core.state.Property
+import jfx.core.state.{Property, ReadOnlyProperty}
 import jfx.dsl.DslRuntime
 import org.scalajs.dom
 
@@ -95,6 +95,7 @@ object Input {
 
   def placeholder(using i: Input): String = i.placeholder
   def placeholder_=(value: String)(using i: Input): Unit = i.placeholder = value
+  def placeholder_=(value: ReadOnlyProperty[String])(using i: Input): Unit = i.placeholder = value
   def editable(using i: Input): Boolean = i.editableProperty.get
   def editable_=(value: Boolean)(using i: Input): Unit = i.editableProperty.set(value)
   def editableProperty(using i: Input): Property[Boolean] = i.editableProperty

@@ -5,9 +5,9 @@ import jfx.form.validators.*
 import scala.annotation.meta.field
 
 class Address(
-  @(NotBlank @field)(message = "Straße darf nicht leer sein")
+  @(NotBlank @field)(message = "Street must not be empty")
   var street: Property[String] = Property(""),
-  @(NotBlank @field)(message = "Stadt darf nicht leer sein")
+  @(NotBlank @field)(message = "City must not be empty")
   var city: Property[String] = Property("")
 )
 
@@ -17,7 +17,7 @@ class Email(
 )
 
 class User(
-  @(Size @field)(min = 3, message = "Name muss mindestens 3 Zeichen lang sein")
+  @(Size @field)(min = 3, message = "Name must be at least 3 characters long")
   @(NotBlank @field)()
   var name: Property[String] = Property(""),
   @(EmailConstraint @field)()

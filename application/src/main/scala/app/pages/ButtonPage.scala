@@ -31,7 +31,7 @@ object ButtonPage {
             text = DemoI18n.text(i18n"Buttons are the heart of interaction. They are not just click targets; they bring your app to life.")
           }
           button(DemoI18n.text(i18n"Click me and bring me to life")) {
-            onClick { _ => dom.window.alert("I was clicked! The magic begins.") }
+            onClick { _ => dom.window.alert(DemoI18n.resolveNow(i18n"I was clicked! The magic begins.")) }
           }
         }
 
@@ -42,13 +42,13 @@ object ButtonPage {
           hbox {
             classes = "showcase-action-row"
             button(DemoI18n.text(i18n"Save")) {
-              onClick { _ => dom.window.alert("Saved.") }
+              onClick { _ => dom.window.alert(DemoI18n.resolveNow(i18n"Saved.")) }
             }
             button(DemoI18n.text(i18n"Check")) {
-              onClick { _ => dom.window.alert("Checked.") }
+              onClick { _ => dom.window.alert(DemoI18n.resolveNow(i18n"Checked.")) }
             }
             button(DemoI18n.text(i18n"Reset")) {
-              onClick { _ => dom.window.alert("Reset.") }
+              onClick { _ => dom.window.alert(DemoI18n.resolveNow(i18n"Reset.")) }
             }
           }
         }
