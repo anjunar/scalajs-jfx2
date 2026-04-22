@@ -31,7 +31,8 @@ const routes = [
   route("/domain", "Domain Metadata | scalajs-jfx2", "Runtime class descriptors, reflected properties, validators, forms, and JSON mapping."),
   route("/image", "Images | scalajs-jfx2", "Image components and visual content handling in JFX2."),
   route("/image-cropper", "ImageCropper | scalajs-jfx2", "Client-side image cropper control for form workflows."),
-  route("/editor", "Editor | scalajs-jfx2", "Lexical-backed editor integration as a normal JFX2 form control.")
+  route("/editor", "Editor | scalajs-jfx2", "Lexical-backed editor integration as a normal JFX2 form control."),
+  route("/memory-leak-test", "Memory Leak Test | scalajs-jfx2", "Stress test 1000 Lexical editors through a VirtualList mount, scroll, and unmount lifecycle.")
 ];
 
 assertBuilt();

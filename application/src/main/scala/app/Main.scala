@@ -98,7 +98,8 @@ object Main {
       asyncRoute("/domain") { page { DomainPage.render() } },
       asyncRoute("/image") { page { ImagePage.render() } },
       asyncRoute("/image-cropper") { page { ImageCropperPage.render() } },
-      asyncRoute("/editor") { page { EditorPage.render() } }
+      asyncRoute("/editor") { page { EditorPage.render() } },
+      asyncRoute("/memory-leak-test") { page { MemoryLeakTestPage.render() } }
     )
 
     div {
@@ -131,6 +132,7 @@ object Main {
               navLink("/input", i18n"Forms", i18n"Natural dialogue")
               navLink("/combo-box", i18n"ComboBox", i18n"Elegant selection")
               navLink("/editor", i18n"Editor", i18n"Lexical playground")
+              navLink("/memory-leak-test", i18n"Memory Test", i18n"Editor lifecycle stress")
               
               sidebarSection(i18n"Architecture")
               navLink("/layout", i18n"Layout", i18n"Room for design")
