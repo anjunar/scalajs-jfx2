@@ -60,29 +60,6 @@ JFX2 is not trying to hide the shape of the UI behind abstractions that need a m
 
 It is trying to keep the shape visible.
 
-```scala
-import jfx.core.component.Component.*
-import jfx.action.Button.button
-import jfx.layout.Div.div
-import jfx.layout.HBox.hbox
-import jfx.layout.VBox.vbox
-
-vbox {
-  classes = Seq("settings-panel")
-
-  div {
-    classes = Seq("settings-panel__title")
-    text = "Preferences"
-  }
-
-  hbox {
-    classes = Seq("settings-panel__actions")
-    button("Save") {}
-    button("Cancel") {}
-  }
-}
-```
-
 The value is not just that this compiles. The value is that it still makes sense later.
 
 ---
@@ -110,41 +87,11 @@ Every UI subtree lives in a component scope. When the scope ends, everything ins
 
 That makes it safe to use inside virtualized lists, modals, and dynamically mounted routes without worrying about what you left behind.
 
-```scala
-import jfx.core.state.Property
-
-val name = Property("Alice")
-
-val subscription = name.observe { current =>
-  println(s"Name is now: $current")
-}
-
-name.set("Bob")
-subscription.dispose()
-```
-
 No hidden dependency tracking. No surprise re-renders. You observe what you choose to observe.
 
 ### Buttons, links, and simple interaction
 
 The smallest useful screen should still feel calm.
-
-```scala
-import jfx.action.Button.button
-import jfx.control.Link.link
-import jfx.core.component.Component.*
-import jfx.layout.HBox.hbox
-
-hbox {
-  button("Continue") {
-    buttonType = "submit"
-  }
-
-  link("/help") {
-    text = "Need help?"
-  }
-}
-```
 
 The event model stays direct. The code reads like intent, not ceremony.
 
@@ -152,77 +99,15 @@ The event model stays direct. The code reads like intent, not ceremony.
 
 `Property[T]` is intentionally small.
 
-```scala
-val title = Property("Welcome")
-
-val dispose = title.observe { current =>
-  println(current)
-}
-
-title.set("Welcome back")
-dispose.dispose()
-```
-
 There is no hidden graph to understand. If you observe it, you own it.
 
 ### Scoped dependency injection
 
 Services are registered and resolved within the current DSL context. No global singletons. No implicit parameters threading through your entire codebase.
 
-```scala
-import jfx.action.Button.button
-import jfx.dsl.DslRuntime
-import jfx.layout.VBox.vbox
-
-final class CounterService {
-  def increment(): Unit = ()
-}
-
-DslRuntime.provide[CounterService](new CounterService) {
-  val root = vbox {
-    button("Click") {
-      onClick { _ => DslRuntime.service[CounterService].increment() }
-    }
-  }
-}
-```
-
 ### Forms with validation
 
 Forms bind directly to model properties by name. Validation annotations live on the model, so the form does not need to be hand-wired field by field.
-
-```scala
-import jfx.core.state.Property
-import jfx.form.Form.form
-import jfx.form.Input.input
-import jfx.form.InputContainer.inputContainer
-import jfx.form.validators.*
-
-final class AccountModel {
-  @NotBlank("Required")
-  @Size(min = 2, max = 50, message = "Between 2 and 50 characters")
-  val firstName: Property[String] = Property("")
-
-  @EmailConstraint("Enter a valid email")
-  val email: Property[String] = Property("")
-}
-
-val account = new AccountModel()
-
-form(account) {
-  inputContainer("First name") {
-    input("firstName") {
-      placeholder = "Ada"
-    }
-  }
-
-  inputContainer("Email") {
-    input("email") {
-      placeholder = "ada@example.com"
-    }
-  }
-}
-```
 
 The form connects automatically. No manual wiring. No string-map choreography.
 
@@ -230,31 +115,11 @@ The form connects automatically. No manual wiring. No string-map choreography.
 
 The same property-oriented model can be serialized and restored without hand-written mapping code.
 
-```scala
-import jfx.json.JsonMapper
-
-val mapper = new JsonMapper()
-val json = mapper.serialize(account)
-val copy = mapper.deserialize[AccountModel](json)
-```
-
 That matters because the data model and the UI model are not treated as separate kingdoms.
 
 ### Combo boxes that stay honest
 
 Complex controls are still kept inside the same DSL.
-
-```scala
-import jfx.core.component.Component.*
-import jfx.form.ComboBox.comboBox
-
-comboBox[String]("country") {
-  items = Seq("Austria", "Germany", "Switzerland")
-  placeholder = "Choose a country"
-  converter = identity
-  multiSelect = false
-}
-```
 
 That matters because the control is not a separate universe. It is still just a component with a lifecycle, state, and structure.
 
@@ -262,88 +127,21 @@ That matters because the control is not a separate universe. It is still just a 
 
 Routes are part of the component model too.
 
-```scala
-import jfx.core.component.Component.*
-import jfx.layout.Div.div
-import jfx.router.Route.*
-import jfx.router.Router.router
-
-router(Seq(
-  asyncRoute("/") {
-    page {
-      div {
-        text = "Home"
-      }
-    }
-  },
-  asyncRoute("/users/:id") { ctx =>
-    page {
-      div {
-        text = s"User ${ctx.pathParams("id")}"
-      }
-    }
-  }
-)) {}
-```
-
 The important part is not syntax. It is that navigation, render state, and URL state remain legible.
 
 ### SSR + Hydration
 
 Server HTML and client hydration share the same component structure. No duplicated templates. No DOM drift.
 
-```scala
-import jfx.hydration.Hydration
-import jfx.ssr.Ssr
-import org.scalajs.dom
-
-val html: String =
-  Ssr.renderToString(appRoot())
-
-Hydration.hydrate(dom.document.getElementById("app")) {
-  appRoot()
-}
-```
-
 ### Virtual lists
 
 Large data sets should feel calm too.
-
-```scala
-import jfx.control.VirtualListView.virtualList
-import jfx.core.component.Component.*
-import jfx.core.state.ListProperty
-import jfx.layout.Div.div
-
-val rows = ListProperty[String]()
-rows.setAll((1 to 10000).map(i => s"Row $i"))
-
-virtualList(rows, estimateHeightPx = 40, crawlable = true) { (row, index) =>
-  div {
-    classes = Seq("row")
-    text = if (row == null) s"Loading row $index" else row
-  }
-}
-```
 
 This is not only a scrolling trick. Browser rendering, SSR rendering, hydration, route query state, and virtualized content all participate in the same component model.
 
 ### Source-first i18n
 
 JFX2 does not make artificial message keys the primary identity of text. The English source sentence stays visible in Scala.
-
-```scala
-import jfx.i18n.*
-
-val user = "Mira"
-val group = "Architecture"
-
-val invite =
-  i18n"User $user invited you to $group"
-
-val contextual =
-  i18nc("verb")"Open"
-```
 
 The interpolator creates structured messages with placeholder names, source position, and fingerprinting for lookup and stale handling.
 
@@ -364,10 +162,31 @@ The interpolator creates structured messages with placeholder names, source posi
 
 ---
 
+## Module documentation
+
+Each module has its own README with installation notes and examples for the components or APIs it owns.
+
+| Module | Purpose |
+|---|---|
+| [jfx-core](jfx-core/README.md) | Component lifecycle, DSL, state, layouts, SSR and hydration |
+| [jfx-router](jfx-router/README.md) | Async routes, route context, query parameters and navigation |
+| [jfx-viewport](jfx-viewport/README.md) | Global viewport, windows, notifications and anchored overlays |
+| [jfx-i18n](jfx-i18n/README.md) | Source-first messages, catalogs, locale fallback and interpolation |
+| [jfx-json](jfx-json/README.md) | Reflection based JSON serialization for `Property` models |
+| [jfx-controls](jfx-controls/README.md) | Link, image, table view and virtual list view |
+| [jfx-forms](jfx-forms/README.md) | Forms, inputs, validation, combo boxes, array forms and image cropper |
+| [jfx-editor](jfx-editor/README.md) | Lexical based rich text editor and editor plugins |
+
+---
+
 ## Installation
 
 ```scala
 libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.0.2"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-router" % "2.0.2"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-viewport" % "2.0.2"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-i18n" % "2.0.2"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-json" % "2.0.2"
 libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-controls" % "2.0.2"
 libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-forms" % "2.0.2"
 libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-editor" % "2.0.2" // optional, includes Lexical
