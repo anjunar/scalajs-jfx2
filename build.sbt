@@ -1,7 +1,7 @@
 import org.scalajs.linker.interface.{ESVersion, ModuleKind}
 import org.scalajs.sbtplugin.ScalaJSPlugin
 
-ThisBuild / version := "2.0.2"
+ThisBuild / version := "2.1.0"
 ThisBuild / organization := "com.anjunar"
 ThisBuild / organizationName := "Anjunar"
 ThisBuild / organizationHomepage := Some(url("https://github.com/anjunar"))
@@ -59,9 +59,50 @@ lazy val jfxCore = Project(id = "scalajs-jfx2-core", base = file("jfx-core"))
   .settings(commonLibrarySettings)
   .settings(commonJsSettings)
 
-lazy val jfxControls = Project(id = "scalajs-jfx2-controls", base = file("jfx-controls"))
+lazy val jfxRouter = Project(id = "scalajs-jfx2-router", base = file("jfx-router"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(jfxCore)
+  .settings(
+    name := "scalajs-jfx2-router",
+    moduleName := "scalajs-jfx2-router"
+  )
+  .settings(commonLibrarySettings)
+  .settings(commonJsSettings)
+
+lazy val jfxViewport = Project(id = "scalajs-jfx2-viewport", base = file("jfx-viewport"))
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(jfxCore)
+  .settings(
+    name := "scalajs-jfx2-viewport",
+    moduleName := "scalajs-jfx2-viewport"
+  )
+  .settings(commonLibrarySettings)
+  .settings(commonJsSettings)
+
+lazy val jfxI18n = Project(id = "scalajs-jfx2-i18n", base = file("jfx-i18n"))
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(jfxCore)
+  .settings(
+    name := "scalajs-jfx2-i18n",
+    moduleName := "scalajs-jfx2-i18n"
+  )
+  .settings(commonLibrarySettings)
+  .settings(commonJsSettings)
+
+lazy val jfxJson = Project(id = "scalajs-jfx2-json", base = file("jfx-json"))
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(jfxCore)
+  .settings(
+    name := "scalajs-jfx2-json",
+    moduleName := "scalajs-jfx2-json",
+    libraryDependencies += "com.anjunar" %%% "scala-reflect" % "1.0.0"
+  )
+  .settings(commonLibrarySettings)
+  .settings(commonJsSettings)
+
+lazy val jfxControls = Project(id = "scalajs-jfx2-controls", base = file("jfx-controls"))
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(jfxCore, jfxRouter, jfxViewport % "test->compile")
   .settings(
     name := "scalajs-jfx2-controls",
     moduleName := "scalajs-jfx2-controls"
@@ -71,7 +112,7 @@ lazy val jfxControls = Project(id = "scalajs-jfx2-controls", base = file("jfx-co
 
 lazy val jfxForms = Project(id = "scalajs-jfx2-forms", base = file("jfx-forms"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(jfxCore, jfxControls)
+  .dependsOn(jfxCore, jfxControls, jfxViewport)
   .settings(
     name := "scalajs-jfx2-forms",
     moduleName := "scalajs-jfx2-forms"
@@ -92,7 +133,7 @@ lazy val jfxEditor = Project(id = "scalajs-jfx2-editor", base = file("jfx-editor
 
 lazy val app = Project(id = "scalajs-jfx2-demo", base = file("application"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(jfxCore, jfxControls, jfxForms, jfxEditor)
+  .dependsOn(jfxCore, jfxRouter, jfxViewport, jfxI18n, jfxJson, jfxControls, jfxForms, jfxEditor)
   .settings(
     scalaJSUseMainModuleInitializer := false,
     publish / skip := true
@@ -100,7 +141,7 @@ lazy val app = Project(id = "scalajs-jfx2-demo", base = file("application"))
   .settings(commonJsSettings)
 
 lazy val root = Project(id = "scalajs-jfx2-root", base = file("."))
-  .aggregate(jfxCore, jfxControls, jfxForms, jfxEditor, app)
+  .aggregate(jfxCore, jfxRouter, jfxViewport, jfxI18n, jfxJson, jfxControls, jfxForms, jfxEditor, app)
   .settings(
     publish / skip := true
   )
