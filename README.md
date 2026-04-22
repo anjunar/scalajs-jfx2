@@ -261,7 +261,7 @@ Technical fingerprints exist for lookup and stale handling, but they do not repl
 In a Scala.js build, add the library as a dependency:
 
 ```scala
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2" % "2.0.1"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2" % "2.0.2"
 ```
 
 Use the companion CSS package in the browser build:
