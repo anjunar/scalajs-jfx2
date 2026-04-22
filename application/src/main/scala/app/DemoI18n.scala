@@ -85,7 +85,7 @@ object DemoI18n {
       de(i18n"Live Documentation", "Live Documentation"),
       de(i18n"Light", "Light"),
       de(i18n"Dark", "Dark"),
-      de(i18n"v2.0.2", "v2.0.2"),
+      de(i18n"v2.1.0", "v2.1.0"),
       de(i18n"© $year Anjunar. Pure Scala.js Architecture.", "© {year} Anjunar. Pure Scala.js Architektur."),
 
       de(i18n"JFX2 Showcase", "JFX2 Showcase"),

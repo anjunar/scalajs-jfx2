@@ -5,10 +5,10 @@ Forms contains model-bound controls, validation and higher level form widgets.
 ## Install
 
 ```scala
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.0.2"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-controls" % "2.0.2"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-viewport" % "2.0.2"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-forms" % "2.0.2"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.1.0"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-controls" % "2.1.0"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-viewport" % "2.1.0"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-forms" % "2.1.0"
 ```
 
 ## Form

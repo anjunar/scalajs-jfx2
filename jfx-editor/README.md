@@ -5,10 +5,10 @@ Editor wraps Lexical as a form control and provides plugin hooks for common rich
 ## Install
 
 ```scala
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.0.2"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-controls" % "2.0.2"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-forms" % "2.0.2"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-editor" % "2.0.2"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.1.0"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-controls" % "2.1.0"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-forms" % "2.1.0"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-editor" % "2.1.0"
 ```
 
 ## Editor

@@ -5,8 +5,8 @@ Router provides route definitions, async route loading, current route context an
 ## Install
 
 ```scala
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.0.2"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-router" % "2.0.2"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.1.0"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-router" % "2.1.0"
 ```
 
 ## Router
