@@ -16,6 +16,12 @@ object OverviewPage {
         style { gap = "34px" }
 
         sectionIntro(
+          i18n"Origin story",
+          i18n"After 17 years of looking for clarity, the project started to feel less like a thesis and more like relief.",
+          i18n"JFX2 is the answer I wanted after living with frameworks that promised simplicity but quietly handed over control. It chooses explicit lifecycles, honest reactivity, and a DSL that stays readable when the codebase grows."
+        )
+
+        sectionIntro(
           i18n"Vision",
           i18n"A documentation site that feels like a real workbench.",
           i18n"The showcase should not just prove that components render. It should show how JFX2 is meant to feel: declarative, server-stable, reactive in the browser, and readable enough that you can still nod to it six months later."
