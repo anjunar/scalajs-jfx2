@@ -16,6 +16,10 @@ object Browser {
       }
     }
 
+    root.physicalHostNodes.foreach { node =>
+      node.domNode.foreach(element.appendChild)
+    }
+
     ClientSideComponent.activateTree(root)
     root
   }

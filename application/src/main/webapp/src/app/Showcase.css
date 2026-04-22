@@ -906,6 +906,66 @@
     background: var(--aj-accent-muted);
 }
 
+.i18n-demo {
+    gap: 16px;
+}
+
+.i18n-demo__toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.i18n-demo__locale,
+.i18n-demo__label,
+.i18n-demo__source {
+    font-family: "Consolas", "SFMono-Regular", monospace;
+}
+
+.i18n-demo__locale {
+    padding: 10px 12px;
+    border: 1px solid var(--aj-line-soft);
+    border-radius: 8px;
+    color: var(--aj-ink);
+    background: var(--aj-surface-muted);
+}
+
+.i18n-demo__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.i18n-demo__sample {
+    gap: 8px;
+    min-width: 0;
+    padding: 14px 0 0;
+    border-top: 1px solid var(--aj-line-soft);
+}
+
+.i18n-demo__label {
+    font-size: 0.72rem;
+    font-weight: 760;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    color: var(--aj-ink-muted);
+}
+
+.i18n-demo__source {
+    overflow-wrap: anywhere;
+    color: var(--aj-ink-soft);
+    line-height: 1.5;
+}
+
+.i18n-demo__resolved {
+    min-height: 44px;
+    font-size: 1.04rem;
+    font-weight: 720;
+    line-height: 1.35;
+    color: var(--aj-ink);
+}
+
 .component-doc__mini-form .input-container,
 .component-doc__mini-form .jfx-image-cropper {
     min-width: 0;
@@ -979,6 +1039,7 @@
     .docs-index__grid,
     .component-doc__patterns,
     .component-doc__preview-grid,
+    .i18n-demo__grid,
     .table-page__count-grid {
         grid-template-columns: minmax(0, 1fr);
     }

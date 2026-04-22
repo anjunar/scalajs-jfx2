@@ -9,6 +9,7 @@ import jfx.core.state.{ListProperty, Property}
 import jfx.dsl.*
 import jfx.form.Input.*
 import jfx.hydration.Hydration
+import jfx.i18n.*
 import jfx.layout.Div.div
 import jfx.layout.Drawer.*
 import jfx.layout.Drawer
@@ -32,7 +33,6 @@ import scala.scalajs.js.annotation.JSExportTopLevel
 
 import app.pages.*
 import app.domain.DomainRegistry
-import app.I18n.Key
 import app.Theme.Mode
 import jfx.core.state.RemoteListProperty
 
@@ -112,37 +112,37 @@ object Main {
             
             div {
               classes = "app-sidebar__header"
-              div { classes = "app-sidebar__logo"; text = I18n.text(Key.SidebarLogo) }
+              div { classes = "app-sidebar__logo"; text = DemoI18n.text(i18n"JFX2 API") }
             }
 
             div {
               classes = "app-sidebar__nav"
-              sidebarSection(Key.SectionWelcome)
-              navLink("/", Key.NavOverview, Key.NavOverviewSub)
+              sidebarSection(i18n"Welcome")
+              navLink("/", i18n"Discover", i18n"The JFX2 vision")
               
-              sidebarSection(Key.SectionInteraction)
-              navLink("/button", Key.NavButton, Key.NavButtonSub)
-              navLink("/image", Key.NavImage, Key.NavImageSub)
-              navLink("/image-cropper", Key.NavImageCropper, Key.NavImageCropperSub)
+              sidebarSection(i18n"Interaction")
+              navLink("/button", i18n"Actions", i18n"The pulse of the app")
+              navLink("/image", i18n"Images", i18n"Visual identity")
+              navLink("/image-cropper", i18n"ImageCropper", i18n"Upload & crop")
               
-              sidebarSection(Key.SectionConversation)
-              navLink("/input", Key.NavInput, Key.NavInputSub)
-              navLink("/combo-box", Key.NavComboBox, Key.NavComboBoxSub)
-              navLink("/editor", Key.NavEditor, Key.NavEditorSub)
+              sidebarSection(i18n"Conversation")
+              navLink("/input", i18n"Forms", i18n"Natural dialogue")
+              navLink("/combo-box", i18n"ComboBox", i18n"Elegant selection")
+              navLink("/editor", i18n"Editor", i18n"Lexical playground")
               
-              sidebarSection(Key.SectionArchitecture)
-              navLink("/layout", Key.NavLayout, Key.NavLayoutSub)
-              navLink("/window", Key.NavWindow, Key.NavWindowSub)
+              sidebarSection(i18n"Architecture")
+              navLink("/layout", i18n"Layout", i18n"Room for design")
+              navLink("/window", i18n"Windows", i18n"Room for focus")
 
-              sidebarSection(Key.SectionKnowledge)
-              navLink("/table-view", Key.NavTableView, Key.NavTableViewSub)
-              navLink("/virtual-list", Key.NavVirtualList, Key.NavVirtualListSub)
-              navLink("/domain", Key.NavDomain, Key.NavDomainSub)
+              sidebarSection(i18n"Knowledge")
+              navLink("/table-view", i18n"Data", i18n"Breathing and flowing")
+              navLink("/virtual-list", i18n"VirtualList", i18n"Endless expanses")
+              navLink("/domain", i18n"Domain", i18n"Mapping & reflection")
             }
             
             div {
               classes = "app-sidebar__footer"
-              text = I18n.text(Key.Footer)
+              text = DemoI18n.text(i18n"Built with JFX2")
             }
           }
         }
@@ -159,35 +159,35 @@ object Main {
               }
               div {
                 classes = "app-toolbar__title"
-                text = I18n.text(Key.AppTitle)
+                text = DemoI18n.text(i18n"Live Documentation")
               }
               div { classes = "spacer"; style { flex = "1" } }
               hbox {
                 classes = "app-toolbar__chooser app-toolbar__language"
                 button() {
                   classes = Seq("app-toolbar__choice")
-                  text = I18n.text(Key.Language)
-                  onClick { _ => I18n.toggle() }
+                  text = DemoI18n.localeLabel
+                  onClick { _ => DemoI18n.toggle() }
                 }
               }
               hbox {
                 classes = "app-toolbar__chooser app-toolbar__theme"
                 button() {
                   classes = Seq("app-toolbar__choice")
-                  text = I18n.text(Key.ThemeLight)
+                  text = DemoI18n.text(i18n"Light")
                   classIf("is-active", Theme.modeProperty.map(_ == Mode.Light))
                   onClick { _ => Theme.set(Mode.Light) }
                 }
                 button() {
                   classes = Seq("app-toolbar__choice")
-                  text = I18n.text(Key.ThemeDark)
+                  text = DemoI18n.text(i18n"Dark")
                   classIf("is-active", Theme.modeProperty.map(_ == Mode.Dark))
                   onClick { _ => Theme.set(Mode.Dark) }
                 }
               }
               div {
                 classes = "app-toolbar__version"
-                text = I18n.text(Key.Version)
+                text = DemoI18n.text(i18n"v2.0.0-alpha")
               }
             }
 
@@ -203,7 +203,8 @@ object Main {
               classes = "app-footer"
               div {
                 classes = "app-footer__text"
-                text = I18n.text(Key.Copyright).map(copy => s"\u00a9 ${new js.Date().getFullYear()} Anjunar. $copy")
+                val year = new js.Date().getFullYear().toInt
+                text = DemoI18n.text(i18n"© $year Anjunar. Pure Scala.js Architecture.")
               }
             }
           }
@@ -219,23 +220,23 @@ object Main {
       TableViewPage.render(books)
     }
 
-  private def sidebarSection(title: Key) = {
+  private def sidebarSection(title: RuntimeMessage) = {
     div {
       classes = "app-sidebar__section-title"
-      text = I18n.text(title)
+      text = DemoI18n.text(title)
     }
   }
 
-  private def navLink(path: String, label: Key, sub: Key)(using d: Drawer) = {
+  private def navLink(path: String, label: RuntimeMessage, sub: RuntimeMessage)(using d: Drawer) = {
     link(path) {
       classes = "app-nav-link"
       div {
         classes = "app-nav-link__label"
-        text = I18n.text(label)
+        text = DemoI18n.text(label)
       }
       div {
         classes = "app-nav-link__sub"
-        text = I18n.text(sub)
+        text = DemoI18n.text(sub)
       }
       addDisposable(host.addEventListener("click", _ => {
         if (dom.window.innerWidth <= 720) {
