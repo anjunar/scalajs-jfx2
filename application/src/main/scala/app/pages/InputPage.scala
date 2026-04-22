@@ -5,6 +5,7 @@ import jfx.action.Button.button
 import jfx.core.component.Component.*
 import jfx.core.state.{ListProperty, Property}
 import jfx.i18n.*
+import jfx.form.ArrayForm.arrayForm
 import jfx.form.Input.{input, stringValueProperty, errorsProperty, validators}
 import jfx.form.InputContainer.inputContainer
 import jfx.form.validators.{EmailValidator, NotBlankValidator}
@@ -127,6 +128,85 @@ inputContainer("Enter name...") {
             }
           }
         }
+
+        componentShowcase(
+          i18n"Array form",
+          i18n"Repeated groups stay inside one lifecycle and keep their own nested controls."
+        ) {
+          import app.domain.Email
+          import jfx.form.ArrayForm.*
+          import jfx.form.Input.input
+          import jfx.form.InputContainer.inputContainer
+          import jfx.form.SubForm.subForm
+
+          val emails = new ListProperty[Email]()
+
+          def createEmail(value: String): Email = {
+            val email = new Email()
+            email.value.set(value)
+            email
+          }
+
+          emails.setAll(
+            Seq(
+              createEmail("hello@example.com"),
+              createEmail("team@example.com")
+            )
+          )
+
+          vbox {
+            style { gap = "18px" }
+
+            div {
+              classes = "showcase-result"
+              val countText = emails.asProperty.map(list => s"${list.length} email entries")
+              text = countText
+            }
+
+            arrayForm[Email]("emails") {
+              controlRenderer = index =>
+                subForm[Email](s"email-$index") {
+                  vbox {
+                    style {
+                      gap = "12px"
+                      padding = "14px"
+                      border = "1px solid var(--aj-surface-muted)"
+                      borderRadius = "14px"
+                      background = "var(--aj-surface)"
+                    }
+
+                    div {
+                      style { fontWeight = "800" }
+                      text = s"Email ${index + 1}"
+                    }
+
+                    inputContainer("Address") {
+                      input("value") {}
+                    }
+                  }
+                }
+            }
+
+            hbox {
+              style { gap = "10px"; flexWrap = "wrap" }
+
+              button(DemoI18n.text(i18n"Add email")) {
+                onClick { _ =>
+                  emails += createEmail(s"new${emails.length + 1}@example.com")
+                }
+              }
+
+              button(DemoI18n.text(i18n"Remove last")) {
+                onClick { _ =>
+                  if (emails.nonEmpty) {
+                    emails.remove(emails.length - 1)
+                  }
+                }
+              }
+            }
+          }
+        }
+
         apiSection(
           i18n"Domain binding",
           i18n"Passing an object to form lets inputs find the matching properties automatically."

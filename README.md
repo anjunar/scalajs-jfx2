@@ -1,162 +1,296 @@
 # scalajs-jfx2
 
-`scalajs-jfx2` is a Scala.js UI library for building application interfaces whose structure, state, metadata, and visible text stay readable in Scala.
+> A reactive UI library for Scala.js - built from 17 years of searching for clarity.
 
-**Live documentation and examples:** https://anjunar.github.io/scalajs-jfx2
+---
 
-It is not a React wrapper and it is not a thin DOM facade. JFX2 is a composed answer to frontend development in Scala.js: declarative templates, reactive state, SSR, hydration, typed controls, runtime domain metadata, JSON mapping, and source-first I18n are designed to work as one system.
+## Why this exists
 
-## What It Is
+I have used Angular. React. Svelte. SolidJS. Dozens of others.
 
-JFX2 gives Scala.js applications a typed UI layer built around:
+Each one promised simplicity. Each one delivered a different kind of complexity: hidden lifecycle management, implicit reactivity storms, state that moves in ways you cannot predict, and a growing feeling that the framework - not you - is in charge.
 
-- declarative component composition
-- reactive state primitives
-- server-side rendering and browser hydration
-- typed forms and controls
-- route-aware application rendering
-- virtualized data controls
-- runtime class descriptors through a Scala.js classloader model
-- JSON mapping for reflected domain objects
-- source-first internationalization
-- a companion CSS package for the provided components
+After 17 years I stopped looking for the right framework and built the thing I actually wanted.
 
-The library lives under `library/src/main/scala/jfx`. Its public surface is intentionally direct: components, properties, controls, layouts, routing, SSR, hydration, reflection, JSON, and I18n are visible Scala APIs.
+Not a framework that does more. A framework that does *less, but honestly*.
 
-## Why This Library Exists
+---
 
-Most UI libraries stop at the component boundary. They help you produce DOM, then leave domain metadata, form binding, validation, serialization, SSR stability, and translation discipline as separate problems.
+## What JFX2 is
 
-JFX2 takes a stricter path. A component template should describe a stable DOM shape. State should be explicit. Runtime metadata should be available where forms and JSON need it. Server HTML and the first hydrated browser tree should agree. Translatable text should remain readable in source code.
+JFX2 is a reactive UI library for Scala.js with a hard focus on three things:
 
-The result is not a generic frontend wrapper. It is a UI architecture for Scala.js applications where the domain model, component tree, rendering backend, and text system can cooperate without stringly glue.
+**Explicit lifecycles.** Every component lives in a controlled scope. You know exactly when it starts, what it owns, and when it is gone. No hidden subscriptions. No memory leaks you discover six months later.
 
-## What Makes It Different
+**Predictable state.** `Property[T]` is the core reactive primitive. It has no magic. It does not re-render your whole tree. It updates exactly what you tell it to update.
 
-### Runtime Classloader For Scala.js Domains
+**A declarative DSL that stays readable.** UI structure is declared in Scala, close to the metal, without virtual DOM overhead and without the ceremony of a JSX transpiler.
 
-JFX2 includes a metadata layer under `jfx.core.meta`. Domain classes can be registered with factories and reflected descriptors, then loaded later by type name.
-
-That is unusual in a frontend UI library. It means browser-side code can inspect classes, properties, annotations, accessors, subtypes, and factories as part of normal application behavior.
+Here is the kind of code JFX2 is trying to protect:
 
 ```scala
-import jfx.core.meta.PackageClassLoader
-import jfx.core.state.{ListProperty, Property}
-import jfx.form.validators.*
-import scala.annotation.meta.field
+import jfx.action.Button.button
+import jfx.core.component.Component.*
+import jfx.core.state.Property
+import jfx.layout.Div.div
+import jfx.layout.VBox.vbox
 
-final class Address(
-  @(NotBlank @field)()
-  var city: Property[String] = Property("")
-)
+val count = Property(0)
 
-final class User(
-  @(Size @field)(min = 3)
-  var name: Property[String] = Property(""),
-  var address: Property[Address] = Property(new Address()),
-  var emails: ListProperty[String] = new ListProperty[String]()
-)
+vbox {
+  classes = Seq("page")
 
-val domains = PackageClassLoader("my.app.domain")
-val userDescriptor = domains.register(() => new User(), classOf[User])
-domains.register(() => new Address(), classOf[Address])
+  div {
+    text = count.map(value => s"Count: $value")
+  }
 
-val reflectedNames =
-  userDescriptor.resolved.properties.map(_.name).toVector
-
-val emptyUser =
-  domains.createInstance[User](classOf[User].getName)
+  button("Increment") {
+    onClick { _ => count.set(count.get + 1) }
+  }
+}
 ```
 
-The same metadata is used by form binding, validators, and JSON mapping. The model is not reduced to plain JavaScript objects just because it runs in the browser.
+You can read this six months later and still nod at it.
 
-### Forms Bind To Models, Not To String Maps
+---
 
-Controls register into a form context. A control named `email` binds to the reflected `email` property on the model. Validator annotations on that property become validators on the control.
+## What it feels like
+
+JFX2 is not trying to hide the shape of the UI behind abstractions that need a manual.
+
+It is trying to keep the shape visible.
 
 ```scala
 import jfx.core.component.Component.*
-import jfx.form.Form.form
-import jfx.form.Input.input
-import jfx.form.InputContainer.inputContainer
-import jfx.form.SubForm.subForm
-import jfx.json.JsonMapper
+import jfx.action.Button.button
+import jfx.layout.Div.div
+import jfx.layout.HBox.hbox
+import jfx.layout.VBox.vbox
 
-val user = new User()
+vbox {
+  classes = Seq("settings-panel")
 
-form(user) {
-  inputContainer("Name") {
-    input("name") {}
+  div {
+    classes = Seq("settings-panel__title")
+    text = "Preferences"
   }
 
-  subForm("address") {
-    inputContainer("City") {
-      input("city") {}
+  hbox {
+    classes = Seq("settings-panel__actions")
+    button("Save") {}
+    button("Cancel") {}
+  }
+}
+```
+
+The value is not just that this compiles. The value is that it still makes sense later.
+
+---
+
+## How it compares
+
+| | JFX2 | Laminar | Raw Scala.js DOM |
+|---|---|---|---|
+| Lifecycle model | Explicit scopes | Signal-based | Manual |
+| State | `Property[T]`, predictable | `Signal`/`Var`, reactive graph | Manual |
+| DSL | Declarative, JavaFX-inspired | Declarative, FRP-style | Imperative |
+| SSR + Hydration | Yes | Limited | No |
+| Forms + Validation | Built-in | Third-party | Manual |
+| Virtual lists | Built-in | Third-party | Manual |
+
+JFX2 is not better than Laminar. It is *different*. Laminar is excellent for functional-reactive programming. JFX2 is for developers who want **structure over abstraction** - explicit over implicit, scoped over ambient, readable over clever.
+
+---
+
+## Core concepts
+
+### Scoped lifecycle
+
+Every UI subtree lives in a component scope. When the scope ends, everything inside it - subscriptions, services, child components - is disposed deterministically.
+
+That makes it safe to use inside virtualized lists, modals, and dynamically mounted routes without worrying about what you left behind.
+
+```scala
+import jfx.core.state.Property
+
+val name = Property("Alice")
+
+val subscription = name.observe { current =>
+  println(s"Name is now: $current")
+}
+
+name.set("Bob")
+subscription.dispose()
+```
+
+No hidden dependency tracking. No surprise re-renders. You observe what you choose to observe.
+
+### Buttons, links, and simple interaction
+
+The smallest useful screen should still feel calm.
+
+```scala
+import jfx.action.Button.button
+import jfx.control.Link.link
+import jfx.core.component.Component.*
+import jfx.layout.HBox.hbox
+
+hbox {
+  button("Continue") {
+    buttonType = "submit"
+  }
+
+  link("/help") {
+    text = "Need help?"
+  }
+}
+```
+
+The event model stays direct. The code reads like intent, not ceremony.
+
+### Reactive state
+
+`Property[T]` is intentionally small.
+
+```scala
+val title = Property("Welcome")
+
+val dispose = title.observe { current =>
+  println(current)
+}
+
+title.set("Welcome back")
+dispose.dispose()
+```
+
+There is no hidden graph to understand. If you observe it, you own it.
+
+### Scoped dependency injection
+
+Services are registered and resolved within the current DSL context. No global singletons. No implicit parameters threading through your entire codebase.
+
+```scala
+import jfx.action.Button.button
+import jfx.dsl.DslRuntime
+import jfx.layout.VBox.vbox
+
+final class CounterService {
+  def increment(): Unit = ()
+}
+
+DslRuntime.provide[CounterService](new CounterService) {
+  val root = vbox {
+    button("Click") {
+      onClick { _ => DslRuntime.service[CounterService].increment() }
     }
   }
 }
-
-val mapper = new JsonMapper()
-val json = mapper.serialize(user)
-val copy = mapper.deserialize[User](json)
 ```
 
-`Property[String]` becomes a JSON string. `ListProperty[T]` becomes a JSON array. During deserialization, JFX2 creates instances through the reflected descriptors and writes back into properties.
+### Forms with validation
 
-### Virtualization Can Still Be Crawlable
-
-Virtual lists and tables are built for large data, remote loading, and browser scrolling. They also include a crawlable SSR mode: on the server, they can render a stable slice from route query parameters and expose a next-page link.
+Forms bind directly to model properties by name. Validation annotations live on the model, so the form does not need to be hand-wired field by field.
 
 ```scala
-import jfx.control.VirtualListView.virtualList
-import jfx.core.component.Component.*
-import jfx.core.state.ListProperty
-import jfx.layout.Div.div
+import jfx.core.state.Property
+import jfx.form.Form.form
+import jfx.form.Input.input
+import jfx.form.InputContainer.inputContainer
+import jfx.form.validators.*
 
-val rows = new ListProperty[String]()
-rows.setAll((1 to 10000).map(i => s"Row $i"))
+final class AccountModel {
+  @NotBlank("Required")
+  @Size(min = 2, max = 50, message = "Between 2 and 50 characters")
+  val firstName: Property[String] = Property("")
 
-virtualList(rows, estimateHeightPx = 40, crawlable = true) { (row, index) =>
-  div {
-    classes = "row"
-    text = if (row == null) s"Loading row $index" else row
+  @EmailConstraint("Enter a valid email")
+  val email: Property[String] = Property("")
+}
+
+val account = new AccountModel()
+
+form(account) {
+  inputContainer("First name") {
+    input("firstName") {
+      placeholder = "Ada"
+    }
+  }
+
+  inputContainer("Email") {
+    input("email") {
+      placeholder = "ada@example.com"
+    }
   }
 }
 ```
 
-This is not only a scrolling trick. The rendering backend matters: browser rendering, SSR rendering, hydration, route query state, and virtualized content all participate in the same component model.
+The form connects automatically. No manual wiring. No string-map choreography.
 
-### Source-First I18n
+### JSON stays close to the model
 
-JFX2 does not make artificial message keys the primary identity of text. The English source sentence is the visible identity:
+The same property-oriented model can be serialized and restored without hand-written mapping code.
 
 ```scala
-import jfx.i18n.*
+import jfx.json.JsonMapper
 
-val locale = I18nLocale("de-AT")
-val user = "Mira"
-val group = "Architecture"
-
-val invite =
-  i18n"User $user invited you to $group"
-
-val catalog =
-  MessageCatalog(
-    I18n.entry(invite.key).translations(
-      I18nLocale("de") -> "Benutzer {user} hat dich zu {group} eingeladen",
-      I18nLocale("fr") -> "L'utilisateur {user} vous a invite dans {group}"
-    )
-  )
-
-val text =
-  new I18nResolver(catalog).resolve(invite, locale)
+val mapper = new JsonMapper()
+val json = mapper.serialize(account)
+val copy = mapper.deserialize[AccountModel](json)
 ```
 
-The interpolator creates a structured message with placeholder names, source position, context, and fingerprint. Fallback chains such as `de-AT -> de -> en` are part of runtime resolution. The English sentence stays in the Scala source.
+That matters because the data model and the UI model are not treated as separate kingdoms.
 
-### SSR And Hydration Are First-Class Constraints
+### Combo boxes that stay honest
 
-JFX2 has separate rendering backends for server rendering, browser rendering, and hydration. Components are expected to keep their first server and first client trees structurally stable.
+Complex controls are still kept inside the same DSL.
+
+```scala
+import jfx.core.component.Component.*
+import jfx.form.ComboBox.comboBox
+
+comboBox[String]("country") {
+  items = Seq("Austria", "Germany", "Switzerland")
+  placeholder = "Choose a country"
+  converter = identity
+  multiSelect = false
+}
+```
+
+That matters because the control is not a separate universe. It is still just a component with a lifecycle, state, and structure.
+
+### Routing and navigation
+
+Routes are part of the component model too.
+
+```scala
+import jfx.core.component.Component.*
+import jfx.layout.Div.div
+import jfx.router.Route.*
+import jfx.router.Router.router
+
+router(Seq(
+  asyncRoute("/") {
+    page {
+      div {
+        text = "Home"
+      }
+    }
+  },
+  asyncRoute("/users/:id") { ctx =>
+    page {
+      div {
+        text = s"User ${ctx.pathParams("id")}"
+      }
+    }
+  }
+)) {}
+```
+
+The important part is not syntax. It is that navigation, render state, and URL state remain legible.
+
+### SSR + Hydration
+
+Server HTML and client hydration share the same component structure. No duplicated templates. No DOM drift.
 
 ```scala
 import jfx.hydration.Hydration
@@ -171,181 +305,123 @@ Hydration.hydrate(dom.document.getElementById("app")) {
 }
 ```
 
-The DSL is shaped by this: conditional rendering, virtual containers, async routes, and client-only behavior must preserve predictable DOM paths.
+### Virtual lists
 
-## Core Ideas
-
-### The Template Should Tell The Truth
-
-A component's `compose()` method is treated as a template. It should declare structure, child components, classes, text, properties, and event bindings. Manual DOM mutation and layout measurement do not belong there.
+Large data sets should feel calm too.
 
 ```scala
-import jfx.action.Button.button
+import jfx.control.VirtualListView.virtualList
 import jfx.core.component.Component.*
-import jfx.core.state.{Property, ReadOnlyProperty}
-import jfx.i18n.*
+import jfx.core.state.ListProperty
 import jfx.layout.Div.div
-import jfx.layout.VBox.vbox
 
-val locale = Property(I18nLocale.En)
-val resolver = new I18nResolver(MessageCatalog.empty)
+val rows = ListProperty[String]()
+rows.setAll((1 to 10000).map(i => s"Row $i"))
 
-def t(message: RuntimeMessage): ReadOnlyProperty[String] =
-  resolver.resolve(message, locale)
-
-def profilePanel(name: Property[String]) =
-  vbox {
-    classes = "profile-panel"
-
-    div {
-      classes = "profile-panel__title"
-      text = t(i18n"User profile")
-    }
-
-    div {
-      classes = "profile-panel__name"
-      text = name.map(current => s"Name: $current")
-    }
-
-    button(t(i18n"Reset")) {
-      onClick { _ => name.set("Ada") }
-    }
+virtualList(rows, estimateHeightPx = 40, crawlable = true) { (row, index) =>
+  div {
+    classes = Seq("row")
+    text = if (row == null) s"Loading row $index" else row
   }
+}
 ```
 
-The important parts stay visible: structure, classes, reactive state, interaction, and source text identity.
+This is not only a scrolling trick. Browser rendering, SSR rendering, hydration, route query state, and virtualized content all participate in the same component model.
 
-### State Is Small And Explicit
+### Source-first i18n
 
-The core state model is intentionally compact:
+JFX2 does not make artificial message keys the primary identity of text. The English source sentence stays visible in Scala.
 
-- `Property[T]`
-- `ReadOnlyProperty[T]`
-- `ListProperty[T]`
-- `RemoteListProperty[T, Q]`
+```scala
+import jfx.i18n.*
 
-These types carry values into text nodes, classes, styles, forms, lists, tables, route-sensitive views, and locale-sensitive rendering.
+val user = "Mira"
+val group = "Architecture"
 
-### Metadata Is Part Of The UI Architecture
+val invite =
+  i18n"User $user invited you to $group"
 
-The classloader and reflection layer are not decorative. They let forms, validators, JSON mapping, and runtime tooling talk about real Scala classes rather than hand-maintained string schemas.
+val contextual =
+  i18nc("verb")"Open"
+```
 
-### Text Is Source, Not A Hidden Key
+The interpolator creates structured messages with placeholder names, source position, and fingerprinting for lookup and stale handling.
 
-Translation starts with complete English messages in Scala source:
+---
 
-- `i18n"Delete document"`
-- `i18n"User $user invited you to $group"`
-- `i18nc("verb")"Open"`
-- `i18nc("adjective")"Open"`
+## What it ships with
 
-Technical fingerprints exist for lookup and stale handling, but they do not replace the visible source sentence.
+- `Property[T]` and `ListProperty[T]` - reactive primitives
+- `RemoteListProperty[T, Q]` - async list loading and range queries
+- Component scopes via `DslRuntime.withComponentScope`
+- `DslRuntime.provide` / `DslRuntime.service` - scoped dependency lookup
+- Layout DSL - `vbox`, `hbox`, `div`, `viewport`, `window`, `drawer`
+- `Form` - model binding and validation with annotations
+- `Router` - async, nested, with path params and query strings
+- `VirtualListView` - efficient rendering of large datasets
+- `JsonMapper` - serialize/deserialize models with `Property` fields
+- i18n - message-centered, type-safe, multi-locale
 
-## Highlights
+---
 
-- Scala 3 DSL for readable component templates
-- runtime class descriptors and factories through `jfx.core.meta`
-- reflection-aware JSON mapping through `jfx.json.JsonMapper`
-- model-bound forms with annotation-derived validators
-- reactive properties for values, derived text, classes, lists, and UI state
-- SSR rendering via `jfx.ssr.Ssr`
-- browser hydration via `jfx.hydration.Hydration`
-- typed routing through `jfx.router`
-- data controls including table and virtual list components
-- crawlable SSR slices for virtualized content
-- source-first I18n with `i18n"..."`, `i18nc("context")"..."`, and named placeholders
-- companion CSS distributed through the npm package
-
-## Quickstart
-
-In a Scala.js build, add the library as a dependency:
+## Installation
 
 ```scala
 libraryDependencies += "com.anjunar" %%% "scalajs-jfx2" % "2.0.2"
 ```
 
-Use the companion CSS package in the browser build:
+Requires Scala 3.8.3, Scala.js, and ES module output targeting ES2021.
 
-```bash
-npm install @anjunar/scalajs-jfx2
-```
-
-Import the CSS from your JavaScript or TypeScript entry point:
-
-```js
-import "@anjunar/scalajs-jfx2/index.css"
-```
-
-For local development inside this repository, use the provided `sbtn` binary:
+For local development in this repository:
 
 ```powershell
 sbtn-x86_64-pc-win32.exe scalajs-jfx2/test
 ```
 
-## Design Principles
+If you want the companion CSS package in the browser build:
 
-- Keep `compose()` declarative.
-- Attach behavior through DSL events such as `onClick`, `onInput`, `onScroll`, and `onKeyDown`.
-- Bind styles and text through properties where the value is reactive.
-- Preserve stable DOM paths for SSR and hydration.
-- Register domain classes when runtime metadata is needed.
-- Translate complete messages, not fragments.
-- Keep English text in source code.
-- Model pluralization and variants structurally, never through string concatenation.
-- Treat number, date, time, and currency formatting as separate concerns from text translation.
+```bash
+npm install @anjunar/scalajs- jfx2
+```
 
-## What You Can Build With It
+---
 
-JFX2 is aimed at application interfaces, not brochure pages.
+## When to use it
 
-It is a fit for:
+Use JFX2 if you are building:
 
-- data-heavy internal tools
-- form-driven business applications
-- dashboards with live reactive state
-- routed Scala.js frontends
-- SSR-rendered application shells
-- metadata-driven forms and inspectors
-- JSON-backed domain editing tools
-- virtualized tables and lists with remote loading
-- interfaces where English source text must remain visible and translatable
+- complex data UIs - tables, dashboards, editors
+- applications where lifecycle leaks are a real cost
+- Scala backends where you want the same language on the frontend
+- anything where you want to understand every moving part
 
-## Examples And Docs
+Do not use it if:
 
-The repository includes executable examples and generated documentation alongside the library:
+- you want the smallest possible bundle for a simple page
+- you prefer a purely functional reactive model
+- you need a large ecosystem of third-party components today
 
-- `library/src/main/scala/jfx` contains the library source.
-- `application/src/main/scala/app` shows the components in use.
-- `docs` contains generated Scaladoc.
-- `npm/scalajs-jfx2` contains the CSS companion package source.
+---
 
-The best way to understand JFX2 is to read the library APIs and then follow how the same primitives appear in composed screens: class descriptors, forms, JSON, controls, virtual lists, routing, SSR, hydration, and I18n all meet there.
+## Status
 
-## Who It Is For
+- Published on Maven Central
+- Used in production (Technology Speaks)
+- Core patterns are stable
+- Active development - feedback is welcome
 
-JFX2 is for Scala developers who want frontend code to remain architectural.
+---
 
-It suits teams that care about typed APIs, runtime domain metadata, SSR discipline, stable component structure, readable source text, and UI code that can be reviewed without mentally reconstructing hidden DOM behavior.
+## A note on the design
 
-It is not for projects that want to treat Scala.js as a syntax layer over an existing JavaScript framework.
+This library is not an experiment. It is the result of a long and honest search for an architecture that I could trust - one where I know what is happening, where state lives, and what gets cleaned up.
 
-## Current Direction
+Every decision in JFX2 is a choice for explicitness over magic. That comes with tradeoffs. It asks more of you upfront. In return it gives you something most frameworks do not: a codebase that is still legible and maintainable when it grows.
 
-JFX2 is young, but its direction is clear:
+If that matters to you, you will feel at home here.
 
-- deepen the component DSL without weakening its declarative rules
-- keep SSR and hydration constraints central
-- make runtime metadata useful across forms, JSON, validation, and tooling
-- grow typed controls from real application needs
-- keep I18n source-first and message-centered
-- preserve a codebase that experienced developers can read end to end
-
-## Explore
-
-Start with `library/src/main/scala/jfx/core`, then move through `core/meta`, `form`, `json`, `control`, `router`, `ssr`, `hydration`, and `i18n`.
-
-The library's character is in the code: explicit state, visible structure, runtime metadata, and a DSL that treats UI as something worth designing carefully.
+---
 
 ## License
 
-MIT
+MIT - © 2026 Anjunar
