@@ -1,19 +1,19 @@
 import org.scalajs.linker.interface.{ESVersion, ModuleKind}
 import org.scalajs.sbtplugin.ScalaJSPlugin
 
-ThisBuild / version := "1.0.0"
+ThisBuild / version := "2.0.0"
 ThisBuild / organization := "com.anjunar"
 ThisBuild / organizationName := "Anjunar"
 ThisBuild / organizationHomepage := Some(url("https://github.com/anjunar"))
 ThisBuild / scalaVersion := "3.8.3"
-ThisBuild / homepage := Some(url("https://github.com/anjunar/scalajs-jfx"))
+ThisBuild / homepage := Some(url("https://github.com/anjunar/scalajs-jfx2"))
 ThisBuild / description := "Reactive UI framework for Scala.js with lifecycle control, typed forms, routing, tables, and a composable DSL."
 ThisBuild / licenses := Seq("MIT" -> url("https://opensource.org/licenses/MIT"))
 ThisBuild / scmInfo := Some(
   ScmInfo(
-    url("https://github.com/anjunar/scalajs-jfx"),
-    "scm:git:https://github.com/anjunar/scalajs-jfx.git",
-    Some("scm:git:git@github.com:anjunar/scalajs-jfx.git")
+    url("https://github.com/anjunar/scalajs-jfx2"),
+    "scm:git:https://github.com/anjunar/scalajs-jfx2.git",
+    Some("scm:git:git@github.com:anjunar/scalajs-jfx2.git")
   )
 )
 ThisBuild / developers := List(
