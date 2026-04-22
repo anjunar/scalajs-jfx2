@@ -259,19 +259,19 @@ Technical fingerprints exist for lookup and stale handling, but they do not repl
 In a Scala.js build, add the library as a dependency:
 
 ```scala
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2" % "1.0.0"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2" % "2.0.0"
 ```
 
 Use the companion CSS package in the browser build:
 
 ```bash
-npm install @anjunar/scalajs-jfx
+npm install @anjunar/scalajs-jfx2
 ```
 
 Import the CSS from your JavaScript or TypeScript entry point:
 
 ```js
-import "@anjunar/scalajs-jfx/index.css"
+import "@anjunar/scalajs-jfx2/index.css"
 ```
 
 For local development inside this repository, use the provided `sbtn` binary:
