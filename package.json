@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@anjunar/scalajs-lexical": "^1.0.8",
-    "@anjunar/scalajs-jfx": "file:./npm/scalajs-jfx2",
+    "@anjunar/scalajs-jfx2": "file:./npm/scalajs-jfx2",
     "@anjunar/ui": "^1.0.1"
   },
   "devDependencies": {
