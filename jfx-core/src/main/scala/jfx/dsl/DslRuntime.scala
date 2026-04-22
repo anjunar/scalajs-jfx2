@@ -1,6 +1,6 @@
 package jfx.dsl
 
-import jfx.core.component.Component
+import jfx.core.component.{ClientSideComponent, Component}
 import jfx.core.render.{BrowserRenderBackend, Cursor, HostElement, HydrationCursor, HydrationRenderBackend, RenderBackend}
 import jfx.di.{ServiceRegistry, HierarchicalRegistry}
 import scala.collection.mutable
@@ -30,6 +30,7 @@ object Scope {
 object DslRuntime {
   private val cursorStack = mutable.ArrayBuffer.empty[Cursor]
   private val contextStack = mutable.ArrayBuffer(ComponentContext.root)
+  private var clientSideActivationSuspensions = 0
 
   def currentCursor: Cursor = cursorStack.lastOption.getOrElse(
     throw IllegalStateException(
@@ -61,6 +62,11 @@ object DslRuntime {
   def withContext[A](context: ComponentContext)(block: => A): A = {
     contextStack += context
     try block finally contextStack.remove(contextStack.length - 1)
+  }
+
+  def withClientSideActivationSuspended[A](block: => A): A = {
+    clientSideActivationSuspensions += 1
+    try block finally clientSideActivationSuspensions -= 1
   }
 
   def attach[C <: Component](component: C): C = {
@@ -228,6 +234,17 @@ object DslRuntime {
       }
     }
     
+    activateClientSideIfNeeded(component)
     component
   }
+
+  private def activateClientSideIfNeeded(component: Component): Unit =
+    component match {
+      case clientSide: ClientSideComponent
+          if clientSideActivationSuspensions == 0 &&
+            !RenderBackend.current.isServer &&
+            !RenderBackend.current.isInstanceOf[HydrationRenderBackend] =>
+        clientSide.activateClientSide()
+      case _ =>
+    }
 }

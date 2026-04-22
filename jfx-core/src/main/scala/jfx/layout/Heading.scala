@@ -1,4 +1,4 @@
-package jfx.control
+package jfx.layout
 
 import jfx.core.component.Box
 import jfx.dsl.DslRuntime

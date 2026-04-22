@@ -1,7 +1,7 @@
 import org.scalajs.linker.interface.{ESVersion, ModuleKind}
 import org.scalajs.sbtplugin.ScalaJSPlugin
 
-ThisBuild / version := "2.0.2"
+ThisBuild / version := "2.1.0"
 ThisBuild / organization := "com.anjunar"
 ThisBuild / organizationName := "Anjunar"
 ThisBuild / organizationHomepage := Some(url("https://github.com/anjunar"))
@@ -42,23 +42,57 @@ lazy val commonJsSettings = Seq(
     )
 )
 
-lazy val jfx = Project(id = "scalajs-jfx2", base = file("library"))
+lazy val commonLibrarySettings = Seq(
+  Compile / doc / sources := Seq.empty,
+  Compile / packageDoc / mappings += (LocalRootProject / baseDirectory).value / "README.md" -> "README.md",
+  libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.8.1",
+  libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.19" % Test
+)
+
+lazy val jfxCore = Project(id = "scalajs-jfx2-core", base = file("jfx-core"))
   .enablePlugins(ScalaJSPlugin)
   .settings(
-    name := "scalajs-jfx2",
-    moduleName := "scalajs-jfx2",
-    Compile / doc / sources := Seq.empty,
-    Compile / packageDoc / mappings += (LocalRootProject / baseDirectory).value / "README.md" -> "README.md",
-    libraryDependencies += "com.anjunar" %%% "scala-reflect" % "1.0.0",
-    libraryDependencies += "com.anjunar" %%% "scalajs-lexical" % "1.0.6",
-    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.8.1",
-    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.19" % Test
+    name := "scalajs-jfx2-core",
+    moduleName := "scalajs-jfx2-core",
+    libraryDependencies += "com.anjunar" %%% "scala-reflect" % "1.0.0"
   )
+  .settings(commonLibrarySettings)
+  .settings(commonJsSettings)
+
+lazy val jfxControls = Project(id = "scalajs-jfx2-controls", base = file("jfx-controls"))
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(jfxCore)
+  .settings(
+    name := "scalajs-jfx2-controls",
+    moduleName := "scalajs-jfx2-controls"
+  )
+  .settings(commonLibrarySettings)
+  .settings(commonJsSettings)
+
+lazy val jfxForms = Project(id = "scalajs-jfx2-forms", base = file("jfx-forms"))
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(jfxCore, jfxControls)
+  .settings(
+    name := "scalajs-jfx2-forms",
+    moduleName := "scalajs-jfx2-forms"
+  )
+  .settings(commonLibrarySettings)
+  .settings(commonJsSettings)
+
+lazy val jfxEditor = Project(id = "scalajs-jfx2-editor", base = file("jfx-editor"))
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(jfxForms)
+  .settings(
+    name := "scalajs-jfx2-editor",
+    moduleName := "scalajs-jfx2-editor",
+    libraryDependencies += "com.anjunar" %%% "scalajs-lexical" % "1.0.6"
+  )
+  .settings(commonLibrarySettings)
   .settings(commonJsSettings)
 
 lazy val app = Project(id = "scalajs-jfx2-demo", base = file("application"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(jfx)
+  .dependsOn(jfxCore, jfxControls, jfxForms, jfxEditor)
   .settings(
     scalaJSUseMainModuleInitializer := false,
     publish / skip := true
@@ -66,7 +100,7 @@ lazy val app = Project(id = "scalajs-jfx2-demo", base = file("application"))
   .settings(commonJsSettings)
 
 lazy val root = Project(id = "scalajs-jfx2-root", base = file("."))
-  .aggregate(jfx, app)
+  .aggregate(jfxCore, jfxControls, jfxForms, jfxEditor, app)
   .settings(
     publish / skip := true
   )

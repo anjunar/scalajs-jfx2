@@ -367,7 +367,10 @@ The interpolator creates structured messages with placeholder names, source posi
 ## Installation
 
 ```scala
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2" % "2.0.2"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.0.2"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-controls" % "2.0.2"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-forms" % "2.0.2"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-editor" % "2.0.2" // optional, includes Lexical
 ```
 
 Requires Scala 3.8.3, Scala.js, and ES module output targeting ES2021.
@@ -375,13 +378,14 @@ Requires Scala 3.8.3, Scala.js, and ES module output targeting ES2021.
 For local development in this repository:
 
 ```powershell
-sbtn-x86_64-pc-win32.exe scalajs-jfx2/test
+sbtn-x86_64-pc-win32.exe scalajs-jfx2-core/test
+sbtn-x86_64-pc-win32.exe scalajs-jfx2-controls/test
 ```
 
 If you want the companion CSS package in the browser build:
 
 ```bash
-npm install @anjunar/scalajs- jfx2
+npm install @anjunar/scalajs-jfx2
 ```
 
 ---

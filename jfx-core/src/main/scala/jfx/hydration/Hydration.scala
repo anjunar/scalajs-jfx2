@@ -22,10 +22,12 @@ object Hydration {
     // We do this "silently" on a detached DOM node.
     val dryBackend = BrowserRenderBackend 
     
-    val root = RenderBackend.withBackend(dryBackend) {
-      val cursor = dryBackend.nextCursor(None)
-      DslRuntime.withCursor(cursor) {
-        factory
+    val root = DslRuntime.withClientSideActivationSuspended {
+      RenderBackend.withBackend(dryBackend) {
+        val cursor = dryBackend.nextCursor(None)
+        DslRuntime.withCursor(cursor) {
+          factory
+        }
       }
     }
 
