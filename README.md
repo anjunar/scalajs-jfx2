@@ -2,6 +2,8 @@
 
 `scalajs-jfx2` is a Scala.js UI library for building application interfaces whose structure, state, metadata, and visible text stay readable in Scala.
 
+**Live documentation and examples:** https://anjunar.github.io/scalajs-jfx2
+
 It is not a React wrapper and it is not a thin DOM facade. JFX2 is a composed answer to frontend development in Scala.js: declarative templates, reactive state, SSR, hydration, typed controls, runtime domain metadata, JSON mapping, and source-first I18n are designed to work as one system.
 
 ## What It Is
