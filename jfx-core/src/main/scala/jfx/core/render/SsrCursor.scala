@@ -25,8 +25,13 @@ class SsrCursor(
   }
 
   override def claimText(initial: String): HostNode = {
-    val t = new HostNode {
-      override def renderHtml(indent: Int): String = HtmlEscaper.text(initial)
+    val t = new TextHostNode {
+      private var current = initial
+
+      override def setText(value: String): Unit =
+        current = value
+
+      override def renderHtml(indent: Int): String = HtmlEscaper.text(current)
       def domNode = None
     }
     if (target.isEmpty && index.isEmpty) {

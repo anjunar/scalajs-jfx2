@@ -1,6 +1,6 @@
 package jfx.core.component
 
-import jfx.core.render.{Cursor, HostNode}
+import jfx.core.render.{Cursor, HostNode, TextHostNode}
 import jfx.core.state.ReadOnlyProperty
 import jfx.dsl.DslRuntime
 import org.scalajs.dom
@@ -29,8 +29,11 @@ class ReactiveTextComponent(val property: ReadOnlyProperty[String]) extends Comp
 
   private def bindReactiveText(): Unit =
     addDisposable(property.observe { value =>
-      if (_host != null && !jfx.core.render.RenderBackend.current.isServer) {
-        _host.domNode.foreach(_.textContent = value)
+      if (_host != null) {
+        _host match {
+          case textHost: TextHostNode => textHost.setText(value)
+          case _ => _host.domNode.foreach(_.textContent = value)
+        }
       }
     })
 }

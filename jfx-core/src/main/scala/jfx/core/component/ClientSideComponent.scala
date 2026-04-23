@@ -15,14 +15,18 @@ trait ClientSideComponent extends Component {
   final def activateClientSide(): Unit =
     if (!clientActivated && host.domNode.nonEmpty) {
       clientActivated = true
-      clearFallback()
-      mountClient()
+      activateClientSideContent()
     }
 
   protected final def renderClient(block: => Unit): Unit =
     DslRuntime.withComponentScope(this)(block)
 
-  private def clearFallback(): Unit =
+  protected def activateClientSideContent(): Unit = {
+    clearFallback()
+    mountClient()
+  }
+
+  protected final def clearFallback(): Unit =
     children.toSeq.foreach { child =>
       removeChild(child)
       child.dispose()

@@ -9,6 +9,10 @@ trait HostNode {
   def domNode: Option[dom.Node]
 }
 
+trait TextHostNode extends HostNode {
+  def setText(value: String): Unit
+}
+
 trait HostElement extends HostNode {
   def tagName: String
   def setAttribute(name: String, value: String): Unit

@@ -71,8 +71,11 @@ private class DomCreationCursor(parent: Option[dom.Element]) extends Cursor {
   
   override def claimText(initial: String): HostNode = {
     val t = dom.document.createTextNode(initial)
-    new HostNode {
-      override def renderHtml(indent: Int): String = initial
+    new TextHostNode {
+      override def setText(value: String): Unit =
+        t.textContent = value
+
+      override def renderHtml(indent: Int): String = t.textContent
       def domNode = Some(t)
     }
   }
@@ -95,8 +98,11 @@ private class DomInsertionCursor(parent: HostElement, index: Int) extends Cursor
   
   override def claimText(initial: String): HostNode = {
     val t = dom.document.createTextNode(initial)
-    val host = new HostNode {
-      override def renderHtml(indent: Int): String = initial
+    val host = new TextHostNode {
+      override def setText(value: String): Unit =
+        t.textContent = value
+
+      override def renderHtml(indent: Int): String = t.textContent
       def domNode = Some(t)
     }
     currentIndex += 1

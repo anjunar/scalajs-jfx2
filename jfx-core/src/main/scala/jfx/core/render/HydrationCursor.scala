@@ -66,7 +66,10 @@ class HydrationCursor(val root: dom.Node, startIndex: Int = 0) extends Cursor {
         val display = if (initial.length > 20) initial.substring(0, 20) + "..." else initial
 //        dom.console.log(s"Hydrated text('$display') at $ctx")
         index += 1
-        new HostNode {
+        new TextHostNode {
+          override def setText(value: String): Unit =
+            t.textContent = value
+
           override def renderHtml(indent: Int): String = t.textContent
           def domNode = Some(t)
         }
@@ -79,8 +82,11 @@ class HydrationCursor(val root: dom.Node, startIndex: Int = 0) extends Cursor {
         if (index < childNodes.length) root.insertBefore(t, childNodes.item(index))
         else root.appendChild(t)
         index += 1
-        new HostNode {
-          override def renderHtml(indent: Int): String = initial
+        new TextHostNode {
+          override def setText(value: String): Unit =
+            t.textContent = value
+
+          override def renderHtml(indent: Int): String = t.textContent
           def domNode = Some(t)
         }
     }

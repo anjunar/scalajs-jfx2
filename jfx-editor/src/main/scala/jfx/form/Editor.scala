@@ -7,7 +7,7 @@ import jfx.dsl.DslRuntime
 import jfx.form.editor.plugins.{DefaultDialogService, EditorPlugin}
 import jfx.layout.Div.div
 import lexical.{EditorModule, EditorTheme, EditorThemeBuilder, Lexical, LexicalBuilder, LexicalCode, LexicalEditor, LexicalLink, LexicalList, LexicalRichText, RibbonRenderer, ToolbarDropdown, ToolbarElement, ToolbarManager, ToolbarRegistry, setDialogService}
-import org.scalajs.dom.{Event, HTMLDivElement, HTMLElement}
+import org.scalajs.dom.{Element, Event, HTMLDivElement, HTMLElement}
 
 import scala.collection.mutable
 import scala.scalajs.js
@@ -221,6 +221,27 @@ class Editor(val name: String, override val standalone: Boolean = false)
     mountLexical()
   }
 
+  override protected def activateClientSideContent(): Unit = {
+    adoptFallbackContent()
+    mountLexical()
+  }
+
+  private def adoptFallbackContent(): Unit = {
+    val hostElement = host.domNode.map(_.asInstanceOf[Element])
+    editorSurface = hostElement
+      .flatMap(element => Option(element.querySelector(".jfx-editor__surface")))
+      .map(_.asInstanceOf[HTMLDivElement])
+      .orNull
+    toolbarHost = hostElement
+      .flatMap(element => Option(element.querySelector(".jfx-editor__toolbar")))
+      .map(_.asInstanceOf[HTMLElement])
+      .orNull
+    placeholderElement = hostElement
+      .flatMap(element => Option(element.querySelector(".jfx-editor__placeholder")))
+      .map(_.asInstanceOf[HTMLElement])
+      .orNull
+  }
+
   private[form] def registerPlugin(plugin: EditorPlugin): Unit =
     if (!pluginComponents.exists(_.name == plugin.name)) {
       pluginComponents += plugin
@@ -251,6 +272,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
 
     if (initialValue != null) {
       builder.withInitialState(initialValue)
+      surface.nn.innerHTML = ""
     }
 
     val editor = builder.build(surface.nn)
