@@ -1,13 +1,13 @@
 package jfx.form
 
-import jfx.core.component.{Box, ClientSideComponent, Component}
+import jfx.core.component.{Box, ClientSideComponent, ClientSideSsrContent, Component}
 import jfx.core.component.Component.*
 import jfx.core.state.{Property, ReadOnlyProperty}
 import jfx.dsl.DslRuntime
 import jfx.form.editor.plugins.{DefaultDialogService, EditorPlugin}
 import jfx.layout.Div.div
 import lexical.{EditorModule, EditorTheme, EditorThemeBuilder, Lexical, LexicalBuilder, LexicalCode, LexicalEditor, LexicalLink, LexicalList, LexicalRichText, RibbonRenderer, ToolbarDropdown, ToolbarElement, ToolbarManager, ToolbarRegistry, setDialogService}
-import org.scalajs.dom.{Element, Event, HTMLDivElement, HTMLElement}
+import org.scalajs.dom.{Event, HTMLDivElement, HTMLElement, window}
 
 import scala.collection.mutable
 import scala.scalajs.js
@@ -21,7 +21,8 @@ class Editor(val name: String, override val standalone: Boolean = false)
   override val valueProperty: Property[js.Any | Null] = Property(null)
 
   private var lexicalEditor: LexicalEditor | Null = null
-  private var editorSurface: HTMLDivElement | Null = null
+  private var previewElement: HTMLElement | Null = null
+  private var liveRoot: HTMLDivElement | Null = null
   private var toolbarHost: HTMLElement | Null = null
   private var placeholderElement: HTMLElement | Null = null
   private var editorUnregister: js.Function0[Unit] | Null = null
@@ -29,6 +30,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
   private var lastSeenValueJson: String | Null = null
   private var fallbackRendered = false
   private var toolbarRendered = false
+  private var hydrationMountScheduled = false
   private val editorRegistrations = mutable.ArrayBuffer.empty[js.Function0[Unit]]
   private val pluginComponents = mutable.ArrayBuffer.empty[EditorPlugin]
 
@@ -74,17 +76,13 @@ class Editor(val name: String, override val standalone: Boolean = false)
         div {
           addClass("jfx-editor__surface-wrap")
 
-          Box.box("section") {
-            addClass("jfx-editor__surface-frame")
-            div {
-              addClass("jfx-editor__surface")
-              addClass("lexical-editor-input")
-              if (!editableProperty.get) {
-                addClass("lexical-read-only")
-              }
-              role = "textbox"
-              previewText.foreach(value => text = value)
-            }
+          div {
+            addClass("jfx-editor__preview")
+            previewText.foreach(value => text = value)
+          }
+
+          div {
+            addClass("jfx-editor__live-root")
           }
 
           div {
@@ -193,7 +191,8 @@ class Editor(val name: String, override val standalone: Boolean = false)
     }
 
   override protected def mountClient(): Unit = {
-    editorSurface = null
+    previewElement = null
+    liveRoot = null
     toolbarHost = null
     placeholderElement = null
 
@@ -204,42 +203,42 @@ class Editor(val name: String, override val standalone: Boolean = false)
         addClass("jfx-editor")
         div {
           addClass("jfx-editor__shell")
-          EditorToolbarHost(element => toolbarHost = element)
+          EditorToolbarHost(_ => ())
 
           div {
             addClass("jfx-editor__surface-wrap")
 
-            EditorSurfaceFrame {
-              EditorSurface(surface => editorSurface = surface)
+            div {
+              addClass("jfx-editor__preview")
+              text = previewProperty
             }
-            EditorPlaceholder(placeholderProperty, element => placeholderElement = element)
+
+            EditorLiveRoot(_ => ())
+            EditorPlaceholder(placeholderProperty, _ => ())
           }
         }
       }
     }
 
+    host.domNode.collect { case element: HTMLElement =>
+      toolbarHost = element.querySelector(".jfx-editor__toolbar").asInstanceOf[HTMLElement]
+      previewElement = element.querySelector(".jfx-editor__preview").asInstanceOf[HTMLElement]
+      liveRoot = element.querySelector(".jfx-editor__live-root").asInstanceOf[HTMLDivElement]
+      placeholderElement = element.querySelector(".jfx-editor__placeholder").asInstanceOf[HTMLElement]
+    }
+
     mountLexical()
   }
 
-  override protected def activateClientSideContent(): Unit = {
-    adoptFallbackContent()
-    mountLexical()
-  }
+  override protected def activateClientSideContent(ssrContent: ClientSideSsrContent): Unit = {
+    releaseFallbackChildren()
+    toolbarRendered = false
 
-  private def adoptFallbackContent(): Unit = {
-    val hostElement = host.domNode.map(_.asInstanceOf[Element])
-    editorSurface = hostElement
-      .flatMap(element => Option(element.querySelector(".jfx-editor__surface")))
-      .map(_.asInstanceOf[HTMLDivElement])
-      .orNull
-    toolbarHost = hostElement
-      .flatMap(element => Option(element.querySelector(".jfx-editor__toolbar")))
-      .map(_.asInstanceOf[HTMLElement])
-      .orNull
-    placeholderElement = hostElement
-      .flatMap(element => Option(element.querySelector(".jfx-editor__placeholder")))
-      .map(_.asInstanceOf[HTMLElement])
-      .orNull
+    if (bindEditorDom(ssrContent.root.collect { case element: HTMLElement => element }.orNull) && hydratedDomReady()) {
+      mountLexical()
+    } else {
+      scheduleHydratedMount(ssrContent)
+    }
   }
 
   private[form] def registerPlugin(plugin: EditorPlugin): Unit =
@@ -252,13 +251,77 @@ class Editor(val name: String, override val standalone: Boolean = false)
     super.dispose()
   }
 
+  private def bindEditorDom(rootElement: HTMLElement | Null): Boolean = {
+    if (rootElement == null) {
+      toolbarHost = null
+      previewElement = null
+      liveRoot = null
+      placeholderElement = null
+      false
+    } else {
+      toolbarHost = rootElement.querySelector(".jfx-editor__toolbar").asInstanceOf[HTMLElement | Null]
+      previewElement = rootElement.querySelector(".jfx-editor__preview").asInstanceOf[HTMLElement | Null]
+      liveRoot = rootElement.querySelector(".jfx-editor__live-root").asInstanceOf[HTMLDivElement | Null]
+      placeholderElement = rootElement.querySelector(".jfx-editor__placeholder").asInstanceOf[HTMLElement | Null]
+      true
+    }
+  }
+
+  private def hydratedDomReady(): Boolean = {
+    val hostElement = host.domNode.collect { case element: HTMLElement => element }.orNull
+
+    hostElement != null &&
+    hostElement.isConnected &&
+    toolbarHost != null &&
+    previewElement != null &&
+    liveRoot != null &&
+    liveRoot.nn.isConnected &&
+    placeholderElement != null
+  }
+
+  private def scheduleHydratedMount(ssrContent: ClientSideSsrContent): Unit =
+    if (!hydrationMountScheduled) {
+      hydrationMountScheduled = true
+
+      def attemptMount(): Unit = {
+        hydrationMountScheduled = false
+
+        val rootElement =
+          ssrContent.root.collect { case element: HTMLElement => element }
+            .orElse(host.domNode.collect { case element: HTMLElement => element })
+            .orNull
+
+        if (bindEditorDom(rootElement) && hydratedDomReady()) {
+          mountLexical()
+        } else {
+          recoverWithClientRemount()
+        }
+      }
+
+      window.requestAnimationFrame { (_: Double) =>
+        if (lexicalEditor == null) {
+          window.requestAnimationFrame { (_: Double) =>
+            if (lexicalEditor == null) {
+              attemptMount()
+            }
+          }
+        }
+      }
+    }
+
+  private def recoverWithClientRemount(): Unit = {
+    clearFallback()
+    mountClient()
+  }
+
   private def mountLexical(): Unit = {
-    val surface = editorSurface
-    if (surface == null) {
+    val root = liveRoot
+    if (root == null) {
       return
     }
 
-    registerDomListeners(surface.nn)
+    registerDomListeners(root.nn)
+    root.nn.style.opacity = "0"
 
     val initialValue = valueProperty.get
 
@@ -272,19 +335,14 @@ class Editor(val name: String, override val standalone: Boolean = false)
 
     if (initialValue != null) {
       builder.withInitialState(initialValue)
-      surface.nn.innerHTML = ""
     }
 
-    val editor = builder.build(surface.nn)
+    val editor = builder.build(root.nn)
     lexicalEditor = editor
     editor.setDialogService(new DefaultDialogService())
-    editorUnregister = editor.registerUpdateListener { (_: js.Dynamic) =>
-      refreshPlaceholder()
-      publishEditorState(editor, markDirty = true)
-    }
 
-    surface.nn.setAttribute("role", "textbox")
-    surface.nn.setAttribute("aria-multiline", "true")
+    root.nn.setAttribute("role", "textbox")
+    root.nn.setAttribute("aria-multiline", "true")
     syncEditableSurface(editableProperty.get)
 
     if (initialValue != null) {
@@ -293,9 +351,15 @@ class Editor(val name: String, override val standalone: Boolean = false)
       publishEditorState(editor, markDirty = false)
     }
 
+    editorUnregister = editor.registerUpdateListener { (_: js.Dynamic) =>
+      refreshPlaceholder()
+      publishEditorState(editor, markDirty = true)
+    }
+
     renderToolbar(editor)
     installPlugins(editor)
     refreshPlaceholder()
+    markClientReady()
   }
 
   private def destroyEditorView(): Unit = {
@@ -330,7 +394,8 @@ class Editor(val name: String, override val standalone: Boolean = false)
     }
     editorRegistrations.clear()
 
-    editorSurface = null
+    previewElement = null
+    liveRoot = null
     if (toolbarHost != null) {
       toolbarHost.nn.innerHTML = ""
     }
@@ -363,12 +428,12 @@ class Editor(val name: String, override val standalone: Boolean = false)
     }
 
   private def syncEditableSurface(editable: Boolean): Unit =
-    if (editorSurface != null) {
-      val surface = editorSurface.nn
-      surface.setAttribute("contenteditable", editable.toString)
-      surface.setAttribute("aria-readonly", (!editable).toString)
-      surface.classList.toggle("lexical-read-only", !editable)
-      surface.classList.toggle("lexical-editor-input", true)
+    if (liveRoot != null) {
+      val root = liveRoot.nn
+      root.setAttribute("contenteditable", editable.toString)
+      root.setAttribute("aria-readonly", (!editable).toString)
+      root.classList.toggle("lexical-read-only", !editable)
+      root.classList.toggle("lexical-editor-input", true)
     }
 
   private def renderToolbar(editor: LexicalEditor): Unit =
@@ -419,6 +484,25 @@ class Editor(val name: String, override val standalone: Boolean = false)
     valueProperty.set(state)
   }
 
+  private def previewProperty: ReadOnlyProperty[String] =
+    valueProperty.map(value => extractPreviewText(value).getOrElse(""))
+
+  private def markClientReady(): Unit = {
+    if (liveRoot != null) {
+      liveRoot.nn.style.opacity = "1"
+    }
+
+    if (previewElement != null) {
+      previewElement.nn.classList.add("is-hidden")
+      previewElement.nn.style.display = "none"
+    }
+  }
+
+  private def updatePreviewElement(value: js.Any | Null): Unit =
+    if (previewElement != null) {
+      previewElement.nn.textContent = extractPreviewText(value).getOrElse("")
+    }
+
   private def syncExternalValue(value: js.Any | Null): Unit =
     if (lexicalEditor != null) {
       val json = if (value == null) null else js.JSON.stringify(value)
@@ -431,6 +515,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
       try {
         val state = lexicalEditor.nn.parseEditorState(value.asInstanceOf[js.Dynamic])
         lexicalEditor.nn.setEditorState(state, js.Dynamic.literal())
+        updatePreviewElement(value)
         refreshPlaceholder()
       } catch {
         case _: Throwable =>
@@ -445,8 +530,9 @@ class Editor(val name: String, override val standalone: Boolean = false)
         if (text.isEmpty || !editorIsEmpty(lexicalEditor.nn)) "none"
         else ""
     } else if (placeholderElement != null) {
+      val previewEmpty = previewProperty.get.trim.isEmpty
       placeholderElement.nn.style.display =
-        if (Option(placeholderProperty.get).forall(_.trim.isEmpty)) "none"
+        if (Option(placeholderProperty.get).forall(_.trim.isEmpty) || !previewEmpty) "none"
         else ""
     }
 
@@ -563,19 +649,19 @@ object Editor {
     e.editableProperty
 }
 
-private final class EditorSurface(onReady: HTMLDivElement => Unit) extends Component {
+private final class EditorLiveRoot(onReady: HTMLDivElement => Unit) extends Component {
   override def tagName: String = "div"
 
   override def compose(): Unit = {
     given Component = this
-    addClass("jfx-editor__surface")
+    addClass("jfx-editor__live-root")
     host.domNode.collect { case surface: HTMLDivElement => onReady(surface) }
   }
 }
 
-private object EditorSurface {
-  def apply(onReady: HTMLDivElement => Unit): EditorSurface =
-    DslRuntime.build(new EditorSurface(onReady)) {}
+private object EditorLiveRoot {
+  def apply(onReady: HTMLDivElement => Unit): EditorLiveRoot =
+    DslRuntime.build(new EditorLiveRoot(onReady)) {}
 }
 
 private final class EditorToolbarHost(onReady: HTMLElement => Unit) extends Component {
@@ -591,20 +677,6 @@ private final class EditorToolbarHost(onReady: HTMLElement => Unit) extends Comp
 private object EditorToolbarHost {
   def apply(onReady: HTMLElement => Unit): EditorToolbarHost =
     DslRuntime.build(new EditorToolbarHost(onReady)) {}
-}
-
-private final class EditorSurfaceFrame extends Component {
-  override def tagName: String = "section"
-
-  override def compose(): Unit = {
-    given Component = this
-    addClass("jfx-editor__surface-frame")
-  }
-}
-
-private object EditorSurfaceFrame {
-  def apply(init: EditorSurfaceFrame ?=> Unit): EditorSurfaceFrame =
-    DslRuntime.build(new EditorSurfaceFrame)(init)
 }
 
 private final class EditorPlaceholder(textProperty: ReadOnlyProperty[String], onReady: HTMLElement => Unit) extends Component {

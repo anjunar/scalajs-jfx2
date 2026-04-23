@@ -5,8 +5,8 @@ Json maps reflection metadata to JavaScript JSON objects. It understands plain f
 ## Install
 
 ```scala
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.1.0"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-json" % "2.1.0"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.1.2"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-json" % "2.1.2"
 ```
 
 ## Serialize

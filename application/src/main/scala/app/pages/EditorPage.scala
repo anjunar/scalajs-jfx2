@@ -1,9 +1,10 @@
 package app.pages
 
 import app.components.Showcase.*
+import app.domain.BlogDraft
 import jfx.action.Button.button
 import jfx.core.component.Component.*
-import jfx.core.state.{Property, ReadOnlyProperty}
+import jfx.core.state.ReadOnlyProperty
 import app.DemoI18n
 import jfx.i18n.*
 import jfx.form.Editor.*
@@ -15,10 +16,14 @@ import jfx.layout.VBox.vbox
 import scala.scalajs.js
 
 object EditorPage {
-  def render(): Unit = {
+  def render(draft: BlogDraft): Unit = {
     val initialEditorText =
       DemoI18n.resolveNow(i18n"This text already comes from the SSR fallback and is adopted by Lexical after hydration.")
-    val mirroredEditorValue = Property[js.Any | Null](initialEditorText)
+    val initialEditorValue = Option(draft.content.get).getOrElse(lexicalState(initialEditorText))
+    if (draft.content.get == null) {
+      draft.content.set(initialEditorValue)
+    }
+    val contentProperty = draft.content
 
     showcasePage(i18n"Editor", i18n"Lexical as an SSR-safe client island.") {
       vbox {
@@ -45,7 +50,7 @@ object EditorPage {
 
             editor("editor-playground", standalone = true) {
               val writableEditor = summon[jfx.form.Editor]
-              value = mirroredEditorValue.get
+              value = contentProperty.get
               placeholder = DemoI18n.text(i18n"The writing surface activates on the client")
               style {
                 width = "100%"
@@ -53,9 +58,9 @@ object EditorPage {
               }
               installDefaultPlugins()
               addDisposable(writableEditor.valueProperty.observeWithoutInitial { nextValue =>
-                mirroredEditorValue.set(nextValue)
+                contentProperty.set(nextValue)
               })
-              addDisposable(mirroredEditorValue.observeWithoutInitial { nextValue =>
+              addDisposable(contentProperty.observeWithoutInitial { nextValue =>
                 writableEditor.valueProperty.set(nextValue)
               })
             }
@@ -65,19 +70,19 @@ object EditorPage {
 
               button(DemoI18n.text(i18n"SSR sample text")) {
                 onClick { _ =>
-                  mirroredEditorValue.set(initialEditorText)
+                  contentProperty.set(initialEditorValue)
                 }
               }
 
               button(DemoI18n.text(i18n"Short text")) {
                 onClick { _ =>
-                  mirroredEditorValue.set(DemoI18n.resolveNow(i18n"Short external property update. The editor adopts it after hydration."))
+                  contentProperty.set(lexicalState(DemoI18n.resolveNow(i18n"Short external property update. The editor adopts it after hydration.")))
                 }
               }
 
               button(DemoI18n.text(i18n"Set readonly content")) {
                 onClick { _ =>
-                  mirroredEditorValue.set(DemoI18n.resolveNow(i18n"This value was set outside the editor and is synchronized to both instances."))
+                  contentProperty.set(lexicalState(DemoI18n.resolveNow(i18n"This value was set outside the editor and is synchronized to both instances.")))
                 }
               }
             }
@@ -90,7 +95,7 @@ object EditorPage {
         ) {
           editor("editor-readonly", standalone = true) {
             val readonlyEditor = summon[jfx.form.Editor]
-            value = mirroredEditorValue.get
+            value = contentProperty.get
             editable = false
             placeholder = DemoI18n.text(i18n"Readonly")
             style {
@@ -98,7 +103,7 @@ object EditorPage {
               minHeight = "220px"
             }
             installDefaultPlugins()
-            addDisposable(mirroredEditorValue.observeWithoutInitial { nextValue =>
+            addDisposable(contentProperty.observeWithoutInitial { nextValue =>
               readonlyEditor.valueProperty.set(nextValue)
             })
           }
@@ -155,23 +160,27 @@ object EditorPage {
           i18n"DSL syntax",
           i18n"The editor remains a normal form control with value, placeholder, editable state, and plugins."
         ) {
-          codeBlock("scala", """editor("content", standalone = true) {
-  value = "Dieser Text ist schon im SSR sichtbar."
-  placeholder = "Write text..."
-  style { minHeight = "340px" }
+          codeBlock("scala", """def render(draft: BlogDraft): Unit = {
+  val contentProperty = draft.content
 
-  basePlugin()
-  headingPlugin()
-  listPlugin()
-  linkPlugin()
-  imagePlugin()
-  tablePlugin()
-  codePlugin()
-}
+  editor("content", standalone = true) {
+    value = contentProperty.get
+    placeholder = "Write text..."
+    style { minHeight = "340px" }
 
-editor("readonly", standalone = true) {
-  value = mirroredEditorValue.get
-  editable = false
+    basePlugin()
+    headingPlugin()
+    listPlugin()
+    linkPlugin()
+    imagePlugin()
+    tablePlugin()
+    codePlugin()
+  }
+
+  editor("readonly", standalone = true) {
+    value = contentProperty.get
+    editable = false
+  }
 }""")
         }
 
@@ -208,6 +217,32 @@ Property Update:
     tablePlugin()
     codePlugin()
   }
+
+  private def lexicalState(text: String): js.Any =
+    js.Dynamic.literal(
+      root = js.Dynamic.literal(
+        `type` = "root",
+        version = 1,
+        indent = 0,
+        children = js.Array(
+          js.Dynamic.literal(
+            `type` = "paragraph",
+            version = 1,
+            indent = 0,
+            children = js.Array(
+              js.Dynamic.literal(
+                `type` = "text",
+                version = 1,
+                text = text,
+                detail = 0,
+                format = 0,
+                mode = "normal"
+              )
+            )
+          )
+        )
+      )
+    )
 
   private def detailCard(title: ReadOnlyProperty[String], body: ReadOnlyProperty[String]): Unit = {
     vbox {

@@ -23,7 +23,7 @@ import scala.scalajs.js.timers.{SetIntervalHandle, clearInterval, setInterval, s
 
 object MemoryLeakTestPage {
 
-  final case class EditorRow(id: Int, title: String, value: String)
+  final case class EditorRow(id: Int, title: String, value: js.Any)
 
   def render(): Unit = {
     val rows = new ListProperty[EditorRow]()
@@ -31,7 +31,7 @@ object MemoryLeakTestPage {
       EditorRow(
         index,
         s"Editor #$index",
-        s"Memory leak test document $index. This row intentionally mounts a Lexical editor inside the VirtualList."
+        lexicalState(s"Memory leak test document $index. This row intentionally mounts a Lexical editor inside the VirtualList.")
       )
     })
 
@@ -265,6 +265,32 @@ object MemoryLeakTestPage {
     tablePlugin()
     codePlugin()
   }
+
+  private def lexicalState(text: String): js.Any =
+    js.Dynamic.literal(
+      root = js.Dynamic.literal(
+        `type` = "root",
+        version = 1,
+        indent = 0,
+        children = js.Array(
+          js.Dynamic.literal(
+            `type` = "paragraph",
+            version = 1,
+            indent = 0,
+            children = js.Array(
+              js.Dynamic.literal(
+                `type` = "text",
+                version = 1,
+                text = text,
+                detail = 0,
+                format = 0,
+                mode = "normal"
+              )
+            )
+          )
+        )
+      )
+    )
 
   private def statusCard(title: ReadOnlyProperty[String], body: ReadOnlyProperty[String]): Unit = {
     vbox {

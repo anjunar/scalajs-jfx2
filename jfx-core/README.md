@@ -5,7 +5,7 @@ Core contains the component model, reactive state, base DSL, simple layout compo
 ## Install
 
 ```scala
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.1.0"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.1.2"
 ```
 
 ## State

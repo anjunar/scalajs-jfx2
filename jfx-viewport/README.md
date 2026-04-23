@@ -5,8 +5,8 @@ Viewport owns global UI that floats above the page: windows, anchored overlays a
 ## Install
 
 ```scala
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.1.0"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-viewport" % "2.1.0"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.1.2"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-viewport" % "2.1.2"
 ```
 
 ## Viewport

@@ -32,9 +32,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 import scala.scalajs.js.annotation.JSExportTopLevel
+import scala.scalajs.js.timers.setTimeout
 
 import app.pages.*
 import app.domain.DomainRegistry
+import app.domain.BlogDraft
 import app.Theme.Mode
 import jfx.core.state.RemoteListProperty
 
@@ -98,7 +100,15 @@ object Main {
       asyncRoute("/domain") { page { DomainPage.render() } },
       asyncRoute("/image") { page { ImagePage.render() } },
       asyncRoute("/image-cropper") { page { ImageCropperPage.render() } },
-      asyncRoute("/editor") { page { EditorPage.render() } },
+      asyncRoute("/editor") {
+        val draft = createEditorDraft()
+
+        sleep(350) {
+          Route.factory {
+            EditorPage.render(draft)
+          }
+        }
+      },
       asyncRoute("/hydration-repro") { page { HydrationReproPage.render() } },
       asyncRoute("/memory-leak-test") { page { MemoryLeakTestPage.render() } }
     )
@@ -211,7 +221,7 @@ object Main {
               }
               div {
                 classes = "app-toolbar__version"
-                text = DemoI18n.text(i18n"v2.1.0")
+                text = DemoI18n.text(i18n"v2.2.1")
               }
             }
 
@@ -243,6 +253,51 @@ object Main {
     Route.factory {
       TableViewPage.render(books)
     }
+
+  private def createEditorDraft(): BlogDraft = {
+    val draft = new BlogDraft()
+    draft.title.set("Editor draft loaded by the router")
+    draft.content.set(editorLexicalState(
+      DemoI18n.resolveNow(i18n"This draft was created in the route loader and then handed to the editor page after a short delay.")
+    ))
+    draft
+  }
+
+  private def sleep[T](millis: Int)(value: => T): js.Promise[T] =
+    new js.Promise[T]((resolve, reject) =>
+      setTimeout(millis) {
+        try resolve(value)
+        catch {
+          case error: Throwable => reject(error)
+        }
+      }
+    )
+
+  private def editorLexicalState(text: String): js.Any =
+    js.Dynamic.literal(
+      root = js.Dynamic.literal(
+        `type` = "root",
+        version = 1,
+        indent = 0,
+        children = js.Array(
+          js.Dynamic.literal(
+            `type` = "paragraph",
+            version = 1,
+            indent = 0,
+            children = js.Array(
+              js.Dynamic.literal(
+                `type` = "text",
+                version = 1,
+                text = text,
+                detail = 0,
+                format = 0,
+                mode = "normal"
+              )
+            )
+          )
+        )
+      )
+    )
 
   private def sidebarSection(title: RuntimeMessage) = {
     div {
