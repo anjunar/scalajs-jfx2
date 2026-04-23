@@ -99,6 +99,7 @@ object Main {
       asyncRoute("/image") { page { ImagePage.render() } },
       asyncRoute("/image-cropper") { page { ImageCropperPage.render() } },
       asyncRoute("/editor") { page { EditorPage.render() } },
+      asyncRoute("/hydration-repro") { page { HydrationReproPage.render() } },
       asyncRoute("/memory-leak-test") { page { MemoryLeakTestPage.render() } }
     )
 
@@ -132,6 +133,7 @@ object Main {
               navLink("/input", i18n"Forms", i18n"Natural dialogue")
               navLink("/combo-box", i18n"ComboBox", i18n"Elegant selection")
               navLink("/editor", i18n"Editor", i18n"Lexical playground")
+              navLink("/hydration-repro", i18n"Hydration", i18n"Direct-load editor repro")
               navLink("/memory-leak-test", i18n"Memory Test", i18n"Editor lifecycle stress")
               
               sidebarSection(i18n"Architecture")

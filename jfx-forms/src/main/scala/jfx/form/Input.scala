@@ -52,6 +52,9 @@ class Input(override val name: String, override val standalone: Boolean = false)
     }
   }
 
+  override def afterRehydrate(): Unit =
+    syncNativeState()
+
   private def nativeInput: Option[dom.html.Input] =
     host.domNode.collect { case input: dom.html.Input => input }
 
@@ -60,7 +63,7 @@ class Input(override val name: String, override val standalone: Boolean = false)
 
   private def bindNativeValue(): Unit = {
     addDisposable(valueProperty.observe { value =>
-      nativeInput.foreach(_.value = value)
+      syncNativeValue(value)
       validate()
     })
   }
@@ -73,14 +76,25 @@ class Input(override val name: String, override val standalone: Boolean = false)
 
   private def bindNativeEditable(): Unit = {
     addDisposable(editableProperty.observe { editable =>
-      nativeInput.foreach { input =>
-        input.readOnly = !editable
-        if (!editable) {
-          input.value = valueProperty.get
-        }
-      }
+      syncNativeEditable(editable)
     })
   }
+
+  private def syncNativeState(): Unit = {
+    syncNativeValue(valueProperty.get)
+    syncNativeEditable(editableProperty.get)
+  }
+
+  private def syncNativeValue(value: String): Unit =
+    nativeInput.foreach(_.value = Option(value).getOrElse(""))
+
+  private def syncNativeEditable(editable: Boolean): Unit =
+    nativeInput.foreach { input =>
+      input.readOnly = !editable
+      if (!editable) {
+        input.value = Option(valueProperty.get).getOrElse("")
+      }
+    }
 }
 
 object Input {

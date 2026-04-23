@@ -156,6 +156,8 @@ object DslRuntime {
     if (component.parent.isEmpty) {
       pruneHydratedRemainder(cursor)
     }
+
+    component.afterRehydrate()
   }
 
   private def rehydrateChildren(component: Component, cursor: Cursor): Unit = {

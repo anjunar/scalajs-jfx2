@@ -3,6 +3,7 @@ package app.domain
 import jfx.core.state.{ListProperty, Property}
 import jfx.form.validators.*
 import scala.annotation.meta.field
+import scala.scalajs.js
 
 class Address(
   @(NotBlank @field)(message = "Street must not be empty")
@@ -24,4 +25,9 @@ class User(
   var email: Property[String] = Property(""),
   var address: Property[Address] = Property(new Address()),
   var emails: ListProperty[Email] = new ListProperty[Email]()
+)
+
+class BlogDraft(
+  var title: Property[String] = Property(""),
+  var content: Property[js.Any | Null] = Property(null)
 )

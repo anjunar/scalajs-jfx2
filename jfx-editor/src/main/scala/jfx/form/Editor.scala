@@ -89,8 +89,10 @@ class Editor(val name: String, override val standalone: Boolean = false)
 
           div {
             addClass("jfx-editor__placeholder")
-            visible = previewText.isEmpty && placeholderProperty.get.trim.nonEmpty
-            text = placeholderProperty.get.trim
+            visible = placeholderProperty.map { placeholder =>
+              previewText.isEmpty && Option(placeholder).exists(_.trim.nonEmpty)
+            }
+            text = placeholderProperty.map(value => Option(value).map(_.trim).getOrElse(""))
           }
         }
       }
