@@ -3,11 +3,13 @@ package jfx.core.render
 import org.scalajs.dom
 import jfx.core.state.Disposable
 import scala.collection.mutable
+import scala.scalajs.js
 
 final class DomHostElement(val tagName: String, private var _element: dom.Element) extends HostElement {
   private val listeners = mutable.ArrayBuffer.empty[(String, dom.Event => Unit)]
   private val attributes = mutable.Map.empty[String, String]
   private val styles = mutable.Map.empty[String, String]
+  private val properties = mutable.Map.empty[String, Any]
 
   def element: dom.Element = _element
 
@@ -32,6 +34,9 @@ final class DomHostElement(val tagName: String, private var _element: dom.Elemen
       // 5. Re-apply styles
       val htmlEl = _element.asInstanceOf[dom.html.Element]
       styles.foreach { case (name, value) => htmlEl.style.setProperty(name, value) }
+
+      // 6. Re-apply DOM properties such as input.value/readOnly after hydration rebinds.
+      properties.foreach { case (name, value) => writeProperty(name, value) }
     }
   }
 
@@ -44,6 +49,17 @@ final class DomHostElement(val tagName: String, private var _element: dom.Elemen
   }
 
   override def attribute(name: String): Option[String] = attributes.get(name).orElse(Option(_element.getAttribute(name)))
+
+  override def setProperty(name: String, value: Any): Unit = {
+    properties.update(name, value)
+    writeProperty(name, value)
+  }
+
+  override def property[T](name: String): Option[T] = {
+    val value = _element.asInstanceOf[js.Dynamic].selectDynamic(name)
+    if (js.isUndefined(value)) properties.get(name).asInstanceOf[Option[T]]
+    else Option(value.asInstanceOf[T])
+  }
 
   override def setClassNames(classes: Seq[String]): Unit = {
     val value = classes.mkString(" ")
@@ -63,6 +79,9 @@ final class DomHostElement(val tagName: String, private var _element: dom.Elemen
     styles.update(name, value)
     _element.asInstanceOf[dom.html.Element].style.setProperty(name, value)
   }
+
+  private def writeProperty(name: String, value: Any): Unit =
+    _element.asInstanceOf[js.Dynamic].updateDynamic(name)(value.asInstanceOf[js.Any])
 
 
   override def clientHeight: Int = _element.clientHeight

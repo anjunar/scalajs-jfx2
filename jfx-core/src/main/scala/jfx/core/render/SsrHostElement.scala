@@ -8,6 +8,7 @@ final class SsrHostElement(val tagName: String) extends HostElement {
   val children = mutable.ArrayBuffer.empty[HostNode]
   private val attributes = mutable.Map.empty[String, String]
   private val styles = mutable.Map.empty[String, String]
+  private val properties = mutable.Map.empty[String, Any]
 
   override def domNode: Option[dom.Node] = None
 
@@ -22,6 +23,14 @@ final class SsrHostElement(val tagName: String) extends HostElement {
 
   override def setAttribute(name: String, value: String): Unit = attributes.update(name, value)
   override def attribute(name: String): Option[String] = attributes.get(name)
+
+  override def setProperty(name: String, value: Any): Unit = {
+    properties.update(name, value)
+    reflectProperty(name, value)
+  }
+
+  override def property[T](name: String): Option[T] =
+    properties.get(name).asInstanceOf[Option[T]]
   
   override def setClassNames(classes: Seq[String]): Unit = {
     if (classes.isEmpty) attributes.remove("class")
@@ -51,4 +60,21 @@ final class SsrHostElement(val tagName: String) extends HostElement {
   override def removeChild(child: HostNode): Unit = {
     children -= child
   }
+
+  private def reflectProperty(name: String, value: Any): Unit =
+    name match {
+      case "value" =>
+        attributes.update("value", Option(value).map(_.toString).getOrElse(""))
+      case "readOnly" =>
+        reflectBooleanAttribute("readonly", value)
+      case "checked" | "disabled" | "selected" =>
+        reflectBooleanAttribute(name.toLowerCase, value)
+      case _ =>
+    }
+
+  private def reflectBooleanAttribute(name: String, value: Any): Unit =
+    value match {
+      case true => attributes.update(name, name)
+      case _    => attributes.remove(name)
+    }
 }

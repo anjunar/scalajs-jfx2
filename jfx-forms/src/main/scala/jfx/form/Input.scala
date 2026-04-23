@@ -23,7 +23,7 @@ class Input(override val name: String, override val standalone: Boolean = false)
         setDirty(true)
         valueProperty.set(nativeValue)
       } else {
-        nativeInput.foreach(_.value = valueProperty.get)
+        syncNativeValue(valueProperty.get)
       }
     }
 
@@ -52,14 +52,8 @@ class Input(override val name: String, override val standalone: Boolean = false)
     }
   }
 
-  override def afterRehydrate(): Unit =
-    syncNativeState()
-
-  private def nativeInput: Option[dom.html.Input] =
-    host.domNode.collect { case input: dom.html.Input => input }
-
   private def nativeValue: String =
-    nativeInput.map(_.value).getOrElse("")
+    host.property[String]("value").getOrElse("")
 
   private def bindNativeValue(): Unit = {
     addDisposable(valueProperty.observe { value =>
@@ -80,21 +74,15 @@ class Input(override val name: String, override val standalone: Boolean = false)
     })
   }
 
-  private def syncNativeState(): Unit = {
-    syncNativeValue(valueProperty.get)
-    syncNativeEditable(editableProperty.get)
-  }
-
   private def syncNativeValue(value: String): Unit =
-    nativeInput.foreach(_.value = Option(value).getOrElse(""))
+    host.setProperty("value", Option(value).getOrElse(""))
 
-  private def syncNativeEditable(editable: Boolean): Unit =
-    nativeInput.foreach { input =>
-      input.readOnly = !editable
-      if (!editable) {
-        input.value = Option(valueProperty.get).getOrElse("")
-      }
+  private def syncNativeEditable(editable: Boolean): Unit = {
+    host.setProperty("readOnly", !editable)
+    if (!editable) {
+      syncNativeValue(valueProperty.get)
     }
+  }
 }
 
 object Input {

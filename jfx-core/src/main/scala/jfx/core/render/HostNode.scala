@@ -13,6 +13,8 @@ trait HostElement extends HostNode {
   def tagName: String
   def setAttribute(name: String, value: String): Unit
   def attribute(name: String): Option[String]
+  def setProperty(name: String, value: Any): Unit
+  def property[T](name: String): Option[T]
   def setClassNames(classes: Seq[String]): Unit
   def getStyle(name: String): String
   def setStyle(name: String, value: String): Unit

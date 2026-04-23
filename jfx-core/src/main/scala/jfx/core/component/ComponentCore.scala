@@ -20,7 +20,6 @@ trait ComponentCore extends Disposable {
   def initialize(): Unit = {}
   def compose(): Unit = {}
   def afterCompose(): Unit = {}
-  def afterRehydrate(): Unit = {}
 
   def bindCursor: Cursor = _bindCursor
   private[jfx] def registry: ServiceRegistry = _registry
