@@ -31,9 +31,9 @@ class JsonMapper {
 object JsonMapper {
 
   private val JsonTypeAnnotation = "jfx.json.JsonType"
-  private val JsonNameAnnotation = "jfx.json.JsonName"
+  private val JsonNameAnnotation = "jfx.json.JsonProperty"
   private val JsonIgnoreAnnotation = "jfx.json.JsonIgnore"
-  private val JsonIgnoreWriteAnnotation = "jfx.json.JsonIgnoreWrite"
+
   private val TypeField = "@type"
   private val IdField = "id"
   inline def serialize[M](model: M): Dynamic =
@@ -478,12 +478,12 @@ object JsonMapper {
 
   private def writableSerializableProperties(descriptor: ClassDescriptor): Array[PropertyDescriptor] =
     descriptor.resolved.properties
-      .filterNot(property => property.hasAnnotation(JsonIgnoreAnnotation) || property.hasAnnotation(JsonIgnoreWriteAnnotation))
+      .filter(isJsonSerializable)
       .filter(isSerializableProperty)
 
   private def readableSerializableProperties(descriptor: ClassDescriptor): Array[PropertyDescriptor] =
     descriptor.resolved.properties
-      .filterNot(_.hasAnnotation(JsonIgnoreAnnotation))
+      .filter(isJsonDeserializable)
       .filter(isSerializableProperty)
 
   private def isSerializableProperty(property: PropertyDescriptor): Boolean =
@@ -494,6 +494,21 @@ object JsonMapper {
 
   private def jsonFieldName(property: PropertyDescriptor): String =
     annotationValue(property.annotations, JsonNameAnnotation).getOrElse(property.name)
+
+  private def isJsonSerializable(property: PropertyDescriptor): Boolean =
+    jsonIgnoreValue(property, "serializable").getOrElse(!property.hasAnnotation(JsonIgnoreAnnotation))
+
+  private def isJsonDeserializable(property: PropertyDescriptor): Boolean =
+    jsonIgnoreValue(property, "deserializable").getOrElse(!property.hasAnnotation(JsonIgnoreAnnotation))
+
+  private def jsonIgnoreValue(property: PropertyDescriptor, parameterName: String): Option[Boolean] =
+    property.annotations
+      .find(_.annotationClassName == JsonIgnoreAnnotation)
+      .flatMap(_.parameters.get(parameterName))
+      .map {
+        case value: Boolean => value
+        case value => value.toString.toBoolean
+      }
 
   private def annotationValue(annotations: Array[Annotation], annotationClassName: String): Option[String] =
     annotations.find(_.annotationClassName == annotationClassName).flatMap(_.parameters.get("value")).map(_.toString)
