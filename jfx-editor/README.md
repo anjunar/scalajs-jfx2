@@ -8,10 +8,10 @@ plugins own editor-specific commands.
 ## Install
 
 ```scala
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.1.2"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-controls" % "2.1.2"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-forms" % "2.1.2"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-editor" % "2.1.2"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.1.3"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-controls" % "2.1.3"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-forms" % "2.1.3"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-editor" % "2.1.3"
 ```
 
 ## Productive Setup

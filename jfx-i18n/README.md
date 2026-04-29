@@ -5,8 +5,8 @@ I18n keeps the source sentence in Scala and builds structured runtime messages w
 ## Install
 
 ```scala
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.1.2"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-i18n" % "2.1.2"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.1.3"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-i18n" % "2.1.3"
 ```
 
 ## Messages
