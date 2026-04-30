@@ -195,7 +195,7 @@ object MemoryLeakTestPage {
 
               elseDo {
                 div {
-                  classes = "showcase-result"
+                  classes = Seq("showcase-result")
                   style {
                     minHeight = "180px"
                     display = "flex"
@@ -294,7 +294,7 @@ object MemoryLeakTestPage {
 
   private def statusCard(title: ReadOnlyProperty[String], body: ReadOnlyProperty[String]): Unit = {
     vbox {
-      classes = "showcase-result"
+      classes = Seq("showcase-result")
       style { gap = "8px"; flex = "1 1 260px" }
       div {
         style { fontWeight = "800" }

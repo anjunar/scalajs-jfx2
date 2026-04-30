@@ -45,7 +45,7 @@ object ImageCropperPage {
             }
 
             div {
-              classes = "showcase-result"
+              classes = Seq("showcase-result")
               hbox {
                 style { gap = "18px"; alignItems = "center"; flexWrap = "wrap" }
 

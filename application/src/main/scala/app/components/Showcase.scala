@@ -92,13 +92,13 @@ object Showcase {
 
   def codeBlock(lang: String, code: String): Unit = {
     vbox {
-      classes = "code-block"
+      classes = Seq("code-block")
       div {
-        classes = "code-block__lang"
+        classes = Seq("code-block__lang")
         text = lang
       }
       div {
-        classes = "code-block__content"
+        classes = Seq("code-block__content")
         text = code
       }
     }
@@ -106,15 +106,15 @@ object Showcase {
 
   private def renderShowcasePage(title: ReadOnlyProperty[String], subtitle: ReadOnlyProperty[String])(content: => Unit): Unit = {
     vbox {
-      classes = "showcase-page"
+      classes = Seq("showcase-page")
       vbox {
-        classes = "showcase-page__header"
-        div { classes = "showcase-page__eyebrow"; text = DemoI18n.text(i18n"JFX2 Showcase") }
-        div { classes = "showcase-page__title"; text = title }
-        div { classes = "showcase-page__subtitle"; text = subtitle }
+        classes = Seq("showcase-page__header")
+        div { classes = Seq("showcase-page__eyebrow"); text = DemoI18n.text(i18n"JFX2 Showcase") }
+        div { classes = Seq("showcase-page__title"); text = title }
+        div { classes = Seq("showcase-page__subtitle"); text = subtitle }
       }
       div {
-        classes = "showcase-page__content"
+        classes = Seq("showcase-page__content")
         content
       }
     }
@@ -122,21 +122,21 @@ object Showcase {
 
   private def renderSectionIntro(kicker: ReadOnlyProperty[String], title: ReadOnlyProperty[String], body: ReadOnlyProperty[String]): Unit = {
     vbox {
-      classes = "showcase-section-intro"
-      div { classes = "showcase-section-intro__kicker"; text = kicker }
-      div { classes = "showcase-section-intro__title"; text = title }
-      div { classes = "showcase-section-intro__body"; text = body }
+      classes = Seq("showcase-section-intro")
+      div { classes = Seq("showcase-section-intro__kicker"); text = kicker }
+      div { classes = Seq("showcase-section-intro__title"); text = title }
+      div { classes = Seq("showcase-section-intro__body"); text = body }
     }
   }
 
   private def renderMetricStrip(items: (ReadOnlyProperty[String], ReadOnlyProperty[String])*): Unit = {
     div {
-      classes = "showcase-metric-strip"
+      classes = Seq("showcase-metric-strip")
       items.foreach { case (value, label) =>
         vbox {
-          classes = "showcase-metric"
-          div { classes = "showcase-metric__value"; text = value }
-          div { classes = "showcase-metric__label"; text = label }
+          classes = Seq("showcase-metric")
+          div { classes = Seq("showcase-metric__value"); text = value }
+          div { classes = Seq("showcase-metric__label"); text = label }
         }
       }
     }
@@ -144,13 +144,13 @@ object Showcase {
 
   private def renderInsightGrid(items: (ReadOnlyProperty[String], ReadOnlyProperty[String], ReadOnlyProperty[String])*): Unit = {
     div {
-      classes = "showcase-insight-grid"
+      classes = Seq("showcase-insight-grid")
       items.zipWithIndex.foreach { case ((label, title, body), index) =>
         vbox {
           classes = s"showcase-insight showcase-insight--${index % 3}"
-          div { classes = "showcase-insight__label"; text = label }
-          div { classes = "showcase-insight__title"; text = title }
-          div { classes = "showcase-insight__body"; text = body }
+          div { classes = Seq("showcase-insight__label"); text = label }
+          div { classes = Seq("showcase-insight__title"); text = title }
+          div { classes = Seq("showcase-insight__body"); text = body }
         }
       }
     }
@@ -158,21 +158,21 @@ object Showcase {
 
   private def renderNoteBlock(title: ReadOnlyProperty[String], body: ReadOnlyProperty[String]): Unit = {
     vbox {
-      classes = "showcase-note"
-      div { classes = "showcase-note__title"; text = title }
-      div { classes = "showcase-note__body"; text = body }
+      classes = Seq("showcase-note")
+      div { classes = Seq("showcase-note__title"); text = title }
+      div { classes = Seq("showcase-note__body"); text = body }
     }
   }
 
   private def renderPatternList(title: ReadOnlyProperty[String], items: ReadOnlyProperty[String]*): Unit = {
     vbox {
-      classes = "showcase-pattern-list"
-      div { classes = "showcase-pattern-list__title"; text = title }
+      classes = Seq("showcase-pattern-list")
+      div { classes = Seq("showcase-pattern-list__title"); text = title }
       div {
-        classes = "showcase-pattern-list__items"
+        classes = Seq("showcase-pattern-list__items")
         items.foreach { item =>
           div {
-            classes = "showcase-pattern-list__item"
+            classes = Seq("showcase-pattern-list__item")
             text = item
           }
         }
@@ -182,18 +182,18 @@ object Showcase {
 
   private def renderComponentShowcase(title: ReadOnlyProperty[String], summary: Option[ReadOnlyProperty[String]] = None)(content: => Unit): Unit = {
     vbox {
-      classes = "component-showcase"
+      classes = Seq("component-showcase")
       vbox {
-        classes = "component-showcase__header"
-        div { classes = "component-showcase__title"; text = title }
+        classes = Seq("component-showcase__header")
+        div { classes = Seq("component-showcase__title"); text = title }
         summary.foreach { value =>
           if (value.get.nonEmpty) {
-            div { classes = "component-showcase__summary"; text = value }
+            div { classes = Seq("component-showcase__summary"); text = value }
           }
         }
       }
       div {
-        classes = "component-showcase__render"
+        classes = Seq("component-showcase__render")
         content
       }
     }
@@ -201,18 +201,18 @@ object Showcase {
 
   private def renderApiSection(title: ReadOnlyProperty[String], summary: Option[ReadOnlyProperty[String]] = None)(content: => Unit): Unit = {
     vbox {
-      classes = "api-section"
+      classes = Seq("api-section")
       vbox {
-        classes = "api-section__header"
-        div { classes = "api-section__title"; text = title }
+        classes = Seq("api-section__header")
+        div { classes = Seq("api-section__title"); text = title }
         summary.foreach { value =>
           if (value.get.nonEmpty) {
-            div { classes = "api-section__summary"; text = value }
+            div { classes = Seq("api-section__summary"); text = value }
           }
         }
       }
       div {
-        classes = "api-section__content"
+        classes = Seq("api-section__content")
         content
       }
     }

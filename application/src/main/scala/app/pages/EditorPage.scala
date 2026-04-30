@@ -246,7 +246,7 @@ Property Update:
 
   private def detailCard(title: ReadOnlyProperty[String], body: ReadOnlyProperty[String]): Unit = {
     vbox {
-      classes = "showcase-result"
+      classes = Seq("showcase-result")
       style { gap = "8px"; flex = "1 1 240px" }
       div {
         style { fontWeight = "800" }
@@ -261,7 +261,7 @@ Property Update:
 
   private def pluginCard(name: ReadOnlyProperty[String], body: ReadOnlyProperty[String]): Unit = {
     vbox {
-      classes = "showcase-result"
+      classes = Seq("showcase-result")
       style { gap = "8px"; flex = "1 1 180px" }
       div {
         style { fontWeight = "800" }

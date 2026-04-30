@@ -82,7 +82,7 @@ object DomainPage {
               style { gap = "22px" }
 
               div {
-                classes = "showcase-result"
+                classes = Seq("showcase-result")
                 vbox {
                   style { gap = "8px" }
                   div {
@@ -278,7 +278,7 @@ val copy = mapper.deserialize[User](json)""")
 
   private def statusCard(title: String, content: Property[String]): Unit = {
     div {
-      classes = "showcase-result"
+      classes = Seq("showcase-result")
       style { flex = "1 1 260px" }
       vbox {
         style { gap = "8px" }
@@ -296,13 +296,13 @@ val copy = mapper.deserialize[User](json)""")
 
   private def codePanel(language: String, content: Property[String]): Unit = {
     vbox {
-      classes = "code-block"
+      classes = Seq("code-block")
       div {
-        classes = "code-block__lang"
+        classes = Seq("code-block__lang")
         text = language
       }
       div {
-        classes = "code-block__content"
+        classes = Seq("code-block__content")
         text = content
       }
     }
@@ -310,7 +310,7 @@ val copy = mapper.deserialize[User](json)""")
 
   private def descriptorCard(descriptor: ClassDescriptor): Unit = {
     vbox {
-      classes = "showcase-result"
+      classes = Seq("showcase-result")
       style { gap = "12px"; flex = "1 1 280px" }
 
       div {

@@ -277,7 +277,7 @@ object TableViewPage {
             }
 
             div {
-              classes = "showcase-result"
+              classes = Seq("showcase-result")
               text = selectedText
             }
           }
@@ -446,7 +446,7 @@ onScroll:
 
   private def logicCard(title: String, body: RuntimeMessage): Unit = {
     vbox {
-      classes = "showcase-result"
+      classes = Seq("showcase-result")
       style { gap = "8px"; flex = "1 1 260px" }
       div {
         style { fontWeight = "800" }

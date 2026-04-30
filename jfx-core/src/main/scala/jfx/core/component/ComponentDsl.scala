@@ -11,10 +11,6 @@ trait ComponentClassDsl {
     c.classes = names
   }
 
-  def classes_=(name: String)(using c: Component): Unit = {
-    c.classes = name
-  }
-
   def addClass(name: String)(using c: Component): Unit = {
     c.addBaseClass(name)
   }

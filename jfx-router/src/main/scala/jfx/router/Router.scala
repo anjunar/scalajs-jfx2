@@ -49,7 +49,7 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component with 
         ()
       case RouteLoading =>
         div {
-          classes = "jfx-router-loading"
+          classes = Seq("jfx-router-loading")
           text = "Loading..."
         }
       case RouteReady(context, factory) =>
@@ -58,7 +58,7 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component with 
         }
       case RouteFailure(error) =>
         div {
-          classes = "jfx-router-error"
+          classes = Seq("jfx-router-error")
           text = Option(error.getMessage).filter(_.nonEmpty).getOrElse("Route could not be loaded")
         }
       case RouteNotFound(path) =>

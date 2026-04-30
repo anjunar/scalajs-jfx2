@@ -19,7 +19,6 @@ trait ComponentClasses extends ComponentCore {
   }
 
   def classes_=(names: Seq[String]): Unit = setUserClasses(names)
-  def classes_=(name: String): Unit = setUserClasses(name.split("\\s+").toSeq.filter(_.nonEmpty))
 
   private[jfx] def addBaseClass(name: String): Unit = {
     if (!_baseClasses.contains(name)) {

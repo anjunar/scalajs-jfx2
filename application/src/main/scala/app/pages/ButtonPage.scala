@@ -40,7 +40,7 @@ object ButtonPage {
           i18n"Several buttons may sit close together as long as their intent remains distinguishable."
         ) {
           hbox {
-            classes = "showcase-action-row"
+            classes = Seq("showcase-action-row")
             button(DemoI18n.text(i18n"Save")) {
               onClick { _ => dom.window.alert(DemoI18n.resolveNow(i18n"Saved.")) }
             }

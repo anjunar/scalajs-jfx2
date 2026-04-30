@@ -48,7 +48,7 @@ object InputPage {
               }
             }
             div {
-              classes = "showcase-result"
+              classes = Seq("showcase-result")
               val labelText = name.flatMap(v => DemoI18n.text(i18n"Input: $v"))
               text = labelText
             }
@@ -121,7 +121,7 @@ inputContainer("Enter name...") {
               }
 
               div {
-                classes = "showcase-result"
+                classes = Seq("showcase-result")
                 val info = user.name.flatMap(n => DemoI18n.text(i18n"Current user: ${I18n.named("name", n)} (${I18n.named("email", user.email.get)}) lives in ${I18n.named("city", user.address.get.city.get)}"))
                 text = info
               }
@@ -158,7 +158,7 @@ inputContainer("Enter name...") {
             style { gap = "18px" }
 
             div {
-              classes = "showcase-result"
+              classes = Seq("showcase-result")
               val countText = emails.asProperty.map(list => s"${list.length} email entries")
               text = countText
             }

@@ -114,23 +114,23 @@ object Main {
     )
 
     div {
-      classes = "app-shell"
+      classes = Seq("app-shell")
 
       drawer {
-        classes = "app-shell-drawer"
+        classes = Seq("app-shell-drawer")
         open = true
 
         drawerNavigation {
           div {
-            classes = "app-sidebar"
+            classes = Seq("app-sidebar")
             
             div {
-              classes = "app-sidebar__header"
-              div { classes = "app-sidebar__logo"; text = DemoI18n.text(i18n"JFX2 API") }
+              classes = Seq("app-sidebar__header")
+              div { classes = Seq("app-sidebar__logo"); text = DemoI18n.text(i18n"JFX2 API") }
             }
 
             div {
-              classes = "app-sidebar__nav"
+              classes = Seq("app-sidebar__nav")
               sidebarSection(i18n"Welcome")
               navLink("/", i18n"Discover", i18n"The JFX2 vision")
               
@@ -157,7 +157,7 @@ object Main {
             }
             
             div {
-              classes = "app-sidebar__footer"
+              classes = Seq("app-sidebar__footer")
               text = DemoI18n.text(i18n"Built with JFX2")
             }
           }
@@ -165,32 +165,32 @@ object Main {
 
         drawerContent {
           div {
-            classes = "app-main"
+            classes = Seq("app-main")
             
             div {
-              classes = "app-toolbar"
+              classes = Seq("app-toolbar")
               button("menu") {
                 classes = Seq("app-toolbar__menu-toggle", "material-icons")
                 onClick { _ => toggle() }
               }
               div {
-                classes = "app-toolbar__title"
+                classes = Seq("app-toolbar__title")
                 text = DemoI18n.text(i18n"Live Documentation")
               }
-              div { classes = "spacer"; style { flex = "1" } }
+              div { classes = Seq("spacer"); style { flex = "1" } }
               box("a") {
-                classes = "app-toolbar__scala-link"
+                classes = Seq("app-toolbar__scala-link")
                 attribute("href", "https://www.scala-js.org/")
                 attribute("target", "_blank")
                 attribute("rel", "noopener noreferrer")
                 image {
-                  classes = "app-toolbar__scala-badge"
+                  classes = Seq("app-toolbar__scala-badge")
                   src = "https://img.shields.io/badge/Scala.js-1.21.0-DC322F.svg?logo=scala&logoColor=white"
                   alt = "Scala.js 1.21.0"
                 }
               }
               box("a") {
-                classes = "app-toolbar__github"
+                classes = Seq("app-toolbar__github")
                 attribute("href", "https://github.com/anjunar/scalajs-jfx2")
                 attribute("target", "_blank")
                 attribute("rel", "noopener noreferrer")
@@ -220,7 +220,7 @@ object Main {
                 }
               }
               div {
-                classes = "app-toolbar__version"
+                classes = Seq("app-toolbar__version")
                 text = DemoI18n.text(i18n"v2.1.3")
               }
             }
@@ -228,15 +228,15 @@ object Main {
             viewport {
               style { flex = "1"; overflow = "auto" }
               div {
-                classes = "app-content-viewport"
+                classes = Seq("app-content-viewport")
                 router(routes, initialPath)
               }
             }
 
             div {
-              classes = "app-footer"
+              classes = Seq("app-footer")
               div {
-                classes = "app-footer__text"
+                classes = Seq("app-footer__text")
                 val year = new js.Date().getFullYear().toInt
                 text = DemoI18n.text(i18n"© $year Anjunar. Pure Scala.js Architecture.")
               }
@@ -301,20 +301,20 @@ object Main {
 
   private def sidebarSection(title: RuntimeMessage) = {
     div {
-      classes = "app-sidebar__section-title"
+      classes = Seq("app-sidebar__section-title")
       text = DemoI18n.text(title)
     }
   }
 
   private def navLink(path: String, label: RuntimeMessage, sub: RuntimeMessage)(using d: Drawer) = {
     link(path) {
-      classes = "app-nav-link"
+      classes = Seq("app-nav-link")
       div {
-        classes = "app-nav-link__label"
+        classes = Seq("app-nav-link__label")
         text = DemoI18n.text(label)
       }
       div {
-        classes = "app-nav-link__sub"
+        classes = Seq("app-nav-link__sub")
         text = DemoI18n.text(sub)
       }
       addDisposable(host.addEventListener("click", _ => {

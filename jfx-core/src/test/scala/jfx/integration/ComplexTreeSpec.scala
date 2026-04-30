@@ -19,24 +19,24 @@ class ComplexTreeSpec extends AnyFlatSpec with Matchers {
 
     val html = Ssr.renderToString {
       vbox {
-        classes = "root-vbox"
-        div { classes = "header"; text = "Title" }
+        classes = Seq("root-vbox")
+        div { classes = Seq("header"); text = "Title" }
         
         condition(showExtra) {
           thenDo {
-            div { classes = "extra-1"; text = "Extra 1" }
-            div { classes = "extra-2"; text = "Extra 2" }
+            div { classes = Seq("extra-1"); text = "Extra 1" }
+            div { classes = Seq("extra-2"); text = "Extra 2" }
           }
         }
 
         vbox {
-          classes = "list-container"
+          classes = Seq("list-container")
           forEach(items) { item =>
             div { classes = s"item-$item"; text = item }
           }
         }
 
-        div { classes = "footer"; text = "End" }
+        div { classes = Seq("footer"); text = "End" }
       }
     }
 
@@ -72,12 +72,12 @@ class ComplexTreeSpec extends AnyFlatSpec with Matchers {
     RenderBackend.withBackend(backend) {
       Ssr.renderToString {
         root = div {
-          div { classes = "pre"; text = "Pre" }
+          div { classes = Seq("pre"); text = "Pre" }
           
           condition(showSection) {
             thenDo {
               vbox {
-                classes = "inner-section"
+                classes = Seq("inner-section")
                 forEach(listItems) { i =>
                   div { classes = s"i-$i"; text = i.toString }
                 }
@@ -85,7 +85,7 @@ class ComplexTreeSpec extends AnyFlatSpec with Matchers {
             }
           }
 
-          div { classes = "post"; text = "Post" }
+          div { classes = Seq("post"); text = "Post" }
         }
         root
       }

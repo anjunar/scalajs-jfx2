@@ -50,7 +50,7 @@ object HydrationReproPage {
               }
 
               div {
-                classes = "showcase-result"
+                classes = Seq("showcase-result")
                 text = "Expected after direct hydration: title input = Hydrated title, editor text = Hydrated editor body."
               }
             }

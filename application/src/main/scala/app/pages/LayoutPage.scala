@@ -31,23 +31,23 @@ object LayoutPage {
           i18n"A denser layout shows how navigation, content, and detail areas emerge from a few building blocks."
         ) {
           hbox {
-            classes = "layout-shell-demo"
+            classes = Seq("layout-shell-demo")
             vbox {
-              classes = "layout-shell-demo__rail"
-              div { classes = "layout-shell-demo__brand"; text = DemoI18n.text(i18n"JFX2") }
+              classes = Seq("layout-shell-demo__rail")
+              div { classes = Seq("layout-shell-demo__brand"); text = DemoI18n.text(i18n"JFX2") }
               div { classes = "layout-shell-demo__nav is-active"; text = DemoI18n.text(i18n"Components") }
-              div { classes = "layout-shell-demo__nav"; text = DemoI18n.text(i18n"Forms") }
-              div { classes = "layout-shell-demo__nav"; text = DemoI18n.text(i18n"Data") }
+              div { classes = Seq("layout-shell-demo__nav"); text = DemoI18n.text(i18n"Forms") }
+              div { classes = Seq("layout-shell-demo__nav"); text = DemoI18n.text(i18n"Data") }
             }
             vbox {
-              classes = "layout-shell-demo__content"
-              div { classes = "layout-shell-demo__headline"; text = DemoI18n.text(i18n"Showcase surface") }
-              div { classes = "layout-shell-demo__copy"; text = DemoI18n.text(i18n"Navigation leads from the left, while the right side keeps room for the active component and its explanation.") }
+              classes = Seq("layout-shell-demo__content")
+              div { classes = Seq("layout-shell-demo__headline"); text = DemoI18n.text(i18n"Showcase surface") }
+              div { classes = Seq("layout-shell-demo__copy"); text = DemoI18n.text(i18n"Navigation leads from the left, while the right side keeps room for the active component and its explanation.") }
               hbox {
-                classes = "layout-shell-demo__tiles"
-                div { classes = "layout-shell-demo__tile"; text = DemoI18n.text(i18n"Live demo") }
-                div { classes = "layout-shell-demo__tile"; text = DemoI18n.text(i18n"API") }
-                div { classes = "layout-shell-demo__tile"; text = DemoI18n.text(i18n"Notes") }
+                classes = Seq("layout-shell-demo__tiles")
+                div { classes = Seq("layout-shell-demo__tile"); text = DemoI18n.text(i18n"Live demo") }
+                div { classes = Seq("layout-shell-demo__tile"); text = DemoI18n.text(i18n"API") }
+                div { classes = Seq("layout-shell-demo__tile"); text = DemoI18n.text(i18n"Notes") }
               }
             }
           }
@@ -61,13 +61,13 @@ object LayoutPage {
             style { gap = "10px" }
             hbox {
               style { gap = "10px" }
-              div { classes = "demo-box"; text = DemoI18n.text(i18n"H1") }
-              div { classes = "demo-box"; text = DemoI18n.text(i18n"H2") }
+              div { classes = Seq("demo-box"); text = DemoI18n.text(i18n"H1") }
+              div { classes = Seq("demo-box"); text = DemoI18n.text(i18n"H2") }
             }
             vbox {
               style { gap = "5px" }
-              div { classes = "demo-box"; text = DemoI18n.text(i18n"V1") }
-              div { classes = "demo-box"; text = DemoI18n.text(i18n"V2") }
+              div { classes = Seq("demo-box"); text = DemoI18n.text(i18n"V1") }
+              div { classes = Seq("demo-box"); text = DemoI18n.text(i18n"V2") }
             }
           }
         }

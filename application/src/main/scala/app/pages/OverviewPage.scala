@@ -38,12 +38,12 @@ object OverviewPage {
           i18n"The English source lives in Scala code. The catalog attaches multiple languages to exactly that one message."
         ) {
           vbox {
-            classes = "i18n-demo"
+            classes = Seq("i18n-demo")
 
             div {
-              classes = "i18n-demo__toolbar"
+              classes = Seq("i18n-demo__toolbar")
               div {
-                classes = "i18n-demo__locale"
+                classes = Seq("i18n-demo__locale")
                 text = DemoI18n.localeLabel.flatMap(locale => DemoI18n.text(i18n"Locale: $locale"))
               }
               button(DemoI18n.text(i18n"Switch locale")) {
@@ -53,7 +53,7 @@ object OverviewPage {
             }
 
             div {
-              classes = "i18n-demo__grid"
+              classes = Seq("i18n-demo__grid")
 
               i18nSample(
                 """i18n"Delete document"""",
@@ -97,11 +97,11 @@ object OverviewPage {
 
   private def i18nSample(source: String, resolved: ReadOnlyProperty[String]): Unit = {
     vbox {
-      classes = "i18n-demo__sample"
-      div { classes = "i18n-demo__label"; text = DemoI18n.text(i18n"Source") }
-      div { classes = "i18n-demo__source"; text = source }
-      div { classes = "i18n-demo__label"; text = DemoI18n.text(i18n"Resolved") }
-      div { classes = "i18n-demo__resolved"; text = resolved }
+      classes = Seq("i18n-demo__sample")
+      div { classes = Seq("i18n-demo__label"); text = DemoI18n.text(i18n"Source") }
+      div { classes = Seq("i18n-demo__source"); text = source }
+      div { classes = Seq("i18n-demo__label"); text = DemoI18n.text(i18n"Resolved") }
+      div { classes = Seq("i18n-demo__resolved"); text = resolved }
     }
   }
 }
