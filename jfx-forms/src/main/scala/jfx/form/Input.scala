@@ -101,6 +101,9 @@ object Input {
   def editable(using i: Input): Boolean = i.editableProperty.get
   def editable_=(value: Boolean)(using i: Input): Unit = i.editableProperty.set(value)
   def editableProperty(using i: Input): Property[Boolean] = i.editableProperty
+  def inputType(using i: Input): String = i.host.attribute("type").getOrElse("text")
+  def inputType_=(value: String)(using i: Input): Unit =
+    i.host.setAttribute("type", Option(value).filter(_.nonEmpty).getOrElse("text"))
   def stringValueProperty(using i: Input): Property[String] = i.stringValueProperty
   def validators(using i: Input): jfx.core.state.ListProperty[jfx.form.validators.Validator[String]] = i.validators
   def errorsProperty(using i: Input): jfx.core.state.ListProperty[String] = i.errorsProperty
