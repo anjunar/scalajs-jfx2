@@ -1,3 +1,3 @@
 import './index.css';
 
-export const version = '2.1.3';
+export const version = '2.2.0';

@@ -7,6 +7,10 @@ import org.scalajs.dom
 trait ComponentClassDsl {
   def classes(using c: Component): Seq[String] = c.classes
 
+  def classes_=(names: String)(using c: Component): Unit = {
+    c.classes = Seq(names)
+  }
+
   def classes_=(names: Seq[String])(using c: Component): Unit = {
     c.classes = names
   }

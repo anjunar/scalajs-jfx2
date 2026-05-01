@@ -14,7 +14,7 @@ final class DomHostElement(val tagName: String, private var _element: dom.Elemen
   def element: dom.Element = _element
 
   /**
-   * Updates the underlying DOM element. 
+   * Updates the underlying DOM element.
    * Used during rehydration to move a component from a dry-run node to a real DOM node.
    */
   def updateElement(newElement: dom.Element): Unit = {

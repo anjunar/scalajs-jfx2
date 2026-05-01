@@ -12,13 +12,13 @@ import org.scalajs.dom.{Event, HTMLDivElement, HTMLElement, window}
 import scala.collection.mutable
 import scala.scalajs.js
 
-class Editor(val name: String, override val standalone: Boolean = false)
+class Editor(val $name: String, override val $standalone: Boolean = false)
     extends ClientSideComponent
     with Control[js.Any | Null] {
 
   override def tagName: String = "div"
 
-  override val valueProperty: Property[js.Any | Null] = Property(null)
+  override val $valueProperty: Property[js.Any | Null] = Property(null)
 
   private var lexicalEditor: LexicalEditor | Null = null
   private var previewElement: HTMLElement | Null = null
@@ -39,14 +39,14 @@ class Editor(val name: String, override val standalone: Boolean = false)
     addClass("editor")
     addClass("jfx-editor-host")
 
-    addDisposable(valueProperty.observe(_ => validate()))
-    addDisposable(valueProperty.observeWithoutInitial(syncExternalValue))
-    addDisposable(validators.observe(_ => validate()))
-    addDisposable(dirtyProperty.observe(_ => validate()))
-    addDisposable(placeholderProperty.observe(_ => refreshPlaceholder()))
-    addDisposable(editableProperty.observe(editable => updateEditable(editable)))
+    addDisposable($valueProperty.observe(_ => validate()))
+    addDisposable($valueProperty.observeWithoutInitial(syncExternalValue))
+    addDisposable($validators.observe(_ => validate()))
+    addDisposable($dirtyProperty.observe(_ => validate()))
+    addDisposable($placeholderProperty.observe(_ => refreshPlaceholder()))
+    addDisposable($editableProperty.observe(editable => updateEditable(editable)))
 
-    if (!standalone) {
+    if (!$standalone) {
       try {
         val formContext = DslRuntime.service[FormContext]
         formContext.registerControl(this)
@@ -65,7 +65,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
 
   private def renderFallbackContent(): Unit = {
     given Component = this
-    val previewText = extractPreviewText(valueProperty.get)
+    val previewText = extractPreviewText($valueProperty.get)
 
     div {
       addClass("jfx-editor")
@@ -87,10 +87,10 @@ class Editor(val name: String, override val standalone: Boolean = false)
 
           div {
             addClass("jfx-editor__placeholder")
-            visible = placeholderProperty.map { placeholder =>
+            visible = $placeholderProperty.map { placeholder =>
               previewText.isEmpty && Option(placeholder).exists(_.trim.nonEmpty)
             }
-            text = placeholderProperty.map(value => Option(value).map(_.trim).getOrElse(""))
+            text = $placeholderProperty.map(value => Option(value).map(_.trim).getOrElse(""))
           }
         }
       }
@@ -102,9 +102,9 @@ class Editor(val name: String, override val standalone: Boolean = false)
 
     div {
       addClass("jfx-editor__toolbar")
-      visible = editableProperty.get && elements.nonEmpty
+      visible = $editableProperty.get && elements.nonEmpty
 
-      if (editableProperty.get && elements.nonEmpty) {
+      if ($editableProperty.get && elements.nonEmpty) {
         val model = new ToolbarRegistry(elements.toList).getModel
 
         div {
@@ -214,7 +214,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
             }
 
             EditorLiveRoot(_ => ())
-            EditorPlaceholder(placeholderProperty, _ => ())
+            EditorPlaceholder($placeholderProperty, _ => ())
           }
         }
       }
@@ -323,13 +323,13 @@ class Editor(val name: String, override val standalone: Boolean = false)
     registerDomListeners(root.nn)
     root.nn.style.opacity = "0"
 
-    val initialValue = valueProperty.get
+    val initialValue = $valueProperty.get
 
     val builder =
       new LexicalBuilder()
-        .withNamespace(name)
+        .withNamespace($name)
         .withTheme(defaultTheme())
-        .withEditable(editableProperty.get)
+        .withEditable($editableProperty.get)
         .withNodes(defaultNodes())
         .withModules(collectModules()*)
 
@@ -343,7 +343,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
 
     root.nn.setAttribute("role", "textbox")
     root.nn.setAttribute("aria-multiline", "true")
-    syncEditableSurface(editableProperty.get)
+    syncEditableSurface($editableProperty.get)
 
     if (initialValue != null) {
       lastSeenValueJson = js.JSON.stringify(initialValue)
@@ -363,7 +363,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
   }
 
   private def destroyEditorView(): Unit = {
-    focusedProperty.set(false)
+    $focusedProperty.set(false)
 
     if (editorUnregister != null) {
       try editorUnregister.nn.apply()
@@ -405,8 +405,8 @@ class Editor(val name: String, override val standalone: Boolean = false)
   }
 
   private def registerDomListeners(surface: HTMLDivElement): Unit = {
-    val focusInListener: Event => Unit = _ => focusedProperty.set(true)
-    val focusOutListener: Event => Unit = _ => focusedProperty.set(false)
+    val focusInListener: Event => Unit = _ => $focusedProperty.set(true)
+    val focusOutListener: Event => Unit = _ => $focusedProperty.set(false)
 
     surface.addEventListener("focusin", focusInListener)
     surface.addEventListener("focusout", focusOutListener)
@@ -440,7 +440,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
     if (toolbarHost != null) {
       val elements = collectToolbarElements()
       val host = toolbarHost.nn
-      val showToolbar = editableProperty.get && elements.nonEmpty
+      val showToolbar = $editableProperty.get && elements.nonEmpty
 
       if (elements.isEmpty) {
         host.innerHTML = ""
@@ -481,11 +481,11 @@ class Editor(val name: String, override val standalone: Boolean = false)
       setDirty(true)
     }
 
-    valueProperty.set(state)
+    $valueProperty.set(state)
   }
 
   private def previewProperty: ReadOnlyProperty[String] =
-    valueProperty.map(value => extractPreviewText(value).getOrElse(""))
+    $valueProperty.map(value => extractPreviewText(value).getOrElse(""))
 
   private def markClientReady(): Unit = {
     if (liveRoot != null) {
@@ -524,7 +524,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
 
   private def refreshPlaceholder(): Unit =
     if (placeholderElement != null && lexicalEditor != null) {
-      val text = Option(placeholderProperty.get).map(_.trim).getOrElse("")
+      val text = Option($placeholderProperty.get).map(_.trim).getOrElse("")
       placeholderElement.nn.textContent = text
       placeholderElement.nn.style.display =
         if (text.isEmpty || !editorIsEmpty(lexicalEditor.nn)) "none"
@@ -532,7 +532,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
     } else if (placeholderElement != null) {
       val previewEmpty = previewProperty.get.trim.isEmpty
       placeholderElement.nn.style.display =
-        if (Option(placeholderProperty.get).forall(_.trim.isEmpty) || !previewEmpty) "none"
+        if (Option($placeholderProperty.get).forall(_.trim.isEmpty) || !previewEmpty) "none"
         else ""
     }
 
@@ -594,7 +594,7 @@ class Editor(val name: String, override val standalone: Boolean = false)
     )
 
   private def collectToolbarElements(): Seq[ToolbarElement] =
-    pluginComponents.iterator.flatMap(_.toolbarElements).toSeq
+    pluginComponents.iterator.flatMap(_.$toolbarElements).toSeq
 
   private def collectModules(): Seq[EditorModule] =
     (
@@ -622,31 +622,31 @@ object Editor {
     DslRuntime.build(new Editor(name, standalone))(init)
 
   def value(using e: Editor): js.Any | Null =
-    e.valueProperty.get
+    e.$valueProperty.get
 
   def value_=(using e: Editor)(nextValue: js.Any | Null): Unit =
-    e.valueProperty.set(nextValue)
+    e.$valueProperty.set(nextValue)
 
   def valueProperty(using e: Editor): Property[js.Any | Null] =
-    e.valueProperty
+    e.$valueProperty
 
   def placeholder(using e: Editor): String =
-    e.placeholder
+    e.$placeholder
 
   def placeholder_=(using e: Editor)(value: String): Unit =
-    e.placeholder = value
+    e.$placeholder = value
 
   def placeholder_=(using e: Editor)(value: ReadOnlyProperty[String]): Unit =
-    e.placeholder = value
+    e.$placeholder = value
 
   def editable(using e: Editor): Boolean =
-    e.editableProperty.get
+    e.$editableProperty.get
 
   def editable_=(using e: Editor)(value: Boolean): Unit =
-    e.editableProperty.set(value)
+    e.$editableProperty.set(value)
 
   def editableProperty(using e: Editor): Property[Boolean] =
-    e.editableProperty
+    e.$editableProperty
 }
 
 private final class EditorLiveRoot(onReady: HTMLDivElement => Unit) extends Component {

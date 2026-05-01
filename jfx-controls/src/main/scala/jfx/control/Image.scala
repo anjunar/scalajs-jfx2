@@ -10,8 +10,8 @@ import jfx.statement.Condition.*
 class Image extends Component {
   override def tagName: String = "div"
 
-  val srcProperty: Property[String] = Property("")
-  val altProperty: Property[String] = Property("")
+  val $srcProperty: Property[String] = Property("")
+  val $altProperty: Property[String] = Property("")
 
   override def compose(): Unit = {
     given Component = this
@@ -22,9 +22,9 @@ class Image extends Component {
       background = "var(--aj-canvas)"
     }
 
-    condition(srcProperty.map(value => Option(value).exists(_.trim.nonEmpty))) {
+    condition($srcProperty.map(value => Option(value).exists(_.trim.nonEmpty))) {
       thenDo {
-        ImageNode(srcProperty, altProperty)
+        ImageNode($srcProperty, $altProperty)
       }
     }
   }
@@ -35,16 +35,16 @@ object Image {
     DslRuntime.build(new Image())(init)
   }
 
-  def src(using i: Image): String = i.srcProperty.get
-  def src_=(value: String)(using i: Image): Unit = i.srcProperty.set(Option(value).getOrElse(""))
+  def src(using i: Image): String = i.$srcProperty.get
+  def src_=(value: String)(using i: Image): Unit = i.$srcProperty.set(Option(value).getOrElse(""))
   def src_=(value: ReadOnlyProperty[String])(using i: Image): Unit = {
-    i.addDisposable(value.observe(v => i.srcProperty.set(Option(v).getOrElse(""))))
+    i.addDisposable(value.observe(v => i.$srcProperty.set(Option(v).getOrElse(""))))
   }
 
-  def alt(using i: Image): String = i.altProperty.get
-  def alt_=(value: String)(using i: Image): Unit = i.altProperty.set(Option(value).getOrElse(""))
+  def alt(using i: Image): String = i.$altProperty.get
+  def alt_=(value: String)(using i: Image): Unit = i.$altProperty.set(Option(value).getOrElse(""))
   def alt_=(value: ReadOnlyProperty[String])(using i: Image): Unit = {
-    i.addDisposable(value.observe(v => i.altProperty.set(Option(v).getOrElse(""))))
+    i.addDisposable(value.observe(v => i.$altProperty.set(Option(v).getOrElse(""))))
   }
 }
 

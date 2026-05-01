@@ -32,7 +32,7 @@ class ComplexTreeSpec extends AnyFlatSpec with Matchers {
         vbox {
           classes = Seq("list-container")
           forEach(items) { item =>
-            div { classes = s"item-$item"; text = item }
+            div { classes = Seq(s"item-$item"); text = item }
           }
         }
 

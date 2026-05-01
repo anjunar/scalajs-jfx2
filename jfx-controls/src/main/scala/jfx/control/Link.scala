@@ -21,12 +21,12 @@ class Link(initialHref: String) extends Box("a") {
 
   private def activate(event: dom.MouseEvent): Unit = {
     event.preventDefault()
-    window.history.pushState(null, "", href)
+    window.history.pushState(null, "", $href)
     window.dispatchEvent(new dom.Event("popstate"))
   }
 
-  def href: String = host.attribute("href").getOrElse("")
-  def href_=(value: String): Unit = host.setAttribute("href", RouterConfig.resolve(value))
+  def $href: String = host.attribute("href").getOrElse("")
+  def $href_=(value: String): Unit = host.setAttribute("href", RouterConfig.resolve(value))
 }
 
 object Link {
@@ -34,6 +34,6 @@ object Link {
     DslRuntime.build(new Link(href))(init)
   }
 
-  def href(using l: Link): String = l.href
-  def href_=(value: String)(using l: Link): Unit = l.href = value
+  def href(using l: Link): String = l.$href
+  def href_=(value: String)(using l: Link): Unit = l.$href = value
 }

@@ -7,20 +7,20 @@ import jfx.dsl.{ComponentContext, DslRuntime, StyleProxy}
 import scala.compiletime.uninitialized
 
 class Drawer extends Box("div") {
-  val openProperty = Property(false)
-  val drawerWidthProperty = Property("280px")
-  val sideProperty = Property(Drawer.Side.Start)
-  val closeOnScrimClickProperty = Property(true)
+  val $openProperty = Property(false)
+  val $drawerWidthProperty = Property("280px")
+  val $sideProperty = Property(Drawer.Side.Start)
+  val $closeOnScrimClickProperty = Property(true)
 
   private var _navigationHost: Box = uninitialized
   private var _contentHost: Box = uninitialized
 
-  def navigationHost: Box = _navigationHost
-  def contentHost: Box = _contentHost
+  def $navigationHost: Box = _navigationHost
+  def $contentHost: Box = _contentHost
 
   private val panelShellWidthProperty =
-    openProperty.flatMap { open =>
-      drawerWidthProperty.map { width =>
+    $openProperty.flatMap { open =>
+      $drawerWidthProperty.map { width =>
         if (open) s"min(92vw, $width)" else "0px"
       }
     }
@@ -28,9 +28,9 @@ class Drawer extends Box("div") {
   override def compose(): Unit = {
     given Component = this
     addBaseClass("jfx-drawer")
-    classIf("jfx-drawer--open", openProperty)
-    classIf("jfx-drawer--start", sideProperty.map(_ == Drawer.Side.Start))
-    classIf("jfx-drawer--end", sideProperty.map(_ == Drawer.Side.End))
+    classIf("jfx-drawer--open", $openProperty)
+    classIf("jfx-drawer--start", $sideProperty.map(_ == Drawer.Side.Start))
+    classIf("jfx-drawer--end", $sideProperty.map(_ == Drawer.Side.End))
     
     style { 
       display = "flex"
@@ -52,7 +52,7 @@ class Drawer extends Box("div") {
         style { 
           height = "100%"
           overflow = "hidden"
-          width_=(drawerWidthProperty)
+          width_=($drawerWidthProperty)
         }
         
         _navigationHost = Box.box("div") {
@@ -69,8 +69,8 @@ class Drawer extends Box("div") {
     Box.box("div") {
       addClass("jfx-drawer__scrim")
       onClick { _ =>
-        if (closeOnScrimClickProperty.get && openProperty.get) {
-          openProperty.set(false)
+        if ($closeOnScrimClickProperty.get && $openProperty.get) {
+          $openProperty.set(false)
         }
       }
     }
@@ -87,8 +87,8 @@ class Drawer extends Box("div") {
     }
 
     onWindowKeyDown { event =>
-      if (event.key == "Escape" && openProperty.get) {
-        openProperty.set(false)
+      if (event.key == "Escape" && $openProperty.get) {
+        $openProperty.set(false)
       }
     }
   }
@@ -102,26 +102,26 @@ object Drawer {
   }
 
   def drawerNavigation(init: => Unit)(using d: Drawer): Unit = {
-    DslRuntime.withComponentScope(d.navigationHost) {
+    DslRuntime.withComponentScope(d.$navigationHost) {
       init
     }
   }
 
   def drawerContent(init: => Unit)(using d: Drawer): Unit = {
-    DslRuntime.withComponentScope(d.contentHost) {
+    DslRuntime.withComponentScope(d.$contentHost) {
       init
     }
   }
 
-  def open(using d: Drawer): Boolean = d.openProperty.get
-  def open_=(v: Boolean)(using d: Drawer): Unit = d.openProperty.set(v)
-  def openProperty(using d: Drawer): Property[Boolean] = d.openProperty
+  def open(using d: Drawer): Boolean = d.$openProperty.get
+  def open_=(v: Boolean)(using d: Drawer): Unit = d.$openProperty.set(v)
+  def openProperty(using d: Drawer): Property[Boolean] = d.$openProperty
   
-  def side(using d: Drawer): Side = d.sideProperty.get
-  def side_=(s: Side)(using d: Drawer): Unit = d.sideProperty.set(s)
+  def side(using d: Drawer): Side = d.$sideProperty.get
+  def side_=(s: Side)(using d: Drawer): Unit = d.$sideProperty.set(s)
 
-  def drawerWidth(using d: Drawer): String = d.drawerWidthProperty.get
-  def drawerWidth_=(w: String)(using d: Drawer): Unit = d.drawerWidthProperty.set(w)
+  def drawerWidth(using d: Drawer): String = d.$drawerWidthProperty.get
+  def drawerWidth_=(w: String)(using d: Drawer): Unit = d.$drawerWidthProperty.set(w)
 
-  def toggle()(using d: Drawer): Unit = d.openProperty.set(!d.openProperty.get)
+  def toggle()(using d: Drawer): Unit = d.$openProperty.set(!d.$openProperty.get)
 }

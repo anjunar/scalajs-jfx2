@@ -16,47 +16,47 @@ import scala.compiletime.uninitialized
 import scala.math.{abs, max, min}
 import scala.util.control.NonFatal
 
-class ImageCropper(val name: String, override val standalone: Boolean = false) extends Component with Control[Media] {
+class ImageCropper(val $name: String, override val $standalone: Boolean = false) extends Component with Control[Media] {
 
   override def tagName: String = "div"
 
-  override val valueProperty: Property[Media] = Property(null)
+  override val $valueProperty: Property[Media] = Property(null)
 
-  val sourceProperty: Property[Media] = Property(null)
-  val fileProperty: Property[File] = Property(null)
-  val validatorsProperty: ListProperty[ImageCropper.Validator] = ListProperty()
+  val $sourceProperty: Property[Media] = Property(null)
+  val $fileProperty: Property[File] = Property(null)
+  val $validatorsProperty: ListProperty[ImageCropper.Validator] = ListProperty()
 
-  var aspectRatio: Option[Double] = None
-  var previewMaxWidth: Int = 480
-  var previewMaxHeight: Int = 360
+  var $aspectRatio: Option[Double] = None
+  var $previewMaxWidth: Int = 480
+  var $previewMaxHeight: Int = 360
 
-  var outputType: String = "image/png"
-  var outputQuality: Double = 0.92
-  var outputMaxWidth: Option[Int] = None
-  var outputMaxHeight: Option[Int] = None
+  var $outputType: String = "image/png"
+  var $outputQuality: Double = 0.92
+  var $outputMaxWidth: Option[Int] = None
+  var $outputMaxHeight: Option[Int] = None
 
-  var thumbnailMaxWidth: Int = 160
-  var thumbnailMaxHeight: Int = 160
-  var windowTitle: String = "Crop image"
+  var $thumbnailMaxWidth: Int = 160
+  var $thumbnailMaxHeight: Int = 160
+  var $windowTitle: String = "Crop image"
 
   private var fileInput: ImageCropperFileInput = null
   private val previewSrcProperty: Property[String] = Property("")
   private val previewPlaceholderVisibleProperty: Property[Boolean] = Property(true)
 
   def disabled: Boolean =
-    !editableProperty.get
+    !$editableProperty.get
 
   def disabled_=(value: Boolean): Unit =
-    editableProperty.set(!value)
+    $editableProperty.set(!value)
 
   def addValidator(validator: ImageCropper.Validator): Unit =
-    validatorsProperty += validator
+    $validatorsProperty += validator
 
   def observeValue(listener: Media => Unit): Disposable =
-    valueProperty.observe(listener)
+    $valueProperty.observe(listener)
 
   def read(): Media =
-    valueProperty.get
+    $valueProperty.get
 
   override def compose(): Unit = {
     given Component = this
@@ -74,18 +74,18 @@ class ImageCropper(val name: String, override val standalone: Boolean = false) e
       }
 
       button() {
-        text = valueProperty.map(v => if (v != null) "Replace image" else "Choose image")
-        visible = editableProperty
+        text = $valueProperty.map(v => if (v != null) "Replace image" else "Choose image")
+        visible = $editableProperty
         onClick { _ => if (fileInput != null) fileInput.click() }
       }
 
       button("Crop") {
-        visible = editableProperty.flatMap(e => sourceProperty.map(s => e && s != null))
+        visible = $editableProperty.flatMap(e => $sourceProperty.map(s => e && s != null))
         onClick { _ => currentSource().foreach(openCropWindow) }
       }
 
       button("Clear") {
-        visible = editableProperty.flatMap(e => valueProperty.map(v => e && v != null))
+        visible = $editableProperty.flatMap(e => $valueProperty.map(v => e && v != null))
         onClick { _ => 
           setDirty(true)
           clear() 
@@ -113,7 +113,7 @@ class ImageCropper(val name: String, override val standalone: Boolean = false) e
         addClass("preview")
         visible = previewSrcProperty.map(_.nonEmpty)
         src = previewSrcProperty
-        alt = placeholderProperty.map(placeholderText)
+        alt = $placeholderProperty.map(placeholderText)
         style {
           width = "100%"
           height = "100%"
@@ -136,21 +136,21 @@ class ImageCropper(val name: String, override val standalone: Boolean = false) e
           padding = "16px"
           color = "var(--aj-ink-muted)"
         }
-        text = placeholderProperty.map(p => if (p.trim.isEmpty) "No image selected" else p)
+        text = $placeholderProperty.map(p => if (p.trim.isEmpty) "No image selected" else p)
       }
     }
 
-    addDisposable(valueProperty.observe { value =>
-      sourceProperty.set(value)
+    addDisposable($valueProperty.observe { value =>
+      $sourceProperty.set(value)
       syncPreview(value)
       validate()
     })
 
-    addDisposable(validators.observe(_ => validate()))
-    addDisposable(validatorsProperty.observe(_ => validate()))
-    addDisposable(dirtyProperty.observe(_ => validate()))
+    addDisposable($validators.observe(_ => validate()))
+    addDisposable($validatorsProperty.observe(_ => validate()))
+    addDisposable($dirtyProperty.observe(_ => validate()))
 
-    if (!standalone) {
+    if (!$standalone) {
       try {
         val formContext = DslRuntime.service[FormContext]
         formContext.registerControl(this)
@@ -165,7 +165,7 @@ class ImageCropper(val name: String, override val standalone: Boolean = false) e
     if (fileInput == null) return
 
     val selectedFile = Option(fileInput.files).flatMap(files => Option(files.item(0))).orNull
-    fileProperty.set(selectedFile)
+    $fileProperty.set(selectedFile)
 
     if (selectedFile != null) {
       val reader = new FileReader()
@@ -174,8 +174,8 @@ class ImageCropper(val name: String, override val standalone: Boolean = false) e
         dataUrl.foreach { encoded =>
           val media = mediaFromFile(selectedFile, encoded)
           setDirty(true)
-          sourceProperty.set(media)
-          valueProperty.set(media)
+          $sourceProperty.set(media)
+          $valueProperty.set(media)
           openCropWindow(media)
         }
       }
@@ -184,19 +184,19 @@ class ImageCropper(val name: String, override val standalone: Boolean = false) e
   }
 
   private def currentSource(): Option[Media] =
-    Option(sourceProperty.get).orElse(Option(valueProperty.get))
+    Option($sourceProperty.get).orElse(Option($valueProperty.get))
       .filter(media => Option(media.data.get).exists(_.trim.nonEmpty))
 
   private def openCropWindow(source: Media): Unit = {
     if (source == null || Option(source.data.get).forall(_.trim.isEmpty)) return
 
     val session = ImageCropperDialog.ImageCropperSession(
-      initialValue = valueProperty.get,
-      initialDirty = dirtyProperty.get
+      initialValue = $valueProperty.get,
+      initialDirty = $dirtyProperty.get
     )
 
     val conf = new Viewport.WindowConf(
-      title = windowTitle,
+      title = $windowTitle,
       component = () => ImageCropperDialog.build(this, source, session),
       onClose = Some { _ =>
         cancelCropSession(session)
@@ -216,7 +216,7 @@ class ImageCropper(val name: String, override val standalone: Boolean = false) e
     session.applied = true
     session.closed = true
     setDirty(true)
-    valueProperty.set(media)
+    $valueProperty.set(media)
     closeCropWindow(session)
   }
 
@@ -226,9 +226,9 @@ class ImageCropper(val name: String, override val standalone: Boolean = false) e
     session.closed = true
     if (!session.applied) {
       if (fileInput != null) fileInput.value = ""
-      fileProperty.set(null)
-      valueProperty.set(session.initialValue)
-      dirtyProperty.set(session.initialDirty)
+      $fileProperty.set(null)
+      $valueProperty.set(session.initialValue)
+      $dirtyProperty.set(session.initialDirty)
     }
   }
 
@@ -241,7 +241,7 @@ class ImageCropper(val name: String, override val standalone: Boolean = false) e
   private def mediaFromFile(file: File, dataUrl: String): Media = {
     val fileName = Option(file.name).getOrElse("")
     val contentType = Option(file.`type`).map(_.trim).filter(_.nonEmpty)
-      .orElse(ImageCropper.mimeTypeFromDataUrl(dataUrl)).getOrElse(outputType)
+      .orElse(ImageCropper.mimeTypeFromDataUrl(dataUrl)).getOrElse($outputType)
 
     val base64 = ImageCropper.base64FromDataUrl(dataUrl).getOrElse(dataUrl)
 
@@ -286,19 +286,19 @@ class ImageCropper(val name: String, override val standalone: Boolean = false) e
 
   override def validate(forceVisible: Boolean = false): Seq[String] = {
     val errors =
-      if (!editableProperty.get) Seq.empty
+      if (!$editableProperty.get) Seq.empty
       else {
-        val mediaErrors = validators.iterator.flatMap(_.validate(valueProperty.get)).toSeq
-        val currentData = Option(valueProperty.get).flatMap(media => Option(media.data.get)).getOrElse("")
-        val imageErrors = validatorsProperty.iterator.filterNot(_.validate(currentData)).map(_.message).toSeq
+        val mediaErrors = $validators.iterator.flatMap(_.validate($valueProperty.get)).toSeq
+        val currentData = Option($valueProperty.get).flatMap(media => Option(media.data.get)).getOrElse("")
+        val imageErrors = $validatorsProperty.iterator.filterNot(_.validate(currentData)).map(_.message).toSeq
         mediaErrors ++ imageErrors
       }
 
-    if (forceVisible || dirtyProperty.get) {
+    if (forceVisible || $dirtyProperty.get) {
       if (forceVisible) setDirty(true)
-      errorsProperty.setAll(errors)
+      $errorsProperty.setAll(errors)
     } else {
-      errorsProperty.setAll(Nil)
+      $errorsProperty.setAll(Nil)
     }
 
     errors
@@ -306,9 +306,9 @@ class ImageCropper(val name: String, override val standalone: Boolean = false) e
 
   private def clear(): Unit = {
     if (fileInput != null) fileInput.value = ""
-    fileProperty.set(null)
-    sourceProperty.set(null)
-    valueProperty.set(null)
+    $fileProperty.set(null)
+    $sourceProperty.set(null)
+    $valueProperty.set(null)
   }
 }
 
@@ -454,7 +454,7 @@ private final class ImageCropperDialog(
     else if (data.startsWith("data:") || data.startsWith("http://") || data.startsWith("https://") || data.startsWith("blob:")) data
     else {
       val contentType = Option(media.contentType.get).map(_.trim).filter(_.nonEmpty)
-        .getOrElse(Option(field.outputType).map(_.trim).filter(_.nonEmpty).getOrElse("image/png"))
+        .getOrElse(Option(field.$outputType).map(_.trim).filter(_.nonEmpty).getOrElse("image/png"))
 
       s"data:$contentType;base64,$data"
     }
@@ -463,7 +463,7 @@ private final class ImageCropperDialog(
   private def setupCanvasFor(image: HTMLImageElement): Unit = {
     val width = max(1, image.naturalWidth)
     val height = max(1, image.naturalHeight)
-    val scale = min(1.0, min(field.previewMaxWidth.toDouble / width, field.previewMaxHeight.toDouble / height))
+    val scale = min(1.0, min(field.$previewMaxWidth.toDouble / width, field.$previewMaxHeight.toDouble / height))
     previewScale = scale
     mainCanvas.width = max(1, math.round(width * scale).toInt)
     mainCanvas.height = max(1, math.round(height * scale).toInt)
@@ -472,7 +472,7 @@ private final class ImageCropperDialog(
   private def defaultCrop(): ImageCropperDialog.CropRect = {
     val cw = mainCanvas.width.toDouble
     val ch = mainCanvas.height.toDouble
-    field.aspectRatio match {
+    field.$aspectRatio match {
       case Some(ratio) if ratio > 0.0 =>
         var w = cw
         var h = w / ratio
@@ -529,7 +529,7 @@ private final class ImageCropperDialog(
         livePending = false
         if (!session.closed) {
           val media = cropToMedia()
-          if (media != null) field.valueProperty.set(media)
+          if (media != null) field.$valueProperty.set(media)
         }
       }
     }
@@ -572,7 +572,7 @@ private final class ImageCropperDialog(
         val canvasWidth = mainCanvas.width.toDouble
         val canvasHeight = mainCanvas.height.toDouble
         val minSize = 8.0
-        val ratio = field.aspectRatio.filter(_ > 0.0)
+        val ratio = field.$aspectRatio.filter(_ > 0.0)
 
         def clampMove(x: Double, y: Double, width: Double, height: Double): ImageCropperDialog.CropRect =
           ImageCropperDialog.CropRect(
@@ -748,10 +748,10 @@ private final class ImageCropperDialog(
     var ow = max(1, math.round(sw).toInt)
     var oh = max(1, math.round(sh).toInt)
 
-    if (field.outputMaxWidth.exists(ow > _) || field.outputMaxHeight.exists(oh > _)) {
+    if (field.$outputMaxWidth.exists(ow > _) || field.$outputMaxHeight.exists(oh > _)) {
       val scale = min(
-        field.outputMaxWidth.map(_.toDouble / ow.toDouble).getOrElse(1.0),
-        field.outputMaxHeight.map(_.toDouble / oh.toDouble).getOrElse(1.0)
+        field.$outputMaxWidth.map(_.toDouble / ow.toDouble).getOrElse(1.0),
+        field.$outputMaxHeight.map(_.toDouble / oh.toDouble).getOrElse(1.0)
       )
       ow = max(1, math.round(ow.toDouble * scale).toInt)
       oh = max(1, math.round(oh.toDouble * scale).toInt)
@@ -766,8 +766,8 @@ private final class ImageCropperDialog(
     ctx.clearRect(0.0, 0.0, ow.toDouble, oh.toDouble)
     ctx.drawImage(loadedImage, sx, sy, sw, sh, 0.0, 0.0, ow.toDouble, oh.toDouble)
 
-    val contentType = Option(field.outputType).map(_.trim).filter(_.nonEmpty).getOrElse("image/png")
-    val dataUrl = outCanvas.toDataURL(contentType, field.outputQuality)
+    val contentType = Option(field.$outputType).map(_.trim).filter(_.nonEmpty).getOrElse("image/png")
+    val dataUrl = outCanvas.toDataURL(contentType, field.$outputQuality)
     val thumbData = ImageCropper.base64FromDataUrl(dataUrl).getOrElse(dataUrl)
     val sourceName = Option(source.name.get).getOrElse("")
     val sourceContentType = Option(source.contentType.get).map(_.trim).filter(_.nonEmpty).getOrElse(contentType)
@@ -818,56 +818,56 @@ object ImageCropper {
   def imageCropper(name: String, standalone: Boolean = false)(init: ImageCropper ?=> Unit): ImageCropper =
     DslRuntime.build(new ImageCropper(name, standalone))(init)
 
-  def value(using c: ImageCropper): Media = c.valueProperty.get
-  def value_=(using c: ImageCropper)(media: Media): Unit = c.valueProperty.set(media)
+  def value(using c: ImageCropper): Media = c.$valueProperty.get
+  def value_=(using c: ImageCropper)(media: Media): Unit = c.$valueProperty.set(media)
 
-  def valueProperty(using c: ImageCropper): Property[Media] = c.valueProperty
+  def valueProperty(using c: ImageCropper): Property[Media] = c.$valueProperty
 
-  def placeholder(using c: ImageCropper): String = c.placeholder
-  def placeholder_=(using c: ImageCropper)(value: String): Unit = c.placeholder = value
-  def placeholder_=(using c: ImageCropper)(value: ReadOnlyProperty[String]): Unit = c.placeholder = value
+  def placeholder(using c: ImageCropper): String = c.$placeholder
+  def placeholder_=(using c: ImageCropper)(value: String): Unit = c.$placeholder = value
+  def placeholder_=(using c: ImageCropper)(value: ReadOnlyProperty[String]): Unit = c.$placeholder = value
 
-  def editable(using c: ImageCropper): Boolean = c.editable
-  def editable_=(using c: ImageCropper)(value: Boolean): Unit = c.editable = value
-  def editableProperty(using c: ImageCropper): Property[Boolean] = c.editableProperty
+  def editable(using c: ImageCropper): Boolean = c.$editable
+  def editable_=(using c: ImageCropper)(value: Boolean): Unit = c.$editable = value
+  def editableProperty(using c: ImageCropper): Property[Boolean] = c.$editableProperty
 
   def disabled(using c: ImageCropper): Boolean = c.disabled
   def disabled_=(using c: ImageCropper)(value: Boolean): Unit = c.disabled = value
 
-  def aspectRatio(using c: ImageCropper): Option[Double] = c.aspectRatio
-  def aspectRatio_=(using c: ImageCropper)(value: Double): Unit = c.aspectRatio = Some(value)
-  def aspectRatio_=(using c: ImageCropper)(value: Option[Double]): Unit = c.aspectRatio = value
+  def aspectRatio(using c: ImageCropper): Option[Double] = c.$aspectRatio
+  def aspectRatio_=(using c: ImageCropper)(value: Double): Unit = c.$aspectRatio = Some(value)
+  def aspectRatio_=(using c: ImageCropper)(value: Option[Double]): Unit = c.$aspectRatio = value
 
-  def previewMaxWidth(using c: ImageCropper): Int = c.previewMaxWidth
-  def previewMaxWidth_=(using c: ImageCropper)(value: Int): Unit = c.previewMaxWidth = value
+  def previewMaxWidth(using c: ImageCropper): Int = c.$previewMaxWidth
+  def previewMaxWidth_=(using c: ImageCropper)(value: Int): Unit = c.$previewMaxWidth = value
 
-  def previewMaxHeight(using c: ImageCropper): Int = c.previewMaxHeight
-  def previewMaxHeight_=(using c: ImageCropper)(value: Int): Unit = c.previewMaxHeight = value
+  def previewMaxHeight(using c: ImageCropper): Int = c.$previewMaxHeight
+  def previewMaxHeight_=(using c: ImageCropper)(value: Int): Unit = c.$previewMaxHeight = value
 
-  def outputType(using c: ImageCropper): String = c.outputType
-  def outputType_=(using c: ImageCropper)(value: String): Unit = c.outputType = value
+  def outputType(using c: ImageCropper): String = c.$outputType
+  def outputType_=(using c: ImageCropper)(value: String): Unit = c.$outputType = value
 
-  def outputQuality(using c: ImageCropper): Double = c.outputQuality
-  def outputQuality_=(using c: ImageCropper)(value: Double): Unit = c.outputQuality = value
+  def outputQuality(using c: ImageCropper): Double = c.$outputQuality
+  def outputQuality_=(using c: ImageCropper)(value: Double): Unit = c.$outputQuality = value
 
-  def outputMaxWidth(using c: ImageCropper): Option[Int] = c.outputMaxWidth
-  def outputMaxWidth_=(using c: ImageCropper)(value: Int): Unit = c.outputMaxWidth = Some(value)
-  def outputMaxWidth_=(using c: ImageCropper)(value: Option[Int]): Unit = c.outputMaxWidth = value
+  def outputMaxWidth(using c: ImageCropper): Option[Int] = c.$outputMaxWidth
+  def outputMaxWidth_=(using c: ImageCropper)(value: Int): Unit = c.$outputMaxWidth = Some(value)
+  def outputMaxWidth_=(using c: ImageCropper)(value: Option[Int]): Unit = c.$outputMaxWidth = value
 
-  def outputMaxHeight(using c: ImageCropper): Option[Int] = c.outputMaxHeight
-  def outputMaxHeight_=(using c: ImageCropper)(value: Int): Unit = c.outputMaxHeight = Some(value)
-  def outputMaxHeight_=(using c: ImageCropper)(value: Option[Int]): Unit = c.outputMaxHeight = value
+  def outputMaxHeight(using c: ImageCropper): Option[Int] = c.$outputMaxHeight
+  def outputMaxHeight_=(using c: ImageCropper)(value: Int): Unit = c.$outputMaxHeight = Some(value)
+  def outputMaxHeight_=(using c: ImageCropper)(value: Option[Int]): Unit = c.$outputMaxHeight = value
 
-  def thumbnailMaxWidth(using c: ImageCropper): Int = c.thumbnailMaxWidth
-  def thumbnailMaxWidth_=(using c: ImageCropper)(value: Int): Unit = c.thumbnailMaxWidth = value
+  def thumbnailMaxWidth(using c: ImageCropper): Int = c.$thumbnailMaxWidth
+  def thumbnailMaxWidth_=(using c: ImageCropper)(value: Int): Unit = c.$thumbnailMaxWidth = value
 
-  def thumbnailMaxHeight(using c: ImageCropper): Int = c.thumbnailMaxHeight
-  def thumbnailMaxHeight_=(using c: ImageCropper)(value: Int): Unit = c.thumbnailMaxHeight = value
+  def thumbnailMaxHeight(using c: ImageCropper): Int = c.$thumbnailMaxHeight
+  def thumbnailMaxHeight_=(using c: ImageCropper)(value: Int): Unit = c.$thumbnailMaxHeight = value
 
-  def windowTitle(using c: ImageCropper): String = c.windowTitle
-  def windowTitle_=(using c: ImageCropper)(value: String): Unit = c.windowTitle = value
+  def windowTitle(using c: ImageCropper): String = c.$windowTitle
+  def windowTitle_=(using c: ImageCropper)(value: String): Unit = c.$windowTitle = value
   def windowTitle_=(using c: ImageCropper)(value: ReadOnlyProperty[String]): Unit =
-    c.addDisposable(value.observe(next => c.windowTitle = Option(next).getOrElse("")))
+    c.addDisposable(value.observe(next => c.$windowTitle = Option(next).getOrElse("")))
 
   def addValidator(validator: Validator)(using c: ImageCropper): Unit =
     c.addValidator(validator)

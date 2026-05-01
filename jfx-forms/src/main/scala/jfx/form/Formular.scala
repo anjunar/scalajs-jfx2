@@ -11,11 +11,11 @@ import scala.collection.mutable
 trait Formular[M] extends FormContext with Editable {
   self: Component =>
 
-  val name: String
+  val $name: String
 
-  val valueProperty: ReadOnlyProperty[M] = Property(null.asInstanceOf[M])
+  val $valueProperty: ReadOnlyProperty[M] = Property(null.asInstanceOf[M])
 
-  val controls: ListProperty[Control[?]] = new ListProperty[Control[?]]()
+  val $controls: ListProperty[Control[?]] = new ListProperty[Control[?]]()
 
   private val bindingsByControl: mutable.Map[Control[?], CompositeDisposable] =
     mutable.Map.empty
@@ -24,8 +24,8 @@ trait Formular[M] extends FormContext with Editable {
     mutable.Map.empty
 
   def registerControl(control: Control[?]): Unit = {
-    if (!controls.contains(control)) {
-      controls += control
+    if (!$controls.contains(control)) {
+      $controls += control
 
       val binding = initBinding(control)
       bindOrDefer(control, binding)
@@ -34,23 +34,23 @@ trait Formular[M] extends FormContext with Editable {
 
   def unregisterControl(control: Control[?]): Unit = {
     disposeBinding(control)
-    val idx = controls.indexOf(control)
-    if (idx >= 0) controls.remove(idx)
+    val idx = $controls.indexOf(control)
+    if (idx >= 0) $controls.remove(idx)
   }
 
   def setErrorResponses(errors: Seq[ErrorResponse]): Unit = {
     errors.groupBy(error => error.path.apply(0).toString)
       .foreach((key, errors) => {
-        controls.foreach {
-          case subForm: SubForm[?] if subForm.name == key => subForm.setErrorResponses(errors.map(error => new ErrorResponse(error.message, error.path.tail)))
-          case control: Control[?] if control.name == key => control.setErrors(errors.map(error => error.message))
+        $controls.foreach {
+          case subForm: SubForm[?] if subForm.$name == key => subForm.setErrorResponses(errors.map(error => new ErrorResponse(error.message, error.path.tail)))
+          case control: Control[?] if control.$name == key => control.setErrors(errors.map(error => error.message))
           case _ => ()
         }
       })
   }
 
   def clearErrors(): Unit = {
-    controls.foreach { control =>
+    $controls.foreach { control =>
       control.setErrors(Nil)
       control match {
         case subForm: Formular[?] => subForm.clearErrors()
@@ -60,7 +60,7 @@ trait Formular[M] extends FormContext with Editable {
   }
 
   def resetInteractionState(): Unit = {
-    controls.foreach { control =>
+    $controls.foreach { control =>
       control.setDirty(false)
       control.setErrors(Nil)
       control match {
@@ -88,17 +88,17 @@ trait Formular[M] extends FormContext with Editable {
   }
 
   private def bindOrDefer(control: Control[?], binding: CompositeDisposable): Unit = {
-    val currentModel = valueProperty.get
+    val currentModel = $valueProperty.get
     if (currentModel != null) {
       binding.add(bindNow(control))
       return
     }
 
-    val observer = valueProperty.observe { model =>
+    val observer = $valueProperty.observe { model =>
       if (model != null) {
         binding.add(bindNow(control))
       } else {
-        control.valueProperty match {
+        control.$valueProperty match {
           case property: Property[Any @unchecked] => property.set(null.asInstanceOf[Any])
           case listProperty: ListProperty[?] => listProperty.clear()
         }
@@ -108,8 +108,8 @@ trait Formular[M] extends FormContext with Editable {
   }
 
   private def bindNow(control: Control[?]): Disposable = {
-    val controlName = control.name
-    val model = valueProperty.get
+    val controlName = control.$name
+    val model = $valueProperty.get
 
     if (model == null) return () => ()
 
@@ -142,7 +142,7 @@ trait Formular[M] extends FormContext with Editable {
     syncControlValidators(control, accessValidators)
 
     val modelProperty: Any = modelPropertyOption.get
-    val controlProperty: Any = control.valueProperty
+    val controlProperty: Any = control.$valueProperty
 
     (modelProperty, controlProperty) match {
       case (m: ListProperty[Any @unchecked], c: ListProperty[Any @unchecked]) =>
@@ -164,14 +164,14 @@ trait Formular[M] extends FormContext with Editable {
   }
 
   private def addValidatorIfMissing(control: Control[?], validator: Validator[Any]): Unit = {
-    val raw = control.validators.asInstanceOf[ListProperty[Validator[Any]]]
+    val raw = control.$validators.asInstanceOf[ListProperty[Validator[Any]]]
     if (!raw.exists(_ == validator)) {
       raw += validator
     }
   }
 
   private def removeValidator(control: Control[?], validator: Validator[Any]): Unit = {
-    val raw = control.validators.asInstanceOf[ListProperty[Validator[Any]]]
+    val raw = control.$validators.asInstanceOf[ListProperty[Validator[Any]]]
     val idx = raw.indexWhere(_ == validator)
     if (idx >= 0) raw.remove(idx)
   }

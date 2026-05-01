@@ -8,8 +8,8 @@ import org.scalajs.dom
 import jfx.statement.ObserveRender.observeRender
 
 class TableRow[S] extends Box("div") {
-  val itemProperty = Property[S | Null](null)
-  val indexProperty = Property(-1)
+  val $itemProperty = Property[S | Null](null)
+  val $indexProperty = Property(-1)
 
   private sealed trait RowState
   private case object Unbound extends RowState
@@ -57,8 +57,8 @@ class TableRow[S] extends Box("div") {
     columns: Seq[TableColumn[S, ?]],
     rowHeight: Double
   ): Unit = {
-    indexProperty.set(rowIndex)
-    itemProperty.set(rowValue)
+    $indexProperty.set(rowIndex)
+    $itemProperty.set(rowValue)
     rowStateProperty.set(Bound(rowIndex, rowValue, tableView, columns, rowHeight))
   }
 
@@ -74,7 +74,7 @@ class TableRow[S] extends Box("div") {
     removeBaseClass("jfx-table-row-placeholder")
     setParityClasses(rowIndex)
 
-    val isSelected = tableView.selectedIndexProperty.map(_ == rowIndex)
+    val isSelected = tableView.$selectedIndexProperty.map(_ == rowIndex)
     classIf("jfx-table-row-selected", isSelected)
     
     attribute("aria-selected", isSelected.map(_.toString))
@@ -88,12 +88,12 @@ class TableRow[S] extends Box("div") {
       Box.box("div") {
         addClass("jfx-table-cell")
         style {
-          val w = tableView.renderedWidthsProperty.map(ws => s"${ws.lift(colIndex).getOrElse(typedColumn.prefWidth)}px")
+          val w = tableView.renderedWidthsProperty.map(ws => s"${ws.lift(colIndex).getOrElse(typedColumn.$prefWidth)}px")
           width_=(w)
           minWidth_=(w)
           flex = "0 0 auto"
         }
-        typedColumn.cellRenderer.get.foreach(r => r(rowValue))
+        typedColumn.$cellRenderer.get.foreach(r => r(rowValue))
       }
     }
   }
@@ -104,8 +104,8 @@ class TableRow[S] extends Box("div") {
     columns: Seq[TableColumn[S, ?]],
     rowHeight: Double
   ): Unit = {
-    indexProperty.set(rowIndex)
-    itemProperty.set(null)
+    $indexProperty.set(rowIndex)
+    $itemProperty.set(null)
     rowStateProperty.set(Placeholder(rowIndex, tableView, columns, rowHeight))
   }
 
@@ -129,7 +129,7 @@ class TableRow[S] extends Box("div") {
         addClass("jfx-table-cell-empty")
         addClass("jfx-table-cell-loading-placeholder")
         style {
-          val w = tableView.renderedWidthsProperty.map(ws => s"${ws.lift(colIndex).getOrElse(typedColumn.prefWidth)}px")
+          val w = tableView.renderedWidthsProperty.map(ws => s"${ws.lift(colIndex).getOrElse(typedColumn.$prefWidth)}px")
           width_=(w)
           minWidth_=(w)
           flex = "0 0 auto"

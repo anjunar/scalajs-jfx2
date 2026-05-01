@@ -85,8 +85,8 @@ class TableViewRemoteListSpec extends AnyFlatSpec with Matchers {
       tableView[String] {
         items = remote
         column[String, String]("Name")((current: TableColumn[String, String]) ?=>
-          current.sortableProperty.set(true)
-          current.sortKeyProperty.set(Some("name"))
+          current.$sortableProperty.set(true)
+          current.$sortKeyProperty.set(Some("name"))
         )
       }
     }

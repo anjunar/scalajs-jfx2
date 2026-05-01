@@ -9,7 +9,7 @@ import scala.scalajs.js
 class CodePlugin extends EditorPlugin {
   override val name: String = "code"
 
-  override val toolbarElements: Seq[ToolbarElement] =
+  override val $toolbarElements: Seq[ToolbarElement] =
     Seq(new CodeMirrorModule())
 
   override val nodes: Seq[js.Any] =

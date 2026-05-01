@@ -8,7 +8,7 @@ import scala.scalajs.js
 class TablePlugin extends EditorPlugin {
   override val name: String = "table"
 
-  override val toolbarElements: Seq[ToolbarElement] =
+  override val $toolbarElements: Seq[ToolbarElement] =
     Seq(
       new TableModule(),
       new RemoveTableModule()

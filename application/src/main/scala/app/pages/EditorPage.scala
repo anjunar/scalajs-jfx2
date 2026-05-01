@@ -57,11 +57,11 @@ object EditorPage {
                 minHeight = "340px"
               }
               installDefaultPlugins()
-              addDisposable(writableEditor.valueProperty.observeWithoutInitial { nextValue =>
+              addDisposable(writableEditor.$valueProperty.observeWithoutInitial { nextValue =>
                 contentProperty.set(nextValue)
               })
               addDisposable(contentProperty.observeWithoutInitial { nextValue =>
-                writableEditor.valueProperty.set(nextValue)
+                writableEditor.$valueProperty.set(nextValue)
               })
             }
 
@@ -104,7 +104,7 @@ object EditorPage {
             }
             installDefaultPlugins()
             addDisposable(contentProperty.observeWithoutInitial { nextValue =>
-              readonlyEditor.valueProperty.set(nextValue)
+              readonlyEditor.$valueProperty.set(nextValue)
             })
           }
         }

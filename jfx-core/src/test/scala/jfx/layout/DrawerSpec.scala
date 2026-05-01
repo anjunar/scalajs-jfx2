@@ -21,7 +21,7 @@ class DrawerSpec extends AnyFlatSpec with Matchers {
 
     dr.classes should contain ("jfx-drawer--open")
     
-    dr.openProperty.set(false)
+    dr.$openProperty.set(false)
     dr.classes should not contain ("jfx-drawer--open")
   }
 
@@ -47,9 +47,9 @@ class DrawerSpec extends AnyFlatSpec with Matchers {
     }
 
     toggle()(using dr)
-    dr.openProperty.get shouldBe true
+    dr.$openProperty.get shouldBe true
     
     toggle()(using dr)
-    dr.openProperty.get shouldBe false
+    dr.$openProperty.get shouldBe false
   }
 }

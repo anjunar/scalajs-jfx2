@@ -5,7 +5,7 @@ import jfx.core.component.Component.*
 import jfx.core.state.Property
 import jfx.dsl.DslRuntime
 
-class Form[M](val name: String = "default") extends Box("form") with Formular[M] {
+class Form[M](val $name: String = "default") extends Box("form") with Formular[M] {
 
   override def compose(): Unit = {
     given jfx.core.component.Component = this
@@ -16,7 +16,7 @@ class Form[M](val name: String = "default") extends Box("form") with Formular[M]
   }
 
   def setModel(model: M): Unit = {
-    valueProperty.asInstanceOf[Property[M]].set(model)
+    $valueProperty.asInstanceOf[Property[M]].set(model)
   }
 }
 
@@ -40,9 +40,9 @@ object Form {
     }
   }
 
-  def controls[M](using f: Form[M]): jfx.core.state.ListProperty[Control[?]] = f.controls
+  def controls[M](using f: Form[M]): jfx.core.state.ListProperty[Control[?]] = f.$controls
 
-  def editable[M](using f: Form[M]): Boolean = f.editable
-  def editable_=[M](using f: Form[M])(value: Boolean): Unit = f.editable = value
-  def editableProperty[M](using f: Form[M]): Property[Boolean] = f.editableProperty
+  def editable[M](using f: Form[M]): Boolean = f.$editable
+  def editable_=[M](using f: Form[M])(value: Boolean): Unit = f.$editable = value
+  def editableProperty[M](using f: Form[M]): Property[Boolean] = f.$editableProperty
 }

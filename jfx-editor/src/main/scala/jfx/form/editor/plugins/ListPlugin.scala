@@ -8,7 +8,7 @@ import scala.scalajs.js
 class ListPlugin extends EditorPlugin {
   override val name: String = "list"
 
-  override val toolbarElements: Seq[ToolbarElement] =
+  override val $toolbarElements: Seq[ToolbarElement] =
     Seq(ListModules.BULLET, ListModules.NUMBERED)
 
   override val nodes: Seq[js.Any] =

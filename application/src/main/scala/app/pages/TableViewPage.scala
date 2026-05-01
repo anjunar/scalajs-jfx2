@@ -234,20 +234,20 @@ object TableViewPage {
 
               column[ShowcaseBook, String](DemoI18n.resolveNow(i18n"Title")) { item =>
                 text = item.title
-              }.prefWidthProperty.set(260.0)
+              }.$prefWidthProperty.set(260.0)
 
               column[ShowcaseBook, String](DemoI18n.resolveNow(i18n"Author")) { item =>
                 text = item.author
-              }.prefWidthProperty.set(220.0)
+              }.$prefWidthProperty.set(220.0)
 
               column[ShowcaseBook, Int](DemoI18n.resolveNow(i18n"Year")) { item =>
                 text = item.year.toString
-              }.prefWidthProperty.set(90.0)
+              }.$prefWidthProperty.set(90.0)
 
               TableView.items = localItems
 
               addDisposable(selectionRequest.observeWithoutInitial(localTable.select))
-              addDisposable(localTable.selectedItemProperty.observe { item =>
+              addDisposable(localTable.$selectedItemProperty.observe { item =>
                 selectedText.set(
                   if (item == null) DemoI18n.resolveNow(i18n"No row selected yet.")
                   else DemoI18n.resolveNow(i18n"Selected: ${I18n.named("title", item.title)} by ${I18n.named("author", item.author)}")
@@ -383,20 +383,20 @@ onScroll:
             val titleColumn = column[ShowcaseBook, String](DemoI18n.resolveNow(i18n"Title")) { item =>
                text = item.title
             }
-            titleColumn.sortableProperty.set(true)
-            titleColumn.sortKeyProperty.set(Some("title"))
+            titleColumn.$sortableProperty.set(true)
+            titleColumn.$sortKeyProperty.set(Some("title"))
 
             val authorColumn = column[ShowcaseBook, String](DemoI18n.resolveNow(i18n"Author")) { item =>
                text = item.author
             }
-            authorColumn.sortableProperty.set(true)
-            authorColumn.sortKeyProperty.set(Some("author"))
+            authorColumn.$sortableProperty.set(true)
+            authorColumn.$sortKeyProperty.set(Some("author"))
 
             val yearColumn = column[ShowcaseBook, Int](DemoI18n.resolveNow(i18n"Year")) { item =>
                text = item.year.toString
             }
-            yearColumn.sortableProperty.set(true)
-            yearColumn.sortKeyProperty.set(Some("year"))
+            yearColumn.$sortableProperty.set(true)
+            yearColumn.$sortKeyProperty.set(Some("year"))
 
             TableView.items = books
           }

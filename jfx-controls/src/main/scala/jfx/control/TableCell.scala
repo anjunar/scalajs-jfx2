@@ -7,18 +7,18 @@ import jfx.core.component.Component.*
 import jfx.statement.ObserveRender.observeRender
 
 class TableCell[S, T] extends Box("div") {
-  val itemProperty = Property[T | Null](null)
-  val emptyProperty = Property(true)
+  val $itemProperty = Property[T | Null](null)
+  val $emptyProperty = Property(true)
   private val revisionProperty = Property(0)
 
   override def compose(): Unit = {
     given Component = this
     addClass("jfx-table-cell")
-    addDisposable(itemProperty.observe(_ => bumpRevision()))
-    addDisposable(emptyProperty.observe(_ => bumpRevision()))
+    addDisposable($itemProperty.observe(_ => bumpRevision()))
+    addDisposable($emptyProperty.observe(_ => bumpRevision()))
 
     observeRender(revisionProperty) { _ =>
-      renderItem(itemProperty.get, emptyProperty.get)
+      renderItem($itemProperty.get, $emptyProperty.get)
     }
   }
 
@@ -37,8 +37,8 @@ class TableCell[S, T] extends Box("div") {
     revisionProperty.set(revisionProperty.get + 1)
 
   private[control] def applyRenderedItem(item: T | Null, empty: Boolean): Unit = {
-    emptyProperty.set(empty)
-    itemProperty.set(item)
+    $emptyProperty.set(empty)
+    $itemProperty.set(item)
   }
 }
 

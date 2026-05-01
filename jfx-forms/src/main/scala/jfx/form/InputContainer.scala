@@ -44,30 +44,30 @@ object InputContainer {
         val control = controls.head
 
         container.addDisposable(placeholderText.observe { value =>
-          control.placeholderProperty.set(value)
+          control.$placeholderProperty.set(value)
         })
 
-        container.addDisposable(control.valueProperty.observe { value =>
+        container.addDisposable(control.$valueProperty.observe { value =>
           val empty = value == null || value.toString.trim.isEmpty
           if (empty) container.addBaseClass("empty") else container.removeBaseClass("empty")
         })
 
-        container.addDisposable(control.focusedProperty.observe { focused =>
+        container.addDisposable(control.$focusedProperty.observe { focused =>
           if (focused) labelDiv.addBaseClass("focus") else labelDiv.removeBaseClass("focus")
           if (focused) divider.addBaseClass("focus") else divider.removeBaseClass("focus")
         })
 
-        container.addDisposable(control.dirtyProperty.observe { dirty =>
+        container.addDisposable(control.$dirtyProperty.observe { dirty =>
           if (dirty) labelDiv.addBaseClass("dirty") else labelDiv.removeBaseClass("dirty")
           if (dirty) divider.addBaseClass("dirty") else divider.removeBaseClass("dirty")
         })
 
-        container.addDisposable(control.invalidProperty.observe { invalid =>
+        container.addDisposable(control.$invalidProperty.observe { invalid =>
           if (invalid) labelDiv.addBaseClass("invalid") else labelDiv.removeBaseClass("invalid")
           if (invalid) divider.addBaseClass("invalid") else divider.removeBaseClass("invalid")
         })
 
-        container.addDisposable(control.errorsProperty.observe { errList =>
+        container.addDisposable(control.$errorsProperty.observe { errList =>
           errorsTextProp.set(errList.mkString(", "))
         })
       }

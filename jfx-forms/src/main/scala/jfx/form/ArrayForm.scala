@@ -6,15 +6,15 @@ import jfx.core.state.{ListProperty, Property}
 import jfx.dsl.DslRuntime
 import scala.scalajs.js
 
-class ArrayForm[V](val name: String)
+class ArrayForm[V](val $name: String)
     extends Box("fieldset")
       with Control[js.Array[V]] {
 
-  override val valueProperty: ListProperty[V] = new ListProperty[V]()
+  override val $valueProperty: ListProperty[V] = new ListProperty[V]()
 
-  private val itemsObserver =
-    valueProperty.observeChanges(onItemsChange)
-  addDisposable(itemsObserver)
+  private val $itemsObserver =
+    $valueProperty.observeChanges(onItemsChange)
+  addDisposable($itemsObserver)
 
   private var mounted: Vector[Control[?]] = Vector.empty
   private var _controlRenderer: (Int => Control[?]) | Null = null
@@ -22,16 +22,16 @@ class ArrayForm[V](val name: String)
   private def hasRenderer: Boolean =
     _controlRenderer != null
 
-  def controlRenderer: Int => Control[?] =
+  def $controlRenderer: Int => Control[?] =
     _controlRenderer.asInstanceOf[Int => Control[?]]
 
-  def controlRenderer_=(renderer: Int => Control[?]): Unit =
+  def $controlRenderer_=(renderer: Int => Control[?]): Unit =
     addControlRenderer(renderer)
 
   override def compose(): Unit = {
     given Component = this
 
-    if (!standalone) {
+    if (!$standalone) {
       try {
         val formContext = DslRuntime.service[FormContext]
         formContext.registerControl(this)
@@ -87,7 +87,7 @@ class ArrayForm[V](val name: String)
       return
     }
 
-    rebuildFrom(valueProperty, 0)
+    rebuildFrom($valueProperty, 0)
   }
 
   private def addAtEnd(items: ListProperty[V]): Unit = {
@@ -152,7 +152,7 @@ class ArrayForm[V](val name: String)
 
     child match {
       case form: Formular[?] =>
-        form.valueProperty match {
+        form.$valueProperty match {
           case property: Property[Any @unchecked] =>
             property.set(items(index))
           case _ =>
@@ -171,7 +171,7 @@ object ArrayForm {
   }
 
   def controlRenderer[V](using form: ArrayForm[V]): Int => Control[?] =
-    form.controlRenderer
+    form.$controlRenderer
 
   def controlRenderer_=[V](using form: ArrayForm[V])(renderer: Int => Control[?]): Unit =
     form.addControlRenderer(renderer)

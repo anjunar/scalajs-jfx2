@@ -1,11 +1,11 @@
 import org.scalajs.linker.interface.{ESVersion, ModuleKind}
 import org.scalajs.sbtplugin.ScalaJSPlugin
 
-ThisBuild / version := "2.1.3"
+ThisBuild / version := "2.2.0"
 ThisBuild / organization := "com.anjunar"
 ThisBuild / organizationName := "Anjunar"
 ThisBuild / organizationHomepage := Some(url("https://github.com/anjunar"))
-ThisBuild / scalaVersion := "3.8.3"
+ThisBuild / scalaVersion := "3.3.7"
 ThisBuild / homepage := Some(url("https://github.com/anjunar/scalajs-jfx2"))
 ThisBuild / description := "Reactive UI framework for Scala.js with lifecycle control, typed forms, routing, tables, and a composable DSL."
 ThisBuild / licenses := Seq("MIT" -> url("https://opensource.org/licenses/MIT"))
@@ -54,7 +54,7 @@ lazy val jfxCore = Project(id = "scalajs-jfx2-core", base = file("jfx-core"))
   .settings(
     name := "scalajs-jfx2-core",
     moduleName := "scalajs-jfx2-core",
-    libraryDependencies += "com.anjunar" %%% "scala-reflect" % "1.0.0"
+    libraryDependencies += "com.anjunar" %%% "scala-reflect" % "1.1.0"
   )
   .settings(commonLibrarySettings)
   .settings(commonJsSettings)
@@ -95,7 +95,7 @@ lazy val jfxJson = Project(id = "scalajs-jfx2-json", base = file("jfx-json"))
   .settings(
     name := "scalajs-jfx2-json",
     moduleName := "scalajs-jfx2-json",
-    libraryDependencies += "com.anjunar" %%% "scala-reflect" % "1.0.0"
+    libraryDependencies += "com.anjunar" %%% "scala-reflect" % "1.1.0"
   )
   .settings(commonLibrarySettings)
   .settings(commonJsSettings)
@@ -126,7 +126,7 @@ lazy val jfxEditor = Project(id = "scalajs-jfx2-editor", base = file("jfx-editor
   .settings(
     name := "scalajs-jfx2-editor",
     moduleName := "scalajs-jfx2-editor",
-    libraryDependencies += "com.anjunar" %%% "scalajs-lexical" % "1.0.7"
+    libraryDependencies += "com.anjunar" %%% "scalajs-lexical" % "1.1.0"
   )
   .settings(commonLibrarySettings)
   .settings(commonJsSettings)

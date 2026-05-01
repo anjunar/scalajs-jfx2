@@ -29,10 +29,10 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component with 
   private var renderToken = 0
   private var pendingRouteLoad: Option[js.Promise[Unit]] = None
 
-  val stateProperty = Property(resolve(initialUrl))
+  val $stateProperty = Property(resolve(initialUrl))
   private val renderStateProperty: Property[RenderState] = Property(RoutePending)
-  val loadingProperty: Property[Boolean] = Property(false)
-  val errorProperty: Property[Option[Throwable]] = Property(None)
+  val $loadingProperty: Property[Boolean] = Property(false)
+  val $errorProperty: Property[Option[Throwable]] = Property(None)
 
   override def pendingRenderPromises: Seq[js.Promise[Unit]] =
     pendingRouteLoad.toSeq
@@ -40,7 +40,7 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component with 
   override def initialize(): Unit = {
     given Component = this
     onWindowPopState(_ => navigate(currentBrowserUrl(), replace = true))
-    addDisposable(stateProperty.observe(_ => resolveRenderState()))
+    addDisposable($stateProperty.observe(_ => resolveRenderState()))
   }
 
   override def compose(): Unit = {
@@ -74,16 +74,16 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component with 
       if (replace) window.history.replaceState(null, "", nextState.url)
       else window.history.pushState(null, "", nextState.url)
     }
-    stateProperty.set(nextState)
+    $stateProperty.set(nextState)
   }
 
   private def resolveRenderState(): Unit = {
     renderToken += 1
     val token = renderToken
-    val state = stateProperty.get
+    val state = $stateProperty.get
     pendingRouteLoad = None
-    errorProperty.set(None)
-    loadingProperty.set(false)
+    $errorProperty.set(None)
+    $loadingProperty.set(false)
 
     state.currentMatchOption match {
       case Some(m) =>
@@ -97,7 +97,7 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component with 
               renderStateProperty.set(RouteReady(ctx, factory))
 
             case None =>
-              loadingProperty.set(true)
+              $loadingProperty.set(true)
               renderStateProperty.set(RouteLoading)
 
               val loaded = routeLoad.promise.toFuture
@@ -105,12 +105,12 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component with 
                 RenderBackend.withBackend(backend) {
                   if (token == renderToken) {
                     pendingRouteLoad = None
-                    loadingProperty.set(false)
+                    $loadingProperty.set(false)
                     result match {
                       case Success(factory) =>
                         renderStateProperty.set(RouteReady(ctx, factory))
                       case Failure(error) =>
-                        errorProperty.set(Some(error))
+                        $errorProperty.set(Some(error))
                         renderStateProperty.set(RouteFailure(error))
                     }
                   }
@@ -122,7 +122,7 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component with 
           }
         } catch {
           case error: Throwable =>
-            errorProperty.set(Some(error))
+            $errorProperty.set(Some(error))
             renderStateProperty.set(RouteFailure(error))
         }
       case None =>

@@ -13,7 +13,7 @@ class ImagePlugin extends EditorPlugin {
   var defaultWidthPx: Int = 680
   var previewMaxHeightPx: Int = 320
 
-  override val toolbarElements: Seq[ToolbarElement] =
+  override val $toolbarElements: Seq[ToolbarElement] =
     Seq(new ImageModule())
 
   override val nodes: Seq[js.Any] =

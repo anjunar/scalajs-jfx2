@@ -11,7 +11,7 @@ const scalaJsFastOptMain = resolve(
     __dirname,
     "application",
     "target",
-    "scala-3.8.3",
+    "scala-3.3.7",
     "scalajs-jfx2-demo-fastopt",
     "main.js"
 );
@@ -20,7 +20,7 @@ const scalaJsFullOptMain = resolve(
     __dirname,
     "application",
     "target",
-    "scala-3.8.3",
+    "scala-3.3.7",
     "scalajs-jfx2-demo-opt",
     "main.js"
 );

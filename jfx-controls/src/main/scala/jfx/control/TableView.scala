@@ -22,23 +22,23 @@ final class TableView[S] extends Box("div") {
   private given ExecutionContext = ExecutionContext.global
 
   private val itemsRefProperty = Property[ListProperty[S]](new ListProperty[S]())
-  val columns = new ListProperty[TableColumn[S, ?]]()
-  val showHeaderProperty = Property(true)
+  val $columns = new ListProperty[TableColumn[S, ?]]()
+  val $showHeaderProperty = Property(true)
 
-  val rowHeightProperty = Property(32.0)
-  val prefWidthProperty = Property[Option[Double]](None)
+  val $rowHeightProperty = Property(32.0)
+  val $prefWidthProperty = Property[Option[Double]](None)
 
-  val scrollTopProperty = Property(0.0)
-  val scrollLeftProperty = Property(0.0)
-  val viewportWidthProperty = Property(800.0)
-  val viewportHeightProperty = Property(400.0)
+  val $scrollTopProperty = Property(0.0)
+  val $scrollLeftProperty = Property(0.0)
+  val $viewportWidthProperty = Property(800.0)
+  val $viewportHeightProperty = Property(400.0)
 
-  val crawlableProperty = Property(false)
+  val $crawlableProperty = Property(false)
   private val defaultLimit = 50
 
-  val selectedIndexProperty = Property(-1)
-  val selectedItemProperty = Property[S | Null](null)
-  val placeholderProperty = Property[Component | Null](null)
+  val $selectedIndexProperty = Property(-1)
+  val $selectedItemProperty = Property[S | Null](null)
+  val $placeholderProperty = Property[Component | Null](null)
 
   private case class VisibleRow(index: Int, item: Option[S])
   private val visibleRowsProperty = new ListProperty[VisibleRow]()
@@ -49,7 +49,7 @@ final class TableView[S] extends Box("div") {
   private var remoteItemsObserver: Disposable = TableView.noopDisposable
   private var routeContext: Option[RouteContext] = None
 
-  def itemsProperty: Property[ListProperty[S]] = itemsRefProperty
+  def $itemsProperty: Property[ListProperty[S]] = itemsRefProperty
 
   def getItems: ListProperty[S] =
     itemsRefProperty.get
@@ -61,20 +61,20 @@ final class TableView[S] extends Box("div") {
     }
   }
 
-  def items: ListProperty[S] =
+  def $items: ListProperty[S] =
     getItems
 
-  def items_=(value: ListProperty[S]): Unit =
+  def $items_=(value: ListProperty[S]): Unit =
     setItems(value)
 
-  def getColumns: ListProperty[TableColumn[S, ?]] =
-    columns
+  def $getColumns: ListProperty[TableColumn[S, ?]] =
+    $columns
 
-  def getFixedCellSize: Double =
-    rowHeightProperty.get
+  def $getFixedCellSize: Double =
+    $rowHeightProperty.get
 
   def setFixedCellSize(value: Double): Unit =
-    rowHeightProperty.set(value)
+    $rowHeightProperty.set(value)
 
   private def captureRouteContext(): Unit =
     routeContext = currentRouteContext()
@@ -93,15 +93,15 @@ final class TableView[S] extends Box("div") {
   }
 
   private def currentRemoteItems: RemoteListProperty[S, ?] | Null =
-    items.remotePropertyOrNull
+    $items.remotePropertyOrNull
 
   private def totalItemCount: Int =
-    math.max(0, items.totalLength)
+    math.max(0, $items.totalLength)
 
   private def itemAt(index: Int): Option[S] = {
     val remote = currentRemoteItems
     if (remote == null) {
-      if (index >= 0 && index < items.length) Some(items(index)) else None
+      if (index >= 0 && index < $items.length) Some($items(index)) else None
     } else {
       remote.getLoadedItem(index)
     }
@@ -114,11 +114,11 @@ final class TableView[S] extends Box("div") {
     remoteStateRevisionProperty.set(remoteStateRevisionProperty.get + 1)
 
   private def refreshSelectedItem(): Unit = {
-    val selectedIndex = selectedIndexProperty.get
+    val selectedIndex = $selectedIndexProperty.get
     if (selectedIndex >= 0 && selectedIndex < totalItemCount) {
-      selectedItemProperty.set(itemAt(selectedIndex).orNull)
+      $selectedItemProperty.set(itemAt(selectedIndex).orNull)
     } else {
-      selectedItemProperty.set(null)
+      $selectedItemProperty.set(null)
     }
   }
 
@@ -133,7 +133,7 @@ final class TableView[S] extends Box("div") {
     remoteItemsObserver.dispose()
     bumpRemoteState()
 
-    val currentItems = items
+    val currentItems = $items
     itemsObserver = currentItems.observeChanges(_ => refreshItemState())
 
     val remote = currentRemoteItems
@@ -162,15 +162,15 @@ final class TableView[S] extends Box("div") {
   }
 
   private def visibleRange(total: Int): (Int, Int) =
-    if (RenderBackend.current.isServer && crawlableProperty.get) {
+    if (RenderBackend.current.isServer && $crawlableProperty.get) {
       val (offset, limit) = getCrawlParams
       val start = math.min(offset, total)
       val end = math.min(total, start + limit)
       (start, end)
     } else {
-      val rowHeight = math.max(1.0, rowHeightProperty.get)
-      val firstVisible = math.floor(scrollTopProperty.get / rowHeight).toInt
-      val visibleCount = math.ceil(math.max(1.0, viewportHeightProperty.get) / rowHeight).toInt + 1
+      val rowHeight = math.max(1.0, $rowHeightProperty.get)
+      val firstVisible = math.floor($scrollTopProperty.get / rowHeight).toInt
+      val visibleCount = math.ceil(math.max(1.0, $viewportHeightProperty.get) / rowHeight).toInt + 1
       val start = math.max(0, firstVisible - TableView.overscanRows)
       val end = math.min(total, firstVisible + visibleCount + TableView.overscanRows)
       (start, end)
@@ -219,7 +219,7 @@ final class TableView[S] extends Box("div") {
 
   private def contentHeightProperty: ReadOnlyProperty[String] =
     itemStateRevisionProperty.flatMap { _ =>
-      rowHeightProperty.map(rowHeight => s"${totalItemCount * rowHeight}px")
+      $rowHeightProperty.map(rowHeight => s"${totalItemCount * rowHeight}px")
     }
 
   private def hasRowsProperty: ReadOnlyProperty[Boolean] =
@@ -238,8 +238,8 @@ final class TableView[S] extends Box("div") {
     }
 
   val renderedWidthsProperty: ReadOnlyProperty[Vector[Double]] =
-    viewportWidthProperty.flatMap { viewportWidth =>
-      columns.asProperty.map(cols => resolveRenderedColumnWidths(cols.toSeq, viewportWidth))
+    $viewportWidthProperty.flatMap { viewportWidth =>
+      $columns.asProperty.map(cols => resolveRenderedColumnWidths(cols.toSeq, viewportWidth))
     }
 
   private val totalColumnWidthProperty: ReadOnlyProperty[Double] =
@@ -264,18 +264,18 @@ final class TableView[S] extends Box("div") {
       itemsObserver.dispose()
       remoteItemsObserver.dispose()
     })
-    addDisposable(scrollTopProperty.observe(_ => recomputeVisibleRows()))
-    addDisposable(viewportHeightProperty.observe(_ => recomputeVisibleRows()))
-    addDisposable(viewportWidthProperty.observe(_ => recomputeVisibleRows()))
-    addDisposable(columns.observeChanges(_ => recomputeVisibleRows()))
-    addDisposable(rowHeightProperty.observe(_ => recomputeVisibleRows()))
-    addDisposable(crawlableProperty.observe(_ => refreshItemState()))
-    addDisposable(selectedIndexProperty.observe(_ => refreshSelectedItem()))
+    addDisposable($scrollTopProperty.observe(_ => recomputeVisibleRows()))
+    addDisposable($viewportHeightProperty.observe(_ => recomputeVisibleRows()))
+    addDisposable($viewportWidthProperty.observe(_ => recomputeVisibleRows()))
+    addDisposable($columns.observeChanges(_ => recomputeVisibleRows()))
+    addDisposable($rowHeightProperty.observe(_ => recomputeVisibleRows()))
+    addDisposable($crawlableProperty.observe(_ => refreshItemState()))
+    addDisposable($selectedIndexProperty.observe(_ => refreshSelectedItem()))
 
     if (!RenderBackend.current.isServer) {
       val (offset, _) = getCrawlParams
       if (offset > 0) {
-        scrollTopProperty.set(offset * rowHeightProperty.get)
+        $scrollTopProperty.set(offset * $rowHeightProperty.get)
       }
     }
 
@@ -287,7 +287,7 @@ final class TableView[S] extends Box("div") {
       overflow = "hidden"
     }
 
-    condition(showHeaderProperty) {
+    condition($showHeaderProperty) {
       thenDo {
         div {
           addClass("jfx-table-header-viewport")
@@ -296,7 +296,7 @@ final class TableView[S] extends Box("div") {
             overflow = "hidden"
             width = "100%"
             flex = "0 0 auto"
-            height_=(rowHeightProperty.map(rowHeight => s"${math.max(30.0, rowHeight)}px"))
+            height_=($rowHeightProperty.map(rowHeight => s"${math.max(30.0, rowHeight)}px"))
           }
 
           div {
@@ -306,26 +306,26 @@ final class TableView[S] extends Box("div") {
               width_=(totalColumnWidthProperty.map(width => s"${width}px"))
               minWidth_=(totalColumnWidthProperty.map(width => s"${width}px"))
               height = "100%"
-              transform_=(scrollLeftProperty.map(left => s"translateX(-${left}px)"))
+              transform_=($scrollLeftProperty.map(left => s"translateX(-${left}px)"))
             }
 
-            forEach(columns) { column =>
+            forEach($columns) { column =>
               val typedColumn = column.asInstanceOf[TableColumn[S, Any]]
               div {
                 addClass("jfx-table-header-cell")
-                classIf("jfx-table-header-cell-last", renderedWidthsProperty.map(_ => columns.indexOf(column) == columns.length - 1))
+                classIf("jfx-table-header-cell-last", renderedWidthsProperty.map(_ => $columns.indexOf(column) == $columns.length - 1))
                 classIf("jfx-table-header-cell-sortable", remoteStateRevisionProperty.map(_ => isRemoteSortable(typedColumn)))
                 classIf("jfx-table-header-cell-sorted", remoteStateRevisionProperty.map(_ => currentSortFor(typedColumn).nonEmpty))
                 classIf("jfx-table-header-cell-sorted-asc", remoteStateRevisionProperty.map(_ => currentSortFor(typedColumn).exists(_.ascending)))
                 classIf("jfx-table-header-cell-sorted-desc", remoteStateRevisionProperty.map(_ => currentSortFor(typedColumn).exists(!_.ascending)))
                 style {
-                  width_=(renderedWidthsProperty.map(widths => s"${widths.lift(columns.indexOf(column)).getOrElse(typedColumn.prefWidth)}px"))
-                  minWidth_=(renderedWidthsProperty.map(widths => s"${widths.lift(columns.indexOf(column)).getOrElse(typedColumn.prefWidth)}px"))
+                  width_=(renderedWidthsProperty.map(widths => s"${widths.lift($columns.indexOf(column)).getOrElse(typedColumn.$prefWidth)}px"))
+                  minWidth_=(renderedWidthsProperty.map(widths => s"${widths.lift($columns.indexOf(column)).getOrElse(typedColumn.$prefWidth)}px"))
                   flex = "0 0 auto"
                   boxSizing = "border-box"
                 }
                 onClick(_ => toggleRemoteSort(typedColumn))
-                text = column.textProperty
+                text = column.$textProperty
               }
             }
           }
@@ -353,10 +353,10 @@ final class TableView[S] extends Box("div") {
 
         onScroll { event =>
           val target = event.target.asInstanceOf[dom.html.Div]
-          scrollTopProperty.set(target.scrollTop)
-          scrollLeftProperty.set(target.scrollLeft)
-          viewportHeightProperty.set(target.clientHeight.toDouble)
-          viewportWidthProperty.set(target.clientWidth.toDouble)
+          $scrollTopProperty.set(target.scrollTop)
+          $scrollLeftProperty.set(target.scrollLeft)
+          $viewportHeightProperty.set(target.clientHeight.toDouble)
+          $viewportWidthProperty.set(target.clientWidth.toDouble)
         }
 
         div {
@@ -377,19 +377,19 @@ final class TableView[S] extends Box("div") {
                   addClass("jfx-table-row-slot")
                   style {
                     position = "absolute"
-                    top = s"${rowDef.index * rowHeightProperty.get}px"
+                    top = s"${rowDef.index * $rowHeightProperty.get}px"
                     left = "0"
                     width_=(totalColumnWidthProperty.map(width => s"${width}px"))
-                    height = s"${rowHeightProperty.get}px"
+                    height = s"${$rowHeightProperty.get}px"
                     display = "flex"
                   }
 
                   tableRow[S] {
                     rowDef.item match {
                       case Some(value) =>
-                        rowItem(rowDef.index, value, TableView.this, columns.get.toSeq, rowHeightProperty.get)
+                        rowItem(rowDef.index, value, TableView.this, $columns.get.toSeq, $rowHeightProperty.get)
                       case None =>
-                        placeholderRow(rowDef.index, TableView.this, columns.get.toSeq, rowHeightProperty.get)
+                        placeholderRow(rowDef.index, TableView.this, $columns.get.toSeq, $rowHeightProperty.get)
                     }
                   }
                 }
@@ -408,7 +408,7 @@ final class TableView[S] extends Box("div") {
                 padding = "20px"
                 textAlign = "center"
                 if (RenderBackend.current.isServer) {
-                  marginTop = s"${(offset + limit) * rowHeightProperty.get}px"
+                  marginTop = s"${(offset + limit) * $rowHeightProperty.get}px"
                 }
               }
               text = "More items..."
@@ -437,7 +437,7 @@ final class TableView[S] extends Box("div") {
 
   private def hasMoreCrawlPage: Boolean = {
     val (offset, limit) = getCrawlParams
-    crawlableProperty.get && offset + limit < totalItemCount
+    $crawlableProperty.get && offset + limit < totalItemCount
   }
 
   private def nextCrawlHref(offset: Int, limit: Int): String = {
@@ -449,7 +449,7 @@ final class TableView[S] extends Box("div") {
   }
 
   private def sortKeyOf(column: TableColumn[S, Any]): Option[String] =
-    column.sortKeyProperty.get.map(_.trim).filter(_.nonEmpty)
+    column.$sortKeyProperty.get.map(_.trim).filter(_.nonEmpty)
 
   private def currentRemoteSorting: Vector[ListProperty.RemoteSort] = {
     val remote = currentRemoteItems
@@ -461,7 +461,7 @@ final class TableView[S] extends Box("div") {
 
   private def isRemoteSortable(column: TableColumn[S, Any]): Boolean = {
     val remote = currentRemoteItems
-    remote != null && remote.supportsSorting && column.sortableProperty.get && sortKeyOf(column).nonEmpty
+    remote != null && remote.supportsSorting && column.$sortableProperty.get && sortKeyOf(column).nonEmpty
   }
 
   private def toggleRemoteSort(column: TableColumn[S, Any]): Unit = {
@@ -485,9 +485,9 @@ final class TableView[S] extends Box("div") {
 
   def select(index: Int): Unit = {
     if (index >= 0 && index < totalItemCount) {
-      selectedIndexProperty.set(index)
+      $selectedIndexProperty.set(index)
     } else {
-      selectedIndexProperty.set(-1)
+      $selectedIndexProperty.set(-1)
     }
   }
 
@@ -495,7 +495,7 @@ final class TableView[S] extends Box("div") {
     val remote = currentRemoteItems
     val index =
       if (remote == null) {
-        items.toSeq.indexOf(item)
+        $items.toSeq.indexOf(item)
       } else {
         (0 until remote.totalLength).find(index => remote.getLoadedItem(index).contains(item)).getOrElse(-1)
       }
@@ -508,7 +508,7 @@ final class TableView[S] extends Box("div") {
   ): Vector[Double] = {
     if (columns.isEmpty) return Vector.empty
 
-    val baseWidths = columns.map(_.prefWidth).toVector
+    val baseWidths = columns.map(_.$prefWidth).toVector
     val minWidths = columns.map(_ => 40.0).toVector
     val maxWidths = columns.map(_ => Double.PositiveInfinity).toVector
     val resizableIndices = columns.indices.toVector
@@ -590,7 +590,7 @@ object TableView {
     DslRuntime.build(new TableView[S])(init)
 
   def items[S](using t: TableView[S]): ListProperty[S] =
-    t.items
+    t.$items
 
   def items_=[S](v: ListProperty[S])(using t: TableView[S]): Unit =
     t.setItems(v)
@@ -600,34 +600,34 @@ object TableView {
       case property: ListProperty[?] =>
         t.setItems(property.asInstanceOf[ListProperty[S]])
       case _ =>
-        t.items.setAll(v)
+        t.$items.setAll(v)
     }
 
-  def rowHeight(using t: TableView[?]): Double = t.rowHeightProperty.get
-  def rowHeight_=(v: Double)(using t: TableView[?]): Unit = t.rowHeightProperty.set(v)
+  def rowHeight(using t: TableView[?]): Double = t.$rowHeightProperty.get
+  def rowHeight_=(v: Double)(using t: TableView[?]): Unit = t.$rowHeightProperty.set(v)
 
-  def fixedCellSize(using t: TableView[?]): Double = t.rowHeightProperty.get
-  def fixedCellSize_=(v: Double)(using t: TableView[?]): Unit = t.rowHeightProperty.set(v)
+  def fixedCellSize(using t: TableView[?]): Double = t.$rowHeightProperty.get
+  def fixedCellSize_=(v: Double)(using t: TableView[?]): Unit = t.$rowHeightProperty.set(v)
 
-  def showHeader(using t: TableView[?]): Boolean = t.showHeaderProperty.get
-  def showHeader_=(v: Boolean)(using t: TableView[?]): Unit = t.showHeaderProperty.set(v)
+  def showHeader(using t: TableView[?]): Boolean = t.$showHeaderProperty.get
+  def showHeader_=(v: Boolean)(using t: TableView[?]): Unit = t.$showHeaderProperty.set(v)
 
-  def prefWidth(using t: TableView[?]): Option[Double] = t.prefWidthProperty.get
-  def prefWidth_=(v: Double)(using t: TableView[?]): Unit = t.prefWidthProperty.set(Some(v))
+  def prefWidth(using t: TableView[?]): Option[Double] = t.$prefWidthProperty.get
+  def prefWidth_=(v: Double)(using t: TableView[?]): Unit = t.$prefWidthProperty.set(Some(v))
   def prefWidth_=(v: ReadOnlyProperty[Double])(using t: TableView[?]): Unit =
-    t.addDisposable(v.observe(width => t.prefWidthProperty.set(Some(width))))
+    t.addDisposable(v.observe(width => t.$prefWidthProperty.set(Some(width))))
 
-  def crawlable(using t: TableView[?]): Boolean = t.crawlableProperty.get
-  def crawlable_=(v: Boolean)(using t: TableView[?]): Unit = t.crawlableProperty.set(v)
+  def crawlable(using t: TableView[?]): Boolean = t.$crawlableProperty.get
+  def crawlable_=(v: Boolean)(using t: TableView[?]): Unit = t.$crawlableProperty.set(v)
 
-  def selectedIndex(using t: TableView[?]): Int = t.selectedIndexProperty.get
-  def selectedIndex_=(v: Int)(using t: TableView[?]): Unit = t.selectedIndexProperty.set(v)
+  def selectedIndex(using t: TableView[?]): Int = t.$selectedIndexProperty.get
+  def selectedIndex_=(v: Int)(using t: TableView[?]): Unit = t.$selectedIndexProperty.set(v)
 
-  def selectedItem[S](using t: TableView[S]): S | Null = t.selectedItemProperty.get
+  def selectedItem[S](using t: TableView[S]): S | Null = t.$selectedItemProperty.get
 
-  def placeholder[S](using t: TableView[S]): Component | Null = t.placeholderProperty.get
-  def placeholder_=[S](v: Component | Null)(using t: TableView[S]): Unit = t.placeholderProperty.set(v)
+  def placeholder[S](using t: TableView[S]): Component | Null = t.$placeholderProperty.get
+  def placeholder_=[S](v: Component | Null)(using t: TableView[S]): Unit = t.$placeholderProperty.set(v)
 
   def columns[S](using t: TableView[S]): ListProperty[TableColumn[S, ?]] =
-    t.columns
+    t.$columns
 }

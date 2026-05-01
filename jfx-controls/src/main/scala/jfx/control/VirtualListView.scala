@@ -30,14 +30,14 @@ final class VirtualListView[T](
 
   private val itemsRefProperty = Property[ListProperty[T]](normalizeItems(initialItems))
 
-  val estimateHeightProperty = Property(initialEstimateHeight)
-  val overscanPxProperty = Property(initialOverscanPx)
-  val prefetchItemsProperty = Property(math.max(1, initialPrefetchItems))
+  val $estimateHeightProperty = Property(initialEstimateHeight)
+  val $overscanPxProperty = Property(initialOverscanPx)
+  val $prefetchItemsProperty = Property(math.max(1, initialPrefetchItems))
 
-  val scrollTopProperty = Property(0.0)
-  val viewportHeightProperty = Property(400.0)
+  val $scrollTopProperty = Property(0.0)
+  val $viewportHeightProperty = Property(400.0)
 
-  val crawlableProperty = Property(initialCrawlable)
+  val $crawlableProperty = Property(initialCrawlable)
   private val defaultLimit = 50
 
   private val visibleSlotsProperty = new ListProperty[VirtualListView.VisibleSlot[T]]()
@@ -55,10 +55,10 @@ final class VirtualListView[T](
   private var viewportMeasureScheduled = false
   private var routeContext: Option[RouteContext] = None
 
-  def itemsProperty: Property[ListProperty[T]] =
+  def $itemsProperty: Property[ListProperty[T]] =
     itemsRefProperty
 
-  def getItems: ListProperty[T] =
+  def $getItems: ListProperty[T] =
     itemsRefProperty.get
 
   def setItems(value: ListProperty[T] | Null): Unit = {
@@ -68,10 +68,10 @@ final class VirtualListView[T](
     }
   }
 
-  def items: ListProperty[T] =
-    getItems
+  def $items: ListProperty[T] =
+    $getItems
 
-  def items_=(value: ListProperty[T]): Unit =
+  def $items_=(value: ListProperty[T]): Unit =
     setItems(value)
 
   def refresh(): Unit =
@@ -82,10 +82,10 @@ final class VirtualListView[T](
     if (total <= 0) return
 
     val clamped = math.max(0, math.min(total - 1, index))
-    scrollTopProperty.set(offsetFor(clamped))
+    $scrollTopProperty.set(offsetFor(clamped))
     host.domNode.collect { case element: dom.html.Element =>
       element.querySelector(".jfx-virtual-list-viewport") match {
-        case viewport: dom.html.Element => viewport.scrollTop = scrollTopProperty.get
+        case viewport: dom.html.Element => viewport.scrollTop = $scrollTopProperty.get
         case _                          =>
       }
     }
@@ -129,12 +129,12 @@ final class VirtualListView[T](
       itemsObserver.dispose()
       remoteItemsObserver.dispose()
     })
-    addDisposable(scrollTopProperty.observe(_ => recomputeVisibleSlots()))
-    addDisposable(viewportHeightProperty.observe(_ => recomputeVisibleSlots()))
-    addDisposable(overscanPxProperty.observe(_ => recomputeVisibleSlots()))
-    addDisposable(prefetchItemsProperty.observe(_ => recomputeVisibleSlots()))
-    addDisposable(crawlableProperty.observe(_ => refreshItemState()))
-    addDisposable(estimateHeightProperty.observe { _ =>
+    addDisposable($scrollTopProperty.observe(_ => recomputeVisibleSlots()))
+    addDisposable($viewportHeightProperty.observe(_ => recomputeVisibleSlots()))
+    addDisposable($overscanPxProperty.observe(_ => recomputeVisibleSlots()))
+    addDisposable($prefetchItemsProperty.observe(_ => recomputeVisibleSlots()))
+    addDisposable($crawlableProperty.observe(_ => refreshItemState()))
+    addDisposable($estimateHeightProperty.observe { _ =>
       resetMeasurements()
       refreshItemState()
     })
@@ -142,7 +142,7 @@ final class VirtualListView[T](
     if (!RenderBackend.current.isServer) {
       val (offset, _) = getCrawlParams
       if (offset > 0) {
-        scrollTopProperty.set(offsetFor(offset))
+        $scrollTopProperty.set(offsetFor(offset))
       }
     }
 
@@ -165,8 +165,8 @@ final class VirtualListView[T](
 
       onScroll { event =>
         val target = event.target.asInstanceOf[dom.html.Element]
-        scrollTopProperty.set(target.scrollTop)
-        viewportHeightProperty.set(target.clientHeight.toDouble)
+        $scrollTopProperty.set(target.scrollTop)
+        $viewportHeightProperty.set(target.clientHeight.toDouble)
       }
 
       div {
@@ -217,7 +217,7 @@ final class VirtualListView[T](
     remoteItemsObserver.dispose()
     bumpRemoteState()
 
-    val currentItems = items
+    val currentItems = $items
     val remote = currentRemoteItems
 
     itemsObserver =
@@ -293,7 +293,7 @@ final class VirtualListView[T](
       return
     }
 
-    if (RenderBackend.current.isServer && crawlableProperty.get) {
+    if (RenderBackend.current.isServer && $crawlableProperty.get) {
       val (offset, limit) = getCrawlParams
       val start = math.min(offset, total)
       val end = math.min(total, start + limit)
@@ -302,10 +302,10 @@ final class VirtualListView[T](
       return
     }
 
-    val viewportHeight = math.max(1.0, viewportHeightProperty.get)
-    val overscan = math.max(0.0, overscanPxProperty.get)
-    val startOffset = math.max(0.0, scrollTopProperty.get - overscan)
-    val endOffset = scrollTopProperty.get + viewportHeight + overscan
+    val viewportHeight = math.max(1.0, $viewportHeightProperty.get)
+    val overscan = math.max(0.0, $overscanPxProperty.get)
+    val startOffset = math.max(0.0, $scrollTopProperty.get - overscan)
+    val endOffset = $scrollTopProperty.get + viewportHeight + overscan
     val maxSlots = maxSlotsForViewport(viewportHeight)
 
     val slots = mutable.ArrayBuffer.empty[VirtualListView.VisibleSlot[T]]
@@ -348,12 +348,12 @@ final class VirtualListView[T](
     }
 
   private def currentRemoteItems: RemoteListProperty[T, ?] | Null =
-    items.remotePropertyOrNull
+    $items.remotePropertyOrNull
 
   private def itemAt(index: Int): T | Null =
     currentRemoteItems match {
       case null =>
-        if (index >= 0 && index < items.length) items(index)
+        if (index >= 0 && index < $items.length) $items(index)
         else null
       case remote =>
         remote.getLoadedItem(index).orNull
@@ -361,7 +361,7 @@ final class VirtualListView[T](
 
   private def knownItemCount: Option[Int] =
     currentRemoteItems match {
-      case null   => Some(items.length)
+      case null   => Some($items.length)
       case remote => remote.totalCountProperty.get
     }
 
@@ -378,12 +378,12 @@ final class VirtualListView[T](
 
   private def maxRenderableCount: Int =
     knownItemCount.getOrElse {
-      if (shouldRenderUnloadedPlaceholders) items.length + tailPaddingItems
+      if (shouldRenderUnloadedPlaceholders) $items.length + tailPaddingItems
       else 0
     }
 
   private def shouldRenderUnloadedPlaceholders: Boolean =
-    items.length > 0 || knownItemCount.exists(_ > 0) || canStillGrow
+    $items.length > 0 || knownItemCount.exists(_ > 0) || canStillGrow
 
   private def requestMoreIfNecessary(visibleStartIndex: Int, visibleEndExclusive: Int): Unit = {
     val remote = currentRemoteItems
@@ -391,10 +391,10 @@ final class VirtualListView[T](
     if (remote.loadingProperty.get) return
     if (remote.errorProperty.get.nonEmpty) return
 
-    val prefetch = math.max(1, prefetchItemsProperty.get)
+    val prefetch = math.max(1, $prefetchItemsProperty.get)
 
     if (knownItemCount.isEmpty && canStillGrow) {
-      val projectedEnd = items.length + tailPaddingItems
+      val projectedEnd = $items.length + tailPaddingItems
       if (visibleEndExclusive + prefetch > projectedEnd) {
         tailPaddingItems += math.max(prefetch * 2, prefetch)
         bumpItemState()
@@ -409,7 +409,7 @@ final class VirtualListView[T](
         discardPromise(remote.ensureRangeLoaded(requestFrom, requestToExclusive))
       }
     } else if (canStillGrow) {
-      val loadedLength = items.length
+      val loadedLength = $items.length
       val threshold = math.max(1, prefetch / 2)
 
       if (loadedLength == 0) {
@@ -518,7 +518,7 @@ final class VirtualListView[T](
 
   private def hasMoreCrawlPage: Boolean = {
     val (offset, limit) = getCrawlParams
-    crawlableProperty.get && offset + limit < maxRenderableCount
+    $crawlableProperty.get && offset + limit < maxRenderableCount
   }
 
   private def nextCrawlHref(offset: Int, limit: Int): String = {
@@ -531,7 +531,7 @@ final class VirtualListView[T](
 
   private def maxSlotsForViewport(viewportHeight: Double): Int = {
     val minRowHeight = math.max(12.0, math.min(estimateHeight, math.max(estimateHeight / 2.0, 1.0)))
-    val area = viewportHeight + 2 * math.max(0.0, overscanPxProperty.get)
+    val area = viewportHeight + 2 * math.max(0.0, $overscanPxProperty.get)
     val raw = math.ceil(area / minRowHeight).toInt + 8
     math.min(600, math.max(32, raw))
   }
@@ -550,9 +550,9 @@ final class VirtualListView[T](
     host.domNode.collect { case element: dom.html.Element =>
       element.querySelector(".jfx-virtual-list-viewport") match {
         case viewport: dom.html.Element =>
-          viewportHeightProperty.set(math.max(1.0, viewport.clientHeight.toDouble))
+          $viewportHeightProperty.set(math.max(1.0, viewport.clientHeight.toDouble))
         case _ =>
-          viewportHeightProperty.set(math.max(1.0, element.clientHeight.toDouble))
+          $viewportHeightProperty.set(math.max(1.0, element.clientHeight.toDouble))
       }
     }
 
@@ -568,10 +568,10 @@ final class VirtualListView[T](
   }
 
   private def estimateHeight: Double =
-    math.max(1.0, estimateHeightProperty.get)
+    math.max(1.0, $estimateHeightProperty.get)
 
   private def defaultTailPadding: Int =
-    math.max(prefetchItemsProperty.get * 3, prefetchItemsProperty.get)
+    math.max($prefetchItemsProperty.get * 3, $prefetchItemsProperty.get)
 
   private def normalizeItems(value: ListProperty[T] | Null): ListProperty[T] =
     if (value == null) new ListProperty[T]() else value
@@ -612,7 +612,7 @@ object VirtualListView {
     ) {}
 
   def items[T](using v: VirtualListView[T]): ListProperty[T] =
-    v.items
+    v.$items
 
   def items_=[T](value: ListProperty[T])(using v: VirtualListView[T]): Unit =
     v.setItems(value)
@@ -622,38 +622,38 @@ object VirtualListView {
       case property: ListProperty[?] =>
         v.setItems(property.asInstanceOf[ListProperty[T]])
       case _ =>
-        v.items.setAll(value)
+        v.$items.setAll(value)
     }
 
   def estimateHeight(using v: VirtualListView[?]): Double =
-    v.estimateHeightProperty.get
+    v.$estimateHeightProperty.get
 
   def estimateHeight_=(value: Double)(using v: VirtualListView[?]): Unit =
-    v.estimateHeightProperty.set(value)
+    v.$estimateHeightProperty.set(value)
 
   def estimateHeightPx(using v: VirtualListView[?]): Double =
-    v.estimateHeightProperty.get
+    v.$estimateHeightProperty.get
 
   def estimateHeightPx_=(value: Double)(using v: VirtualListView[?]): Unit =
-    v.estimateHeightProperty.set(value)
+    v.$estimateHeightProperty.set(value)
 
   def overscanPx(using v: VirtualListView[?]): Double =
-    v.overscanPxProperty.get
+    v.$overscanPxProperty.get
 
   def overscanPx_=(value: Double)(using v: VirtualListView[?]): Unit =
-    v.overscanPxProperty.set(value)
+    v.$overscanPxProperty.set(value)
 
   def prefetchItems(using v: VirtualListView[?]): Int =
-    v.prefetchItemsProperty.get
+    v.$prefetchItemsProperty.get
 
   def prefetchItems_=(value: Int)(using v: VirtualListView[?]): Unit =
-    v.prefetchItemsProperty.set(math.max(1, value))
+    v.$prefetchItemsProperty.set(math.max(1, value))
 
   def crawlable(using v: VirtualListView[?]): Boolean =
-    v.crawlableProperty.get
+    v.$crawlableProperty.get
 
   def crawlable_=(value: Boolean)(using v: VirtualListView[?]): Unit =
-    v.crawlableProperty.set(value)
+    v.$crawlableProperty.set(value)
 
   private def virtualListCell[T](
     slot: VisibleSlot[T],

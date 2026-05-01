@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -7,14 +7,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = resolve(__dirname, "..");
 const docsDir = resolve(rootDir, "docs");
 const templatePath = resolve(docsDir, "index.html");
-const scalaJsBundle = resolve(
-  rootDir,
-  "application",
-  "target",
-  "scala-3.8.3",
-  "scalajs-jfx2-demo-opt",
-  "main.js"
-);
+const scalaTargetDir = resolve(rootDir, "application", "target");
+const scalaJsBundle = resolveScalaJsBundle();
 
 const siteUrl = "https://anjunar.github.io/scalajs-jfx2";
 const basePath = "/scalajs-jfx2";
@@ -142,4 +136,23 @@ function assertBuilt() {
   throw new Error(
     `Build-time SSR needs a production build first.\nMissing:\n${labels}\n\nRun: npm run build:pages`
   );
+}
+
+function resolveScalaJsBundle() {
+  const bundleSuffix = ["scalajs-jfx2-demo-opt", "main.js"];
+
+  const versionDirs = readdirSync(scalaTargetDir, { withFileTypes: true })
+    .filter(entry => entry.isDirectory() && entry.name.startsWith("scala-"))
+    .map(entry => entry.name)
+    .sort()
+    .reverse();
+
+  for (const versionDir of versionDirs) {
+    const candidate = resolve(scalaTargetDir, versionDir, ...bundleSuffix);
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return resolve(scalaTargetDir, "scala-3.x", ...bundleSuffix);
 }

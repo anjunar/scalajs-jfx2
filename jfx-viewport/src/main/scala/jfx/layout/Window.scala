@@ -18,19 +18,19 @@ import scala.compiletime.uninitialized
 
 final class Window extends Box("div") {
 
-  val titleProperty: Property[String] = Property.owned(disposable, "")
-  val maximizedProperty: Property[Boolean] = Property.owned(disposable, false)
-  val zIndexProperty: Property[Int] = Property.owned(disposable, 0)
-  val activeProperty: Property[Boolean] = Property.owned(disposable, false)
+  val $titleProperty: Property[String] = Property.owned(disposable, "")
+  val $maximizedProperty: Property[Boolean] = Property.owned(disposable, false)
+  val $zIndexProperty: Property[Int] = Property.owned(disposable, 0)
+  val $activeProperty: Property[Boolean] = Property.owned(disposable, false)
   
   private val hasCloseHandler = Property.owned(disposable, false)
 
-  var draggable: Boolean = true
-  var resizeable: Boolean = true
-  var centerOnOpen: Boolean = true
-  var rememberPosition: Boolean = true
-  var positionStorageKey: String | Null = null
-  var rememberSize: Boolean = true
+  var $draggable: Boolean = true
+  var $resizeable: Boolean = true
+  var $centerOnOpen: Boolean = true
+  var $rememberPosition: Boolean = true
+  var $positionStorageKey: String | Null = null
+  var $rememberSize: Boolean = true
 
   private var didAutoCenter: Boolean = false
   private var closeHandler: Option[Window => Unit] = None
@@ -50,11 +50,11 @@ final class Window extends Box("div") {
     addClass("jfx-window")
 
     style {
-      zIndex_=(zIndexProperty.map(_.toString))
+      zIndex_=($zIndexProperty.map(_.toString))
     }
 
-    addDisposable(maximizedProperty.observe(syncMaximizedState))
-    addDisposable(activeProperty.observe(syncActiveState))
+    addDisposable($maximizedProperty.observe(syncMaximizedState))
+    addDisposable($activeProperty.observe(syncActiveState))
     addDisposable(() => stopActivePointerInteraction(persistState = false))
     addDisposable(() => openAnimationHandle.foreach(clearTimeout))
 
@@ -71,7 +71,7 @@ final class Window extends Box("div") {
         
         span {
           addClass("jfx-window__title")
-          text = titleProperty
+          text = $titleProperty
         }
 
         actionsHost = div {
@@ -82,7 +82,7 @@ final class Window extends Box("div") {
             buttonType = "button"
             onClick { event =>
               event.stopPropagation()
-              maximizedProperty.set(false)
+              $maximizedProperty.set(false)
             }
           }
           
@@ -113,13 +113,13 @@ final class Window extends Box("div") {
   override def afterCompose(): Unit = {
     if (!didRunOpenSequence) {
       given Component = this
-      if (resizeable) {
+      if ($resizeable) {
         addClass("jfx-window--resizable")
       }
 
       didRunOpenSequence = true
       openAnimationHandle = Some(setTimeout(300) {
-        maximizedProperty.set(true)
+        $maximizedProperty.set(true)
       })
 
       restoreSizeFromStorage()
@@ -129,11 +129,11 @@ final class Window extends Box("div") {
     }
   }
 
-  def title: String = titleProperty.get
-  def title_=(v: String): Unit = titleProperty.set(v)
+  def $title: String = $titleProperty.get
+  def $title_=(v: String): Unit = $titleProperty.set(v)
 
-  def active: Boolean = activeProperty.get
-  def active_=(v: Boolean): Unit = activeProperty.set(v)
+  def $active: Boolean = $activeProperty.get
+  def $active_=(v: Boolean): Unit = $activeProperty.set(v)
 
   def onCloseWindow(block: Window => Unit): Unit = {
     closeHandler = Some(block)
@@ -214,7 +214,7 @@ final class Window extends Box("div") {
   def centerInViewport(force: Boolean = false): Unit = {
     val element = host.asInstanceOf[jfx.core.render.DomHostElement].element.asInstanceOf[HTMLElement]
     if (!force) {
-      if (!centerOnOpen || didAutoCenter) return
+      if (!$centerOnOpen || didAutoCenter) return
       if (!element.style.left.isBlank || !element.style.top.isBlank) return
     }
     def attempt(triesLeft: Int): Unit = {
@@ -272,7 +272,7 @@ final class Window extends Box("div") {
     component.host.asInstanceOf[DomHostElement].element.asInstanceOf[HTMLElement]
 
   private def startDrag(event: PointerEvent, captureTarget: HTMLElement): Unit = {
-    if (!draggable) return
+    if (!$draggable) return
     val element = host.asInstanceOf[jfx.core.render.DomHostElement].element.asInstanceOf[HTMLElement]
     val startLeft = element.offsetLeft.toDouble
     val startTop = element.offsetTop.toDouble
@@ -286,7 +286,7 @@ final class Window extends Box("div") {
   }
 
   private def startResize(event: PointerEvent, captureTarget: HTMLElement, horizontal: Int, vertical: Int): Unit = {
-    if (!resizeable) return
+    if (!$resizeable) return
     val element = host.asInstanceOf[jfx.core.render.DomHostElement].element.asInstanceOf[HTMLElement]
     val startLeft = element.offsetLeft.toDouble
     val startTop = element.offsetTop.toDouble
@@ -378,14 +378,14 @@ final class Window extends Box("div") {
   }
 
   private def resolvedPositionStorageKey(): Option[String] = {
-    if (!rememberPosition) return None
-    val raw = Option(positionStorageKey).map(_.trim).filter(_.nonEmpty).orElse(Option(title).map(_.trim).filter(_.nonEmpty))
+    if (!$rememberPosition) return None
+    val raw = Option($positionStorageKey).map(_.trim).filter(_.nonEmpty).orElse(Option($title).map(_.trim).filter(_.nonEmpty))
     raw.map(value => s"jFx2.window.position:$value")
   }
 
   private def resolvedSizeStorageKey(): Option[String] = {
-    if (!rememberSize) return None
-    val raw = Option(positionStorageKey).map(_.trim).filter(_.nonEmpty).orElse(Option(title).map(_.trim).filter(_.nonEmpty))
+    if (!$rememberSize) return None
+    val raw = Option($positionStorageKey).map(_.trim).filter(_.nonEmpty).orElse(Option($title).map(_.trim).filter(_.nonEmpty))
     raw.map(value => s"jFx2.window.size:$value")
   }
 
@@ -448,43 +448,43 @@ object Window {
     DslRuntime.build(new Window())(init)
   }
   
-  def title(using w: Window): String = w.title
-  def title_=(v: String)(using w: Window): Unit = w.title = v
+  def title(using w: Window): String = w.$title
+  def title_=(v: String)(using w: Window): Unit = w.$title = v
   def title_=(v: ReadOnlyProperty[String])(using w: Window): Unit =
-    w.addDisposable(v.observe(next => w.title = Option(next).getOrElse("")))
+    w.addDisposable(v.observe(next => w.$title = Option(next).getOrElse("")))
   
-  def draggable(using w: Window): Boolean = w.draggable
-  def draggable_=(v: Boolean)(using w: Window): Unit = w.draggable = v
+  def draggable(using w: Window): Boolean = w.$draggable
+  def draggable_=(v: Boolean)(using w: Window): Unit = w.$draggable = v
 
-  def resizeable(using w: Window): Boolean = w.resizeable
-  def resizeable_=(v: Boolean)(using w: Window): Unit = w.resizeable = v
+  def resizeable(using w: Window): Boolean = w.$resizeable
+  def resizeable_=(v: Boolean)(using w: Window): Unit = w.$resizeable = v
 
-  def centerOnOpen(using w: Window): Boolean = w.centerOnOpen
-  def centerOnOpen_=(v: Boolean)(using w: Window): Unit = w.centerOnOpen = v
+  def centerOnOpen(using w: Window): Boolean = w.$centerOnOpen
+  def centerOnOpen_=(v: Boolean)(using w: Window): Unit = w.$centerOnOpen = v
 
-  def rememberPosition(using w: Window): Boolean = w.rememberPosition
-  def rememberPosition_=(v: Boolean)(using w: Window): Unit = w.rememberPosition = v
+  def rememberPosition(using w: Window): Boolean = w.$rememberPosition
+  def rememberPosition_=(v: Boolean)(using w: Window): Unit = w.$rememberPosition = v
 
-  def positionStorageKey(using w: Window): String | Null = w.positionStorageKey
-  def positionStorageKey_=(v: String | Null)(using w: Window): Unit = w.positionStorageKey = v
+  def positionStorageKey(using w: Window): String | Null = w.$positionStorageKey
+  def positionStorageKey_=(v: String | Null)(using w: Window): Unit = w.$positionStorageKey = v
 
-  def rememberSize(using w: Window): Boolean = w.rememberSize
-  def rememberSize_=(v: Boolean)(using w: Window): Unit = w.rememberSize = v
+  def rememberSize(using w: Window): Boolean = w.$rememberSize
+  def rememberSize_=(v: Boolean)(using w: Window): Unit = w.$rememberSize = v
 
-  def active(using w: Window): Boolean = w.active
+  def active(using w: Window): Boolean = w.$active
   def active_=(v: Boolean | jfx.core.state.ReadOnlyProperty[Boolean])(using w: Window): Unit = v match {
-    case b: Boolean => w.active = b
+    case b: Boolean => w.$active = b
     case p: jfx.core.state.ReadOnlyProperty[Boolean] => 
-       w.addDisposable(p.observe(w.active = _))
+       w.addDisposable(p.observe(w.$active = _))
   }
 
-  def zIndex(using w: Window): Property[Int] = w.zIndexProperty
+  def zIndex(using w: Window): Property[Int] = w.$zIndexProperty
   def zIndex_=(p: Property[Int])(using w: Window): Unit = 
-     w.addDisposable(jfx.core.state.Property.subscribeBidirectional(w.zIndexProperty, p))
+     w.addDisposable(jfx.core.state.Property.subscribeBidirectional(w.$zIndexProperty, p))
 
-  def maximized(using w: Window): Property[Boolean] = w.maximizedProperty
+  def maximized(using w: Window): Property[Boolean] = w.$maximizedProperty
   def maximized_=(p: Property[Boolean])(using w: Window): Unit = 
-     w.addDisposable(jfx.core.state.Property.subscribeBidirectional(w.maximizedProperty, p))
+     w.addDisposable(jfx.core.state.Property.subscribeBidirectional(w.$maximizedProperty, p))
 
   def onCloseWindow(handler: Window => Unit)(using w: Window): Unit = w.onCloseWindow(handler)
   def onClickWindow(handler: Window => Unit)(using w: Window): Unit = w.onClickWindow(handler)
