@@ -182,14 +182,14 @@ Each module has its own README with installation notes and examples for the comp
 ## Installation
 
 ```scala
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.2.0"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-router" % "2.2.0"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-viewport" % "2.2.0"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-i18n" % "2.2.0"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-json" % "2.2.0"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-controls" % "2.2.0"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-forms" % "2.2.0"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-editor" % "2.2.0" // optional, includes Lexical
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.2.1"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-router" % "2.2.1"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-viewport" % "2.2.1"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-i18n" % "2.2.1"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-json" % "2.2.1"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-controls" % "2.2.1"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-forms" % "2.2.1"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-editor" % "2.2.1" // optional, includes Lexical
 ```
 
 Requires Scala 3.8.3, Scala.js, and ES module output targeting ES2021.
