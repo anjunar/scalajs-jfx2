@@ -37,14 +37,14 @@ class ConditionSpec extends AnyFlatSpec with Matchers {
       }
 
       cond.children should have size 1
-      cond.children.head.asInstanceOf[jfx.core.component.Box].classes should contain ("t")
+      cond.children.head.asInstanceOf[jfx.core.component.Box].$classes should contain ("t")
 
       // Act: Switch
       prop.set(false)
     }
 
     cond.children should have size 1
-    cond.children.head.asInstanceOf[jfx.core.component.Box].classes should contain ("f")
+    cond.children.head.asInstanceOf[jfx.core.component.Box].$classes should contain ("f")
   }
 
   it should "handle nested conditions and maintain offsets" in {

@@ -11,14 +11,14 @@ trait ComponentClasses extends ComponentCore {
   def baseClasses: Seq[String] = _baseClasses.toSeq
   def userClasses: Seq[String] = _userClasses.toSeq
 
-  def classes: Seq[String] = {
+  def $classes: Seq[String] = {
     _host match {
       case h: HostElement => h.attribute("class").getOrElse("").split(" ").toSeq.filter(_.nonEmpty)
       case _              => (_baseClasses ++ _userClasses).distinct.toSeq
     }
   }
 
-  def classes_=(names: Seq[String]): Unit = setUserClasses(names)
+  def $classes_=(names: Seq[String]): Unit = setUserClasses(names)
 
   private[jfx] def addBaseClass(name: String): Unit = {
     if (!_baseClasses.contains(name)) {

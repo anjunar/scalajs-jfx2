@@ -48,7 +48,7 @@ class ForEachSpec extends AnyFlatSpec with Matchers {
 
     // Verify Tree
     root.children.head.children should have size 2
-    root.children.head.children(1).asInstanceOf[jfx.core.component.Box].classes should contain ("item-B")
+    root.children.head.children(1).asInstanceOf[jfx.core.component.Box].$classes should contain ("item-B")
   }
 
   it should "maintain correct DOM offsets after middle insertion" in {
@@ -117,9 +117,9 @@ class ForEachSpec extends AnyFlatSpec with Matchers {
     items.insert(1, "B")
 
     fe.children should have size 3
-    fe.children(0).asInstanceOf[jfx.core.component.Box].classes should contain ("item-0-A")
-    fe.children(1).asInstanceOf[jfx.core.component.Box].classes should contain ("item-1-B")
-    fe.children(2).asInstanceOf[jfx.core.component.Box].classes should contain ("item-2-C")
+    fe.children(0).asInstanceOf[jfx.core.component.Box].$classes should contain ("item-0-A")
+    fe.children(1).asInstanceOf[jfx.core.component.Box].$classes should contain ("item-1-B")
+    fe.children(2).asInstanceOf[jfx.core.component.Box].$classes should contain ("item-2-C")
   }
 
   it should "handle range, patch, update, clear and reset changes" in {
@@ -138,20 +138,20 @@ class ForEachSpec extends AnyFlatSpec with Matchers {
 
     items.insertAll(1, Seq("B", "C"))
     fe.children should have size 3
-    fe.children(2).asInstanceOf[jfx.core.component.Box].classes should contain ("entry-2-C")
+    fe.children(2).asInstanceOf[jfx.core.component.Box].$classes should contain ("entry-2-C")
 
     items.update(0, "Z")
-    fe.children(0).asInstanceOf[jfx.core.component.Box].classes should contain ("entry-0-Z")
+    fe.children(0).asInstanceOf[jfx.core.component.Box].$classes should contain ("entry-0-Z")
 
     items.patchInPlace(1, Seq("Y"), 2)
     fe.children should have size 2
-    fe.children(1).asInstanceOf[jfx.core.component.Box].classes should contain ("entry-1-Y")
+    fe.children(1).asInstanceOf[jfx.core.component.Box].$classes should contain ("entry-1-Y")
 
     items.clear()
     fe.children shouldBe empty
 
     items.setAll(Seq("R", "S"))
     fe.children should have size 2
-    fe.children(1).asInstanceOf[jfx.core.component.Box].classes should contain ("entry-1-S")
+    fe.children(1).asInstanceOf[jfx.core.component.Box].$classes should contain ("entry-1-S")
   }
 }

@@ -47,7 +47,7 @@ class ObserveRenderSpec extends AnyFlatSpec with Matchers {
     }
 
     statement.children should have size 1
-    statement.children.head.asInstanceOf[jfx.core.component.Box].classes should contain ("state-B")
+    statement.children.head.asInstanceOf[jfx.core.component.Box].$classes should contain ("state-B")
   }
 
   it should "expose the current observeRender value inside the render block" in {

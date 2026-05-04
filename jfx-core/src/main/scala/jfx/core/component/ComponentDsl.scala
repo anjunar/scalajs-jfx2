@@ -5,14 +5,14 @@ import jfx.core.state.{Disposable, ReadOnlyProperty}
 import org.scalajs.dom
 
 trait ComponentClassDsl {
-  def classes(using c: Component): Seq[String] = c.classes
+  def classes(using c: Component): Seq[String] = c.$classes
 
   def classes_=(names: String)(using c: Component): Unit = {
-    c.classes = Seq(names)
+    c.$classes = Seq(names)
   }
 
   def classes_=(names: Seq[String])(using c: Component): Unit = {
-    c.classes = names
+    c.$classes = names
   }
 
   def addClass(name: String)(using c: Component): Unit = {

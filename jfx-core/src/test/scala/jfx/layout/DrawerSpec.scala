@@ -19,10 +19,10 @@ class DrawerSpec extends AnyFlatSpec with Matchers {
       dr
     }
 
-    dr.classes should contain ("jfx-drawer--open")
+    dr.$classes should contain ("jfx-drawer--open")
     
     dr.$openProperty.set(false)
-    dr.classes should not contain ("jfx-drawer--open")
+    dr.$classes should not contain ("jfx-drawer--open")
   }
 
   it should "render content and navigation in their respective hosts" in {
