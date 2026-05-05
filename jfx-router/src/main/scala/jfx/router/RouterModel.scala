@@ -72,11 +72,13 @@ object RouteMatcher {
   def resolve(routes: Seq[Route], path: String): List[RouteMatch] = {
     val normalized = normalize(path)
     
-    def tryMatch(p: String): Option[List[RouteMatch]] = {
-      routes.collectFirst {
-        case r if normalize(r.path) == p => List(RouteMatch(r, normalized, Map.empty))
-      }
-    }
+    def tryMatch(p: String): Option[List[RouteMatch]] =
+      routes
+        .iterator
+        .map(route => route -> matches(route.path, p))
+        .collectFirst {
+          case (route, Some(params)) => List(RouteMatch(route, normalized, params))
+        }
 
     // 1. Try direct match
     tryMatch(normalized).orElse {
@@ -89,6 +91,37 @@ object RouteMatcher {
       tryMatch(p)
     }.getOrElse(Nil)
   }
+
+  private def matches(routePath: String, requestPath: String): Option[Map[String, String]] = {
+    val routeSegments = segments(normalize(routePath))
+    val requestSegments = segments(normalize(requestPath))
+
+    if (routeSegments.length != requestSegments.length) {
+      None
+    } else {
+      routeSegments.zip(requestSegments).foldLeft(Option(Map.empty[String, String])) {
+        case (None, _) => None
+        case (Some(params), (routeSegment, requestSegment)) =>
+          if (routeSegment.startsWith(":") && routeSegment.length > 1) {
+            Some(params.updated(routeSegment.drop(1), decode(requestSegment)))
+          } else if (routeSegment == requestSegment) {
+            Some(params)
+          } else {
+            None
+          }
+      }
+    }
+  }
+
+  private def segments(path: String): Vector[String] =
+    if (path == "/") Vector.empty
+    else path.stripPrefix("/").split("/").iterator.filter(_.nonEmpty).toVector
+
+  private def decode(value: String): String =
+    try js.URIUtils.decodeURIComponent(value)
+    catch {
+      case _: Throwable => value
+    }
 
   private def normalize(path: String): String = {
     if (path == null || path.isEmpty || path == "/") "/"
