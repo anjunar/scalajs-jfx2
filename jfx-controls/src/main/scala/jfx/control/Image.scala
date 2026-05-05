@@ -58,8 +58,6 @@ private final class ImageNode(srcProperty: ReadOnlyProperty[String], altProperty
     attribute("alt", altProperty)
     style {
       display = "block"
-      width = "100%"
-      height = "100%"
       objectFit = "inherit"
       objectPosition = "inherit"
       borderRadius = "inherit"
