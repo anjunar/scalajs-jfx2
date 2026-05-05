@@ -47,6 +47,7 @@ final class TableView[S] extends Box("div") {
 
   private var itemsObserver: Disposable = TableView.noopDisposable
   private var remoteItemsObserver: Disposable = TableView.noopDisposable
+  private var viewportMeasureScheduled = false
   private var routeContext: Option[RouteContext] = None
 
   def $itemsProperty: Property[ListProperty[S]] = itemsRefProperty
@@ -432,6 +433,61 @@ final class TableView[S] extends Box("div") {
           }
         }
       }
+    }
+  }
+
+  override def afterCompose(): Unit = {
+    if (!RenderBackend.current.isServer) {
+      scheduleViewportMeasure()
+
+      host.domNode.collect { case element: dom.html.Element =>
+        val observedElement =
+          element.querySelector(".jfx-table-viewport") match {
+            case viewport: dom.html.Element => viewport
+            case _                          => element
+          }
+
+        val resizeObserver = new dom.ResizeObserver((_, _) => scheduleViewportMeasure())
+        resizeObserver.observe(observedElement)
+        addDisposable(() => resizeObserver.disconnect())
+      }
+
+      val listener: dom.Event => Unit = _ => scheduleViewportMeasure()
+      dom.window.addEventListener("resize", listener)
+      addDisposable(() => dom.window.removeEventListener("resize", listener))
+    }
+  }
+
+  private def scheduleViewportMeasure(): Unit = {
+    if (viewportMeasureScheduled || RenderBackend.current.isServer) return
+
+    viewportMeasureScheduled = true
+    dom.window.requestAnimationFrame { _ =>
+      viewportMeasureScheduled = false
+      measureViewport()
+    }
+  }
+
+  private def measureViewport(): Unit =
+    host.domNode.collect { case element: dom.html.Element =>
+      element.querySelector(".jfx-table-viewport") match {
+        case viewport: dom.html.Element =>
+          updateViewportSize(viewport)
+        case _ =>
+          updateViewportSize(element)
+      }
+    }
+
+  private def updateViewportSize(element: dom.html.Element): Unit = {
+    val width = element.clientWidth.toDouble
+    val height = element.clientHeight.toDouble
+
+    if (width > 0.0) {
+      $viewportWidthProperty.set(width)
+    }
+
+    if (height > 0.0) {
+      $viewportHeightProperty.set(height)
     }
   }
 
