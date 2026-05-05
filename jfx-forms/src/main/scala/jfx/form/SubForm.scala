@@ -26,6 +26,7 @@ class SubForm[M](val $name: String) extends Box("fieldset") with Formular[M] wit
     super.compose()
 
     addDisposable($editableProperty.observe { editable =>
+      host.setProperty("disabled", !editable)
       $controls.foreach(_. $editableProperty.set(editable))
     })
 

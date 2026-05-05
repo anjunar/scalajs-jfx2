@@ -4,6 +4,7 @@ import jfx.core.render.{BrowserRenderBackend, Cursor, HostElement, HostNode, Ren
 import jfx.core.state.Disposable
 import jfx.dsl.DslRuntime
 import jfx.form.Input.*
+import jfx.form.SubForm.{editable as subFormEditable, subForm}
 import org.scalajs.dom
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -30,6 +31,23 @@ class InputSpec extends AnyFlatSpec with Matchers {
     }
 
     control.$valueProperty.get shouldBe ""
+  }
+
+  it should "disable the native fieldset when a subform becomes non-editable" in {
+    val createdHosts = mutable.ArrayBuffer.empty[FakeHostElement]
+
+    RenderBackend.withBackend(BrowserRenderBackend) {
+      DslRuntime.withCursor(new FakeCursor(created => createdHosts += created)) {
+        subForm[String]("info") {
+          input("firstName") {}
+          subFormEditable = false
+        }
+      }
+    }
+
+    val fieldsetHost = createdHosts.find(_.tagName == "fieldset").orNull
+    fieldsetHost should not be null
+    fieldsetHost.property[Boolean]("disabled") shouldBe Some(true)
   }
 }
 
