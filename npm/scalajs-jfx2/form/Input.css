@@ -11,10 +11,18 @@ input {
     font-size: 15px;
     outline: 0;
     border: 0;
+    box-shadow: none !important;
     padding: 0;
     margin: 0;
     background-color: inherit;
     width: 100%;
+
+    &:focus,
+    &:focus-visible,
+    &:active {
+        outline: none !important;
+        box-shadow: none !important;
+    }
 
     &.focus {
         color: var(--aj-accent);
