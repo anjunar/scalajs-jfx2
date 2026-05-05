@@ -5,6 +5,7 @@ import jfx.core.component.Component.*
 import jfx.core.state.{Property, ReadOnlyProperty}
 import jfx.dsl.DslRuntime
 import org.scalajs.dom
+import scala.scalajs.js
 
 class Input(override val $name: String, override val $standalone: Boolean = false) extends Component with Control[String] {
   override def tagName: String = "input"
@@ -53,7 +54,10 @@ class Input(override val $name: String, override val $standalone: Boolean = fals
   }
 
   private def nativeValue: String =
-    host.property[String]("value").getOrElse("")
+    host.property[js.Any]("value")
+      .filter(value => value != null && !js.isUndefined(value))
+      .map(_.toString)
+      .getOrElse("")
 
   private def bindNativeValue(): Unit = {
     addDisposable($valueProperty.observe { value =>

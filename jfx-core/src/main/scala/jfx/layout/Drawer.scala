@@ -4,6 +4,7 @@ import jfx.core.component.{Box, Component}
 import jfx.core.component.Component.*
 import jfx.core.state.Property
 import jfx.dsl.{ComponentContext, DslRuntime, StyleProxy}
+import scala.scalajs.js
 import scala.compiletime.uninitialized
 
 class Drawer extends Box("div") {
@@ -87,7 +88,13 @@ class Drawer extends Box("div") {
     }
 
     onWindowKeyDown { event =>
-      if (event.key == "Escape" && $openProperty.get) {
+      val key =
+        Option(event.asInstanceOf[js.Dynamic].selectDynamic("key").asInstanceOf[js.Any])
+          .filter(value => value != null && !js.isUndefined(value))
+          .map(_.toString)
+          .getOrElse("")
+
+      if (key == "Escape" && $openProperty.get) {
         $openProperty.set(false)
       }
     }
