@@ -61,6 +61,7 @@ object TableColumn {
   def prefWidth_=[S, T](value: jfx.core.state.ReadOnlyProperty[Double])(using c: TableColumn[S, T]): Unit =
     c.addDisposable(value.observe(c.$prefWidthProperty.set))
 
+  def cellRenderer[S](using c: TableColumn[S, ?]): Option[S => Unit] = c.$cellRenderer.get
   def cellRenderer_=[S](renderer: S => Unit)(using c: TableColumn[S, ?]): Unit = c.setCellRenderer(renderer)
 
   def cellValueFactory[S, T](using tableColumn: TableColumn[S, T]): TableColumn.CellDataFeatures[S, T] => ReadOnlyProperty[T] | Null =
