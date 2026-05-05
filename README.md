@@ -176,6 +176,7 @@ Each module has its own README with installation notes and examples for the comp
 | [jfx-controls](jfx-controls/README.md) | Link, image, table view and virtual list view |
 | [jfx-forms](jfx-forms/README.md) | Forms, inputs, validation, combo boxes, array forms and image cropper |
 | [jfx-editor](jfx-editor/README.md) | Lexical based rich text editor and editor plugins |
+| [jfx-webAuthn](jfx-webAuthn/README.md) | Browser-side WebAuthn registration, authentication and passkey payload helpers |
 
 ---
 
@@ -190,6 +191,7 @@ libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-json" % "2.2.1"
 libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-controls" % "2.2.1"
 libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-forms" % "2.2.1"
 libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-editor" % "2.2.1" // optional, includes Lexical
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-webauthn" % "2.2.1" // optional, browser-side passkeys
 ```
 
 Requires Scala 3.8.3, Scala.js, and ES module output targeting ES2021.
