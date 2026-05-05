@@ -8,4 +8,10 @@ trait ComponentEvents extends ComponentCore {
       handler(e.asInstanceOf[dom.MouseEvent])
     }))
   }
+
+  def onDoubleClickHandler(handler: dom.MouseEvent => Unit): Unit = {
+    addDisposable(host.addEventListener("dblclick", e => {
+      handler(e.asInstanceOf[dom.MouseEvent])
+    }))
+  }
 }

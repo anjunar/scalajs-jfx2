@@ -82,6 +82,8 @@ trait ComponentAttributeDsl {
 trait ComponentEventDsl {
   def onClick(handler: dom.MouseEvent => Unit)(using c: Component): Unit = c.onClickHandler(handler)
 
+  def onDoubleClick(handler: dom.MouseEvent => Unit)(using c: Component): Unit = c.onDoubleClickHandler(handler)
+
   def onInput(handler: dom.Event => Unit)(using c: Component): Unit = {
     c.addDisposable(c.host.addEventListener("input", handler))
   }

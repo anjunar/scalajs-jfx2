@@ -83,6 +83,10 @@ class TableRow[S] extends Box("div") {
       tableView.select(rowIndex)
     }
 
+    onDoubleClick { _ =>
+      tableView.fireRowDoubleClick(rowValue)
+    }
+
     columns.zipWithIndex.foreach { case (col, colIndex) =>
       val typedColumn = col.asInstanceOf[TableColumn[S, Any]]
       Box.box("div") {

@@ -39,6 +39,7 @@ final class TableView[S] extends Box("div") {
   val $selectedIndexProperty = Property(-1)
   val $selectedItemProperty = Property[S | Null](null)
   val $placeholderProperty = Property[Component | Null](null)
+  val $rowDoubleClickHandlerProperty: Property[Option[S => Unit]] = Property(None)
 
   private case class VisibleRow(index: Int, item: Option[S])
   private val visibleRowsProperty = new ListProperty[VisibleRow]()
@@ -558,6 +559,12 @@ final class TableView[S] extends Box("div") {
     select(index)
   }
 
+  def setRowDoubleClickHandler(handler: S => Unit): Unit =
+    $rowDoubleClickHandlerProperty.set(Option(handler))
+
+  private[control] def fireRowDoubleClick(item: S): Unit =
+    $rowDoubleClickHandlerProperty.get.foreach(handler => handler(item))
+
   private def resolveRenderedColumnWidths(
     columns: Seq[TableColumn[S, ?]],
     viewportWidth: Double
@@ -683,6 +690,9 @@ object TableView {
 
   def placeholder[S](using t: TableView[S]): Component | Null = t.$placeholderProperty.get
   def placeholder_=[S](v: Component | Null)(using t: TableView[S]): Unit = t.$placeholderProperty.set(v)
+
+  def onRowDoubleClick[S](handler: S => Unit)(using t: TableView[S]): Unit =
+    t.setRowDoubleClickHandler(handler)
 
   def columns[S](using t: TableView[S]): ListProperty[TableColumn[S, ?]] =
     t.$columns
