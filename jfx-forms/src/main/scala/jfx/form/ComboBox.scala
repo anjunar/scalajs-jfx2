@@ -32,6 +32,8 @@ class ComboBox[T](override val $name: String, override val $standalone: Boolean 
   
   val $converterProperty: Property[T => String] = Property((v: T) => if (v == null) "" else v.toString)
   val $identityProperty: Property[T => Any] = Property((v: T) => v.asInstanceOf[Any])
+  val $selectionTextProperty: Property[Seq[T] => String] =
+    Property((values: Seq[T]) => values.headOption.map($converterProperty.get).getOrElse(""))
   
   type Renderer = (T, ReadOnlyProperty[Boolean]) => Unit
   val $itemRendererProperty: Property[Option[Renderer]] = Property(None)
@@ -46,8 +48,8 @@ class ComboBox[T](override val $name: String, override val $standalone: Boolean 
   }
 
   private val displayText = $selectionProperty.asProperty.flatMap { list =>
-    val first = list.headOption.getOrElse(null.asInstanceOf[T])
-    if (first == null) $placeholderProperty else Property($converterProperty.get(first))
+    val values = list.toSeq
+    if (values.isEmpty) $placeholderProperty else Property($selectionTextProperty.get(values))
   }
 
   private val isPlaceholder = $selectionProperty.asProperty.map(_.isEmpty)
@@ -198,8 +200,8 @@ class ComboBox[T](override val $name: String, override val $standalone: Boolean 
 }
 
 object ComboBox {
-  def comboBox[T](name: String)(init: ComboBox[T] ?=> Unit): ComboBox[T] = {
-    DslRuntime.build(new ComboBox[T](name))(init)
+  def comboBox[T](name: String, standalone: Boolean = false)(init: ComboBox[T] ?=> Unit): ComboBox[T] = {
+    DslRuntime.build(new ComboBox[T](name, standalone))(init)
   }
 
   def items[T](using c: ComboBox[T]): ListProperty[T] = c.$itemsProperty
@@ -218,6 +220,9 @@ object ComboBox {
 
   def identityBy[T](using c: ComboBox[T]): T => Any = c.$identityProperty.get
   def identityBy_=[T](using c: ComboBox[T])(v: T => Any): Unit = c.$identityProperty.set(v)
+
+  def selectionText[T](using c: ComboBox[T]): Seq[T] => String = c.$selectionTextProperty.get
+  def selectionText_=[T](using c: ComboBox[T])(v: Seq[T] => String): Unit = c.$selectionTextProperty.set(v)
 
   def rowHeight(using c: ComboBox[?]): Double = c.$rowHeightProperty.get
   def rowHeight_=(using c: ComboBox[?])(v: Double): Unit = c.$rowHeightProperty.set(v)
