@@ -67,12 +67,14 @@ class Input(override val $name: String, override val $standalone: Boolean = fals
   }
 
   private def bindNativePlaceholder(): Unit = {
+    host.setAttribute("placeholder", if ($placeholderProperty.get == null) "" else $placeholderProperty.get)
     addDisposable($placeholderProperty.observe { placeholder =>
       host.setAttribute("placeholder", if (placeholder == null) "" else placeholder)
     })
   }
 
   private def bindNativeEditable(): Unit = {
+    syncNativeEditable($editableProperty.get)
     addDisposable($editableProperty.observe { editable =>
       syncNativeEditable(editable)
     })

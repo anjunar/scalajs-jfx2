@@ -49,6 +49,21 @@ class InputSpec extends AnyFlatSpec with Matchers {
     fieldsetHost should not be null
     fieldsetHost.property[Boolean]("disabled") shouldBe Some(true)
   }
+
+  it should "sync native readonly state during initial compose when an input starts non-editable" in {
+    var host: FakeHostElement = null
+
+    RenderBackend.withBackend(BrowserRenderBackend) {
+      DslRuntime.withCursor(new FakeCursor(created => host = created)) {
+        input("firstName", standalone = true) {
+          editable = false
+        }
+      }
+    }
+
+    host.tagName shouldBe "input"
+    host.property[Boolean]("readOnly") shouldBe Some(true)
+  }
 }
 
 private final class FakeCursor(onCreate: FakeHostElement => Unit) extends Cursor {

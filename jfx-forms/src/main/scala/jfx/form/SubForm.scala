@@ -25,6 +25,7 @@ class SubForm[M](val $name: String) extends Box("fieldset") with Formular[M] wit
     given jfx.core.component.Component = this
     super.compose()
 
+    host.setProperty("disabled", !$editableProperty.get)
     addDisposable($editableProperty.observe { editable =>
       host.setProperty("disabled", !editable)
       $controls.foreach(_. $editableProperty.set(editable))
