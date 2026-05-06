@@ -141,9 +141,19 @@ lazy val jfxWebAuthn = Project(id = "scalajs-jfx2-webauthn", base = file("jfx-we
   .settings(commonLibrarySettings)
   .settings(commonJsSettings)
 
+lazy val jfxSsr = Project(id = "scalajs-jfx2-ssr", base = file("jfx-ssr"))
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(jfxCore)
+  .settings(
+    name := "scalajs-jfx2-ssr",
+    moduleName := "scalajs-jfx2-ssr"
+  )
+  .settings(commonLibrarySettings)
+  .settings(commonJsSettings)
+
 lazy val app = Project(id = "scalajs-jfx2-demo", base = file("application"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(jfxCore, jfxRouter, jfxViewport, jfxI18n, jfxJson, jfxControls, jfxForms, jfxEditor, jfxWebAuthn)
+  .dependsOn(jfxCore, jfxRouter, jfxViewport, jfxI18n, jfxJson, jfxControls, jfxForms, jfxEditor, jfxWebAuthn, jfxSsr)
   .settings(
     scalaJSUseMainModuleInitializer := false,
     publish / skip := true
@@ -151,7 +161,7 @@ lazy val app = Project(id = "scalajs-jfx2-demo", base = file("application"))
   .settings(commonJsSettings)
 
 lazy val root = Project(id = "scalajs-jfx2-root", base = file("."))
-  .aggregate(jfxCore, jfxRouter, jfxViewport, jfxI18n, jfxJson, jfxControls, jfxForms, jfxEditor, jfxWebAuthn, app)
+  .aggregate(jfxCore, jfxRouter, jfxViewport, jfxI18n, jfxJson, jfxControls, jfxForms, jfxEditor, jfxWebAuthn, jfxSsr, app)
   .settings(
     publish / skip := true
   )
