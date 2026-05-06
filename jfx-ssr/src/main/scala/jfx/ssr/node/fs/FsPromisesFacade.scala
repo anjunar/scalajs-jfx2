@@ -8,4 +8,3 @@ import scala.scalajs.js.annotation.JSImport
 object fsPromises extends js.Object {
   def readFile(path: String, encoding: String): js.Promise[String] = js.native
 }
-
