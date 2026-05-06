@@ -1,7 +1,5 @@
 package jfx.ssr.context
 
-import jfx.core.render.RenderBackend
-
 import scala.scalajs.js
 
 /**
@@ -22,16 +20,32 @@ object SsrContext {
     finally active = previous
   }
 
+  def withAsyncContext[A](ctx: js.UndefOr[SsrRequestContext])(thunk: => js.Promise[A]): js.Promise[A] = {
+    val previous = active
+    active = ctx
+
+    try {
+      thunk.`then`[A]({ value =>
+        active = previous
+        value
+      }).`catch` { error =>
+        active = previous
+        js.Promise.reject(error).asInstanceOf[js.Promise[A]]
+      }
+    } catch {
+      case error: Throwable =>
+        active = previous
+        throw error
+    }
+  }
+
   def currentOrigin: Option[String] =
-    if (!RenderBackend.current.isServer) None
-    else active.toOption.flatMap(_.origin.toOption).filter(_.nonEmpty)
+    active.toOption.flatMap(_.origin.toOption).filter(_.nonEmpty)
 
   def currentPath: Option[String] =
-    if (!RenderBackend.current.isServer) None
-    else active.toOption.flatMap(_.path.toOption).filter(_.nonEmpty)
+    active.toOption.flatMap(_.path.toOption).filter(_.nonEmpty)
 
   def currentCookie: Option[String] =
-    if (!RenderBackend.current.isServer) None
-    else active.toOption.flatMap(_.cookie.toOption).filter(_.nonEmpty)
+    active.toOption.flatMap(_.cookie.toOption).filter(_.nonEmpty)
 }
 
