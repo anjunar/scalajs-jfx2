@@ -11,10 +11,13 @@ const scalaTargetDir = resolve(rootDir, "application", "target");
 const scalaJsBundle = resolveScalaJsBundle();
 
 const siteUrl = "https://anjunar.github.io/scalajs-jfx2";
-const basePath = "/scalajs-jfx2";
 
 const routes = [
-  route("/", "scalajs-jfx2 | Scala.js UI Library", "A Scala.js UI library for declarative components, SSR, hydration, typed controls, runtime metadata, and source-first I18n."),
+  route(
+    "/",
+    "scalajs-jfx2 | Scala.js UI Library",
+    "A Scala.js UI library for declarative components, SSR, hydration, typed controls, runtime metadata, and source-first I18n."
+  ),
   route("/button", "Buttons | scalajs-jfx2", "Action controls in the JFX2 component DSL."),
   route("/input", "Inputs And Forms | scalajs-jfx2", "Typed input controls, form context, model binding, and validation."),
   route("/combo-box", "ComboBox | scalajs-jfx2", "Typed selection with stable identity and reactive state."),
@@ -26,7 +29,8 @@ const routes = [
   route("/image", "Images | scalajs-jfx2", "Image components and visual content handling in JFX2."),
   route("/image-cropper", "ImageCropper | scalajs-jfx2", "Client-side image cropper control for form workflows."),
   route("/editor", "Editor | scalajs-jfx2", "Lexical-backed editor integration as a normal JFX2 form control."),
-  route("/memory-leak-test", "Memory Leak Test | scalajs-jfx2", "Stress test 1000 Lexical editors through a VirtualList mount, scroll, and unmount lifecycle.")
+  route("/hydration-repro", "Hydration | scalajs-jfx2", "Hydration-focused editor route for direct-load SSR and client attach verification."),
+  route("/memory-leak-test", "Memory Leak Test | scalajs-jfx2", "Stress test 1000 Lexical editors through a VirtualList mount, scroll, and unmount lifecycle."),
 ];
 
 assertBuilt();
@@ -53,7 +57,7 @@ function route(path, title, description) {
     path,
     title,
     description,
-    canonical: `${siteUrl}${path === "/" ? "/" : `${path}/`}`
+    canonical: `${siteUrl}${path === "/" ? "/" : `${path}/`}`,
   };
 }
 
@@ -95,12 +99,16 @@ function relativeToDocs(path) {
 
 function sitemap() {
   const today = new Date().toISOString().slice(0, 10);
-  const urls = routes.map(entry => `  <url>
+  const urls = routes
+    .map(
+      (entry) => `  <url>
     <loc>${entry.canonical}</loc>
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>${entry.path === "/" ? "1.0" : "0.8"}</priority>
-  </url>`).join("\n");
+  </url>`
+    )
+    .join("\n");
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -127,10 +135,12 @@ function escapeHtml(value) {
 function assertBuilt() {
   const missing = [
     [templatePath, "docs/index.html"],
-    [scalaJsBundle, "Scala.js fullOptJS bundle"]
+    [scalaJsBundle, "Scala.js fullOptJS bundle"],
   ].filter(([path]) => !existsSync(path));
 
-  if (missing.length === 0) return;
+  if (missing.length === 0) {
+    return;
+  }
 
   const labels = missing.map(([, label]) => `- ${label}`).join("\n");
   throw new Error(
@@ -142,8 +152,8 @@ function resolveScalaJsBundle() {
   const bundleSuffix = ["scalajs-jfx2-demo-opt", "main.js"];
 
   const versionDirs = readdirSync(scalaTargetDir, { withFileTypes: true })
-    .filter(entry => entry.isDirectory() && entry.name.startsWith("scala-"))
-    .map(entry => entry.name)
+    .filter((entry) => entry.isDirectory() && entry.name.startsWith("scala-"))
+    .map((entry) => entry.name)
     .sort()
     .reverse();
 
