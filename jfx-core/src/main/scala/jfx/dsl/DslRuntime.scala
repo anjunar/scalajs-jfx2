@@ -3,6 +3,7 @@ package jfx.dsl
 import jfx.core.component.{ClientSideComponent, Component}
 import jfx.core.render.{BrowserRenderBackend, Cursor, HostElement, HydrationCursor, HydrationRenderBackend, RenderBackend}
 import jfx.di.{ServiceRegistry, HierarchicalRegistry}
+import jfx.hydration.DeferredHydrationBoundary
 import scala.collection.mutable
 import scala.reflect.ClassTag
 
@@ -31,6 +32,7 @@ object DslRuntime {
   private val cursorStack = mutable.ArrayBuffer.empty[Cursor]
   private val contextStack = mutable.ArrayBuffer(ComponentContext.root)
   private var clientSideActivationSuspensions = 0
+  private var deferredHydrationSuspensions = 0
 
   def currentCursor: Cursor = cursorStack.lastOption.getOrElse(
     throw IllegalStateException(
@@ -68,6 +70,17 @@ object DslRuntime {
     clientSideActivationSuspensions += 1
     try block finally clientSideActivationSuspensions -= 1
   }
+
+  def withDeferredHydrationSuspended[A](block: => A): A = {
+    deferredHydrationSuspensions += 1
+    try block finally deferredHydrationSuspensions -= 1
+  }
+
+  def isClientSideActivationSuspended: Boolean =
+    clientSideActivationSuspensions > 0
+
+  def isDeferredHydrationSuspended: Boolean =
+    deferredHydrationSuspensions > 0
 
   def attach[C <: Component](component: C): C = {
     component.bind(currentCursor)
@@ -139,17 +152,27 @@ object DslRuntime {
    */
   def rehydrate(component: Component, cursor: Cursor): Unit = {
     component.bind(cursor)
-    
-    if (component.isVirtual) {
-      rehydrateChildren(component, cursor)
-    } else {
-      component.hostNode match {
-        case h: HostElement =>
-          val childCursor = cursor.subCursor(h)
-          rehydrateChildren(component, childCursor)
-          pruneHydratedRemainder(childCursor)
-        case _ =>
-          // Non-element hosts (like text nodes) cannot have children in the DOM
+
+    val deferChildren = component match {
+      case boundary: DeferredHydrationBoundary if boundary.shouldDeferHydrationChildren =>
+        boundary.markDeferredHydrationClaimed()
+        true
+      case _ =>
+        false
+    }
+
+    if (!deferChildren) {
+      if (component.isVirtual) {
+        rehydrateChildren(component, cursor)
+      } else {
+        component.hostNode match {
+          case h: HostElement =>
+            val childCursor = cursor.subCursor(h)
+            rehydrateChildren(component, childCursor)
+            pruneHydratedRemainder(childCursor)
+          case _ =>
+            // Non-element hosts (like text nodes) cannot have children in the DOM
+        }
       }
     }
 

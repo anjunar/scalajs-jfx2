@@ -23,10 +23,12 @@ object Hydration {
     val dryBackend = BrowserRenderBackend 
     
     val root = DslRuntime.withClientSideActivationSuspended {
-      RenderBackend.withBackend(dryBackend) {
-        val cursor = dryBackend.nextCursor(None)
-        DslRuntime.withCursor(cursor) {
-          factory
+      DslRuntime.withDeferredHydrationSuspended {
+        RenderBackend.withBackend(dryBackend) {
+          val cursor = dryBackend.nextCursor(None)
+          DslRuntime.withCursor(cursor) {
+            factory
+          }
         }
       }
     }
@@ -44,6 +46,7 @@ object Hydration {
       }
 
       ClientSideComponent.activateTree(root)
+      HydrationBoundary.scheduleTree(root)
       
       root
     }.toJSPromise
