@@ -1,19 +1,19 @@
 package jfx.form
 
-import jfx.core.component.{Box, ClientSideComponent, ClientSideSsrContent, Component}
 import jfx.core.component.Component.*
+import jfx.core.component.{Box, ClientSideComponent, ClientSideSsrContent, Component}
 import jfx.core.state.{Property, ReadOnlyProperty}
 import jfx.dsl.DslRuntime
 import jfx.form.editor.plugins.{DefaultDialogService, EditorPlugin}
 import jfx.layout.Div.div
-import lexical.{EditorModule, EditorTheme, EditorThemeBuilder, Lexical, LexicalBuilder, LexicalCode, LexicalEditor, LexicalLink, LexicalList, LexicalRichText, RibbonRenderer, ToolbarDropdown, ToolbarElement, ToolbarManager, ToolbarRegistry, setDialogService}
+import lexical.*
 import org.scalajs.dom.{Event, HTMLDivElement, HTMLElement, window}
 
 import scala.collection.mutable
 import scala.scalajs.js
 
 class Editor(val $name: String, override val $standalone: Boolean = false)
-    extends ClientSideComponent
+  extends ClientSideComponent
     with Control[js.Any | Null] {
 
   override def tagName: String = "div"
@@ -36,6 +36,7 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
 
   override protected def composeFallback(): Unit = {
     given Component = this
+
     addClass("editor")
     addClass("jfx-editor-host")
 
@@ -65,6 +66,7 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
 
   private def renderFallbackContent(): Unit = {
     given Component = this
+
     val previewText = extractPreviewText($valueProperty.get)
 
     div {
@@ -271,12 +273,12 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
     val hostElement = host.domNode.collect { case element: HTMLElement => element }.orNull
 
     hostElement != null &&
-    hostElement.isConnected &&
-    toolbarHost != null &&
-    previewElement != null &&
-    liveRoot != null &&
-    liveRoot.nn.isConnected &&
-    placeholderElement != null
+      hostElement.isConnected &&
+      toolbarHost != null &&
+      previewElement != null &&
+      liveRoot != null &&
+      liveRoot.nn.isConnected &&
+      placeholderElement != null
   }
 
   private def scheduleHydratedMount(ssrContent: ClientSideSsrContent): Unit =
@@ -331,7 +333,7 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
         .withTheme(defaultTheme())
         .withEditable($editableProperty.get)
         .withNodes(defaultNodes())
-        .withModules(collectModules()*)
+        .withModules(collectModules() *)
 
     if (initialValue != null) {
       builder.withInitialState(initialValue)
@@ -590,7 +592,7 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
           LexicalLink.LinkNode,
           LexicalCode.CodeNode
         ) ++ pluginComponents.iterator.flatMap(_.nodes).toSeq
-      ).distinct*
+        ).distinct *
     )
 
   private def collectToolbarElements(): Seq[ToolbarElement] =
@@ -600,15 +602,20 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
     (
       pluginComponents.iterator.flatMap(_.modules).toSeq ++
         collectToolbarElements().collect { case module: EditorModule => module }
-    ).distinct
+      ).distinct
 
   private def defaultTheme(): EditorTheme =
     new EditorThemeBuilder()
       .withParagraph("lexical-paragraph")
       .withQuote("lexical-quote")
-      .withHeading(1, "lexical-heading-1")
-      .withHeading(2, "lexical-heading-2")
-      .withHeading(3, "lexical-heading-3")
+
+      .withHeading(1, "lexical-heading-h1")
+      .withHeading(2, "lexical-heading-h2")
+      .withHeading(3, "lexical-heading-h3")
+      .withList("ul", "lexical-list-ul")
+
+      .withList("ol", "lexical-list-ol")
+      .withList("listitem", "lexical-listitem")
       .withTextBold("lexical-text-bold")
       .withTextItalic("lexical-text-italic")
       .withTextUnderline("lexical-text-underline")
@@ -637,6 +644,7 @@ private final class EditorLiveRoot(onReady: HTMLDivElement => Unit) extends Comp
 
   override def compose(): Unit = {
     given Component = this
+
     addClass("jfx-editor__live-root")
     host.domNode.collect { case surface: HTMLDivElement => onReady(surface) }
   }
@@ -652,6 +660,7 @@ private final class EditorToolbarHost(onReady: HTMLElement => Unit) extends Comp
 
   override def compose(): Unit = {
     given Component = this
+
     addClass("jfx-editor__toolbar")
     host.domNode.collect { case element: HTMLElement => onReady(element) }
   }
@@ -667,6 +676,7 @@ private final class EditorPlaceholder(textProperty: ReadOnlyProperty[String], on
 
   override def compose(): Unit = {
     given Component = this
+
     addClass("jfx-editor__placeholder")
     text = textProperty.map { value =>
       Option(value).map(_.trim).getOrElse("")

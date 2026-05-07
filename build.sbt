@@ -1,7 +1,7 @@
 import org.scalajs.linker.interface.{ESVersion, ModuleKind}
 import org.scalajs.sbtplugin.ScalaJSPlugin
 
-ThisBuild / version := "2.2.2"
+ThisBuild / version := "2.2.3"
 ThisBuild / organization := "com.anjunar"
 ThisBuild / organizationName := "Anjunar"
 ThisBuild / organizationHomepage := Some(url("https://github.com/anjunar"))
@@ -126,7 +126,7 @@ lazy val jfxEditor = Project(id = "scalajs-jfx2-editor", base = file("jfx-editor
   .settings(
     name := "scalajs-jfx2-editor",
     moduleName := "scalajs-jfx2-editor",
-    libraryDependencies += "com.anjunar" %%% "scalajs-lexical" % "1.1.0"
+    libraryDependencies += "com.anjunar" %%% "scalajs-lexical" % "1.1.1"
   )
   .settings(commonLibrarySettings)
   .settings(commonJsSettings)
