@@ -199,17 +199,13 @@ class ComboBox[T](override val $name: String, override val $standalone: Boolean 
   }
 }
 
-object ComboBox {
+object ComboBox extends HasPlaceholder[ComboBox[?]] {
   def comboBox[T](name: String, standalone: Boolean = false)(init: ComboBox[T] ?=> Unit): ComboBox[T] = {
     DslRuntime.build(new ComboBox[T](name, standalone))(init)
   }
 
   def items[T](using c: ComboBox[T]): ListProperty[T] = c.$itemsProperty
   def items_=[T](using c: ComboBox[T])(v: scala.collection.IterableOnce[T]): Unit = c.$itemsProperty.setAll(v)
-
-  def placeholder(using c: ComboBox[?]): String = c.$placeholderProperty.get
-  def placeholder_=(using c: ComboBox[?])(v: String): Unit = c.$placeholderProperty.set(v)
-  def placeholder_=(using c: ComboBox[?])(v: ReadOnlyProperty[String]): Unit = c.$placeholder = v
 
   def editable(using c: ComboBox[?]): Boolean = c.$editableProperty.get
   def editable_=(using c: ComboBox[?])(v: Boolean): Unit = c.$editableProperty.set(v)

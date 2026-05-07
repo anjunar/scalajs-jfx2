@@ -617,7 +617,7 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
       .build()
 }
 
-object Editor {
+object Editor extends HasPlaceholder[Editor] {
   def editor(name: String, standalone: Boolean = false)(init: Editor ?=> Unit = {}): Editor =
     DslRuntime.build(new Editor(name, standalone))(init)
 
@@ -629,15 +629,6 @@ object Editor {
 
   def valueProperty(using e: Editor): Property[js.Any | Null] =
     e.$valueProperty
-
-  def placeholder(using e: Editor): String =
-    e.$placeholder
-
-  def placeholder_=(using e: Editor)(value: String): Unit =
-    e.$placeholder = value
-
-  def placeholder_=(using e: Editor)(value: ReadOnlyProperty[String]): Unit =
-    e.$placeholder = value
 
   def editable(using e: Editor): Boolean =
     e.$editableProperty.get

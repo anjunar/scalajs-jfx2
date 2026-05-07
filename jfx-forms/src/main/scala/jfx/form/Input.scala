@@ -91,7 +91,7 @@ class Input(override val $name: String, override val $standalone: Boolean = fals
   }
 }
 
-object Input {
+object Input extends HasPlaceholder[Input] {
   def input(name: String, standalone: Boolean = false)(init: Input ?=> Unit): Input = {
     DslRuntime.build(new Input(name, standalone))(init)
   }
@@ -101,9 +101,6 @@ object Input {
     DslRuntime.build(new Input(name, true))(init)
   }
 
-  def placeholder(using i: Input): String = i.$placeholder
-  def placeholder_=(value: String)(using i: Input): Unit = i.$placeholder = value
-  def placeholder_=(value: ReadOnlyProperty[String])(using i: Input): Unit = i.$placeholder = value
   def editable(using i: Input): Boolean = i.$editableProperty.get
   def editable_=(value: Boolean)(using i: Input): Unit = i.$editableProperty.set(value)
   def editableProperty(using i: Input): Property[Boolean] = i.$editableProperty

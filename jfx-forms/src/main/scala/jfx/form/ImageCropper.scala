@@ -798,7 +798,7 @@ object ImageCropperDialog {
   final case class ImageCropperSession(initialValue: Media, initialDirty: Boolean, var applied: Boolean = false, var closed: Boolean = false, var windowConf: Viewport.WindowConf = null)
 }
 
-object ImageCropper {
+object ImageCropper extends HasPlaceholder[ImageCropper] {
   trait Validator {
     def validate(value: String): Boolean
     def message: String
@@ -822,10 +822,6 @@ object ImageCropper {
   def value_=(using c: ImageCropper)(media: Media): Unit = c.$valueProperty.set(media)
 
   def valueProperty(using c: ImageCropper): Property[Media] = c.$valueProperty
-
-  def placeholder(using c: ImageCropper): String = c.$placeholder
-  def placeholder_=(using c: ImageCropper)(value: String): Unit = c.$placeholder = value
-  def placeholder_=(using c: ImageCropper)(value: ReadOnlyProperty[String]): Unit = c.$placeholder = value
 
   def editable(using c: ImageCropper): Boolean = c.$editable
   def editable_=(using c: ImageCropper)(value: Boolean): Unit = c.$editable = value
