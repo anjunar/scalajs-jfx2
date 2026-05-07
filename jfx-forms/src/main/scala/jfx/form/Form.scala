@@ -20,7 +20,7 @@ class Form[M](val $name: String = "default") extends Box("form") with Formular[M
   }
 }
 
-object Form {
+object Form extends HasEditable[Form[?]] {
   def form[M](model: M)(init: Form[M] ?=> Unit): Form[M] = {
     val f = new Form[M]()
     f.setModel(model)
@@ -42,7 +42,4 @@ object Form {
 
   def controls[M](using f: Form[M]): jfx.core.state.ListProperty[Control[?]] = f.$controls
 
-  def editable[M](using f: Form[M]): Boolean = f.$editable
-  def editable_=[M](using f: Form[M])(value: Boolean): Unit = f.$editable = value
-  def editableProperty[M](using f: Form[M]): Property[Boolean] = f.$editableProperty
 }

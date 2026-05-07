@@ -91,7 +91,7 @@ class Input(override val $name: String, override val $standalone: Boolean = fals
   }
 }
 
-object Input extends HasPlaceholder[Input] {
+object Input extends HasPlaceholder[Input] with HasEditable[Input] {
   def input(name: String, standalone: Boolean = false)(init: Input ?=> Unit): Input = {
     DslRuntime.build(new Input(name, standalone))(init)
   }
@@ -101,9 +101,6 @@ object Input extends HasPlaceholder[Input] {
     DslRuntime.build(new Input(name, true))(init)
   }
 
-  def editable(using i: Input): Boolean = i.$editableProperty.get
-  def editable_=(value: Boolean)(using i: Input): Unit = i.$editableProperty.set(value)
-  def editableProperty(using i: Input): Property[Boolean] = i.$editableProperty
   def inputType(using i: Input): String = i.host.attribute("type").getOrElse("text")
   def inputType_=(value: String)(using i: Input): Unit =
     i.host.setAttribute("type", Option(value).filter(_.nonEmpty).getOrElse("text"))
