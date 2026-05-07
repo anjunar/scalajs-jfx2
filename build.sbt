@@ -126,7 +126,7 @@ lazy val jfxEditor = Project(id = "scalajs-jfx2-editor", base = file("jfx-editor
   .settings(
     name := "scalajs-jfx2-editor",
     moduleName := "scalajs-jfx2-editor",
-    libraryDependencies += "com.anjunar" %%% "scalajs-lexical" % "1.1.1"
+    libraryDependencies += "com.anjunar" %%% "scalajs-lexical" % "1.1.2"
   )
   .settings(commonLibrarySettings)
   .settings(commonJsSettings)

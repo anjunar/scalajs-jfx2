@@ -18,7 +18,7 @@
             opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
             transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     opacity: 1;
-    transform: scale(1);
+    transform: none;
     pointer-events: all;
 
     .jfx-window__surface {
@@ -28,13 +28,29 @@
         min-width: 0;
         min-height: 0;
         overflow: hidden;
+        position: relative;
+        isolation: isolate;
 
         background: var(--aj-overlay-bg);
-        backdrop-filter: blur(var(--aj-overlay-blur)) saturate(180%);
-        -webkit-backdrop-filter: blur(var(--aj-overlay-blur)) saturate(180%);
         border: 1px solid var(--aj-overlay-border);
         box-shadow: 0 16px 44px var(--aj-shadow-medium);
         border-radius: var(--aj-overlay-radius);
+    }
+
+    .jfx-window__surface::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        backdrop-filter: blur(var(--aj-overlay-blur)) saturate(180%);
+        -webkit-backdrop-filter: blur(var(--aj-overlay-blur)) saturate(180%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .jfx-window__surface > * {
+        position: relative;
+        z-index: 1;
     }
 
     .jfx-window__container {
