@@ -368,9 +368,12 @@
 }
 
 .editor .lexical-dropdown-menu {
-    position: fixed;
+    position: absolute;
+    top: 100%;
+    left: 0;
     z-index: 3000;
     min-width: 180px;
+    margin-top: 4px;
     padding: 6px;
     border: 1px solid color-mix(in srgb, var(--aj-line-strong) 26%, transparent);
     border-radius: 10px;
