@@ -33,9 +33,11 @@ object JsonMapper {
   private val JsonTypeAnnotation = "jfx.json.JsonType"
   private val JsonNameAnnotation = "jfx.json.JsonProperty"
   private val JsonIgnoreAnnotation = "jfx.json.JsonIgnore"
+  private val JsonIdAnnotation = "jfx.json.JsonId"
 
   private val TypeField = "@type"
   private val IdField = "id"
+
   inline def serialize[M](model: M): Dynamic =
     serialize(model, reflectType[M])
 
@@ -158,7 +160,10 @@ object JsonMapper {
         val accessor = propertyAccessor(runtimeDescriptor, property)
         val propertyValue = accessor.get(model.asInstanceOf[Any])
         val fieldContext = childContext(context, property.propertyType)
-        obj(jsonFieldName(property)) = serializeValue(propertyValue, fieldContext)
+
+        if (shouldSerializeField(propertyValue, fieldContext, property)) {
+          obj(jsonFieldName(property)) = serializeValue(propertyValue, fieldContext)
+        }
       }
     }
 
@@ -202,7 +207,7 @@ object JsonMapper {
   private def serializeListPropertyValue(value: Any, context: JsonContext): js.Any = {
     val property = value.asInstanceOf[ListProperty[Any]]
     val elementType = listElementType(context.expectedType)
-    js.Array(property.get.toSeq.map(item => serializeValue(item, childContext(context, elementType)))*)
+    js.Array(property.get.toSeq.map(item => serializeValue(item, childContext(context, elementType))) *)
   }
 
   private def serializeOptionValue(value: Any, context: JsonContext): js.Any =
@@ -240,6 +245,21 @@ object JsonMapper {
           throw new IllegalArgumentException(s"Expected collection for ${context.expectedType.typeName}, got ${other.getClass.getName}")
       }
     js.Array(values.map(item => serializeValue(item, childContext(context, elementType)))*)
+  }
+
+  private def shouldSerializeField(value: Any, context: JsonContext, property : PropertyDescriptor): Boolean = {
+    if (isJsonId(property)) {
+      return value match {
+        case propertyValue: Property[?] => propertyValue.get != null
+        case _ => true
+      }
+    }
+
+    value match {
+      case propertyValue: Property[?] => propertyValue.isDirty
+      case listProperty: ListProperty[?] => listProperty.isDirty
+      case _ => true
+    }
   }
 
   private def serializePrimitive(value: Any, typeName: String): js.Any =
@@ -338,6 +358,7 @@ object JsonMapper {
     currentValue match {
       case propertyValue: Property[?] =>
         propertyValue.asInstanceOf[Property[Any]].set(value)
+        propertyValue.asInstanceOf[Property[Any]].setDefault(value)
       case propertyValue: ListProperty[?] =>
         val values =
           value match {
@@ -349,6 +370,7 @@ object JsonMapper {
               throw new IllegalArgumentException(s"Expected sequence value for list property ${owner.typeName}.${property.name}, got ${other.getClass.getName}")
           }
         propertyValue.asInstanceOf[ListProperty[Any]].setAll(values.asInstanceOf[Seq[Any]])
+        propertyValue.asInstanceOf[ListProperty[Any]].setDefaultValue(values.toJSArray)
       case _ =>
         if (accessor.hasSetter) {
           accessor.set(instance, value)
@@ -500,6 +522,9 @@ object JsonMapper {
 
   private def isJsonDeserializable(property: PropertyDescriptor): Boolean =
     jsonIgnoreValue(property, "deserializable").getOrElse(!property.hasAnnotation(JsonIgnoreAnnotation))
+
+  private def isJsonId(property: PropertyDescriptor) : Boolean =
+    property.hasAnnotation(JsonIdAnnotation)
 
   private def jsonIgnoreValue(property: PropertyDescriptor, parameterName: String): Option[Boolean] =
     property.annotations

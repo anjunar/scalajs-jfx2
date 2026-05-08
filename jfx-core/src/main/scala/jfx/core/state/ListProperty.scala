@@ -3,6 +3,7 @@ package jfx.core.state
 import org.scalajs.dom
 
 import scala.collection.mutable
+import scala.compiletime.uninitialized
 import scala.concurrent.{ExecutionContext, Future}
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
@@ -16,9 +17,21 @@ class ListProperty[V](val underlying: js.Array[V] = js.Array[V]())
   private val listeners = mutable.ArrayBuffer.empty[js.Array[V] => Unit]
   private val changeListeners = mutable.ArrayBuffer.empty[Change[V] => Unit]
   private var disposableOwner: CompositeDisposable | Null = null
+  private var defaultValue : js.Array[V] = underlying
 
   override def get: js.Array[V] =
     underlying
+
+  def setDefaultValue(newValue : js.Array[V]) : Unit = {
+    defaultValue = newValue
+  }
+
+  def isDirty : Boolean = ! arrayEquals(underlying, defaultValue)
+
+  private def arrayEquals[A](left: js.Array[A], right: js.Array[A]): Boolean =
+    (left eq right) ||
+      left.length == right.length &&
+        left.indices.forall(index => left(index) == right(index))
 
   def registerDisposableOwner(owner: CompositeDisposable): this.type = {
     disposableOwner = owner

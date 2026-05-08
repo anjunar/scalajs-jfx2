@@ -18,13 +18,13 @@ import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 
 final class VirtualListView[T](
-  initialItems: ListProperty[T] | Null = null,
-  initialEstimateHeight: Double = 44.0,
-  initialOverscanPx: Double = 240.0,
-  initialPrefetchItems: Int = 80,
-  initialCrawlable: Boolean = false,
-  initialRenderer: (T | Null, Int) => Unit = (_: T | Null, _: Int) => ()
-) extends Box("div") {
+                                initialItems: ListProperty[T] | Null = null,
+                                initialEstimateHeight: Double = 44.0,
+                                initialOverscanPx: Double = 240.0,
+                                initialPrefetchItems: Int = 80,
+                                initialCrawlable: Boolean = false,
+                                initialRenderer: (T | Null, Int) => Unit = (_: T | Null, _: Int) => ()
+                              ) extends Box("div") {
 
   private given ExecutionContext = ExecutionContext.global
 
@@ -46,7 +46,9 @@ final class VirtualListView[T](
 
   private val heights = mutable.ArrayBuffer.empty[Double]
   private val prefix = mutable.ArrayBuffer(0.0)
+  private val pendingRangeLoads = mutable.Set.empty[(Int, Int)]
 
+  private var lastVisibleSlots = Vector.empty[VirtualListView.VisibleSlot[T]]
   private var prefixDirtyFrom: Int = Int.MaxValue
   private var tailPaddingItems: Int = defaultTailPadding
   private var itemRenderer: (T | Null, Int) => Unit = initialRenderer
@@ -165,8 +167,16 @@ final class VirtualListView[T](
 
       onScroll { event =>
         val target = event.target.asInstanceOf[dom.html.Element]
-        $scrollTopProperty.set(target.scrollTop)
-        $viewportHeightProperty.set(target.clientHeight.toDouble)
+        val nextScrollTop = target.scrollTop
+        val nextViewportHeight = target.clientHeight.toDouble
+
+        if (math.abs($scrollTopProperty.get - nextScrollTop) > 0.5) {
+          $scrollTopProperty.set(nextScrollTop)
+        }
+
+        if (math.abs($viewportHeightProperty.get - nextViewportHeight) > 0.5) {
+          $viewportHeightProperty.set(nextViewportHeight)
+        }
       }
 
       div {
@@ -215,6 +225,7 @@ final class VirtualListView[T](
   private def rewireItemsObserver(): Unit = {
     itemsObserver.dispose()
     remoteItemsObserver.dispose()
+    pendingRangeLoads.clear()
     bumpRemoteState()
 
     val currentItems = $items
@@ -267,8 +278,8 @@ final class VirtualListView[T](
 
   private def handleLocalItemsChange(change: ListProperty.Change[T]): Unit = {
     change match {
-      case ListProperty.UpdateAt(_, _, _, _) =>
-        ()
+      case ListProperty.UpdateAt(index, _, _, _) =>
+        invalidateVisibleSlot(index)
       case ListProperty.Add(_, _) =>
         ()
       case _ =>
@@ -288,8 +299,7 @@ final class VirtualListView[T](
 
     val total = maxRenderableCount
     if (total <= 0) {
-      visibleSlotsProperty.setAll(Seq.empty)
-      bumpItemState()
+      publishVisibleSlots(Seq.empty)
       return
     }
 
@@ -297,8 +307,7 @@ final class VirtualListView[T](
       val (offset, limit) = getCrawlParams
       val start = math.min(offset, total)
       val end = math.min(total, start + limit)
-      visibleSlotsProperty.setAll((start until end).map(crawlSlotFor))
-      bumpItemState()
+      publishVisibleSlots((start until end).map(crawlSlotFor))
       return
     }
 
@@ -322,13 +331,25 @@ final class VirtualListView[T](
       index += 1
     }
 
-    visibleSlotsProperty.setAll(slots.toSeq)
-    bumpItemState()
+    publishVisibleSlots(slots.toSeq)
 
     if (!RenderBackend.current.isServer && slots.nonEmpty) {
       requestMoreIfNecessary(slots.head.index, slots.last.index + 1)
     }
   }
+
+  private def publishVisibleSlots(slots: Seq[VirtualListView.VisibleSlot[T]]): Unit = {
+    val next = slots.toVector
+    if (next != lastVisibleSlots) {
+      lastVisibleSlots = next
+      visibleSlotsProperty.setAll(next)
+    }
+  }
+
+  private def invalidateVisibleSlot(index: Int): Unit =
+    if (index >= 0 && lastVisibleSlots.exists(_.index == index)) {
+      lastVisibleSlots = Vector.empty
+    }
 
   private def crawlSlotFor(index: Int): VirtualListView.VisibleSlot[T] = {
     val item = itemAt(index)
@@ -402,11 +423,18 @@ final class VirtualListView[T](
     }
 
     if (remote.supportsRangeLoading) {
+      val pageSize = math.max(prefetch, defaultLimit)
       val requestFrom = math.max(0, visibleStartIndex - prefetch)
       val requestToExclusive = visibleEndExclusive + prefetch
+      val pageFrom = requestFrom / pageSize * pageSize
+      val pageToExclusive = ((requestToExclusive + pageSize - 1) / pageSize) * pageSize
+      val key = (pageFrom, pageToExclusive)
 
-      if (!remote.isRangeLoaded(requestFrom, requestToExclusive)) {
-        discardPromise(remote.ensureRangeLoaded(requestFrom, requestToExclusive))
+      if (!remote.isRangeLoaded(pageFrom, pageToExclusive) && !pendingRangeLoads.contains(key)) {
+        pendingRangeLoads += key
+        remote.ensureRangeLoaded(pageFrom, pageToExclusive).toFuture.onComplete { _ =>
+          pendingRangeLoads -= key
+        }
       }
     } else if (canStillGrow) {
       val loadedLength = $items.length
@@ -426,6 +454,8 @@ final class VirtualListView[T](
     prefix += 0.0
     prefixDirtyFrom = Int.MaxValue
     tailPaddingItems = defaultTailPadding
+    lastVisibleSlots = Vector.empty
+    pendingRangeLoads.clear()
   }
 
   private def ensureHeightsSize(size: Int): Unit =
@@ -583,23 +613,23 @@ object VirtualListView {
   type Renderer[T] = (T | Null, Int) => Unit
 
   private[control] final case class VisibleSlot[T](
-    index: Int,
-    item: T | Null,
-    loaded: Boolean,
-    top: Double,
-    height: Double
-  )
+                                                    index: Int,
+                                                    item: T | Null,
+                                                    loaded: Boolean,
+                                                    top: Double,
+                                                    height: Double
+                                                  )
 
   def virtualList[T](items: ListProperty[T])(renderer: Renderer[T]): VirtualListView[T] =
     virtualList(items, estimateHeightPx = 44, overscanPx = 240, prefetchItems = 80)(renderer)
 
   def virtualList[T](
-    items: ListProperty[T],
-    estimateHeightPx: Int = 44,
-    overscanPx: Int = 240,
-    prefetchItems: Int = 80,
-    crawlable: Boolean = false
-  )(renderer: Renderer[T]): VirtualListView[T] =
+                      items: ListProperty[T],
+                      estimateHeightPx: Int = 44,
+                      overscanPx: Int = 240,
+                      prefetchItems: Int = 80,
+                      crawlable: Boolean = false
+                    )(renderer: Renderer[T]): VirtualListView[T] =
     DslRuntime.build(
       new VirtualListView[T](
         initialItems = items,
@@ -656,17 +686,17 @@ object VirtualListView {
     v.$crawlableProperty.set(value)
 
   private def virtualListCell[T](
-    slot: VisibleSlot[T],
-    renderer: Renderer[T],
-    onMeasured: (Int, Double) => Unit
-  ): VirtualListCell[T] =
+                                  slot: VisibleSlot[T],
+                                  renderer: Renderer[T],
+                                  onMeasured: (Int, Double) => Unit
+                                ): VirtualListCell[T] =
     DslRuntime.build(new VirtualListCell[T](slot, renderer, onMeasured)) {}
 
   private final class VirtualListCell[T](
-    slot: VisibleSlot[T],
-    renderer: Renderer[T],
-    onMeasured: (Int, Double) => Unit
-  ) extends Box("div") {
+                                          slot: VisibleSlot[T],
+                                          renderer: Renderer[T],
+                                          onMeasured: (Int, Double) => Unit
+                                        ) extends Box("div") {
 
     override def compose(): Unit = {
       given Component = this
@@ -719,3 +749,4 @@ object VirtualListView {
     }
   }
 }
+
