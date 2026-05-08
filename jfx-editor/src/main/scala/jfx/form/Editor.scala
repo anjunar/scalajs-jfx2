@@ -12,6 +12,9 @@ import org.scalajs.dom.{Event, HTMLDivElement, HTMLElement, window}
 import scala.collection.mutable
 import scala.scalajs.js
 
+enum EditorToolbarMode:
+  case Ribbon, Menu, Floating
+
 class Editor(val $name: String, override val $standalone: Boolean = false)
   extends ClientSideComponent
     with Control[js.Any | Null] {
@@ -27,10 +30,12 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
   private var placeholderElement: HTMLElement | Null = null
   private var editorUnregister: js.Function0[Unit] | Null = null
   private var editorDomCleanup: (() => Unit) | Null = null
+  private var floatingToolbarCleanup: js.Function0[Unit] | Null = null
   private var lastSeenValueJson: String | Null = null
   private var fallbackRendered = false
   private var toolbarRendered = false
   private var hydrationMountScheduled = false
+  private var $toolbarMode: EditorToolbarMode = EditorToolbarMode.Ribbon
   private val editorRegistrations = mutable.ArrayBuffer.empty[js.Function0[Unit]]
   private val pluginComponents = mutable.ArrayBuffer.empty[EditorPlugin]
 
@@ -101,52 +106,117 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
 
   private def renderFallbackToolbar()(using Component): Unit = {
     val elements = collectToolbarElements()
+    val showToolbar = $editableProperty.get && elements.nonEmpty
 
     div {
       addClass("jfx-editor__toolbar")
-      visible = $editableProperty.get && elements.nonEmpty
+      visible = showToolbar
 
-      if ($editableProperty.get && elements.nonEmpty) {
-        val model = new ToolbarRegistry(elements.toList).getModel
+      if (showToolbar) {
+        $toolbarMode match {
+          case EditorToolbarMode.Ribbon =>
+            renderFallbackRibbonToolbar(elements)
+          case EditorToolbarMode.Menu =>
+            renderFallbackMenuToolbar(elements)
+          case EditorToolbarMode.Floating =>
+            renderFallbackFloatingToolbar(collectFloatingToolbarModules())
+        }
+      }
+    }
+  }
 
-        div {
-          addClass("lexical-ribbon-wrapper")
+  private def renderFallbackRibbonToolbar(elements: Seq[ToolbarElement])(using Component): Unit = {
+    val model = new ToolbarRegistry(elements.toList, ToolbarLayout.Ribbon).getModel
 
+    div {
+      addClass("lexical-ribbon-wrapper")
+
+      div {
+        addClass("lexical-ribbon-tabs")
+        model.tabs.zipWithIndex.foreach { case (tab, index) =>
           div {
-            addClass("lexical-ribbon-tabs")
-            model.tabs.zipWithIndex.foreach { case (tab, index) =>
+            addClass("lexical-ribbon-tab")
+            if (index == 0) {
+              addClass("active")
+            }
+            text = tab.name
+          }
+        }
+      }
+
+      div {
+        addClass("lexical-ribbon-content")
+        model.tabs.zipWithIndex.foreach { case (tab, tabIndex) =>
+          div {
+            addClass("lexical-ribbon-tab-content")
+            style {
+              display = if (tabIndex == 0) "flex" else "none"
+            }
+
+            tab.sections.foreach { section =>
               div {
-                addClass("lexical-ribbon-tab")
-                if (index == 0) {
-                  addClass("active")
+                addClass("lexical-ribbon-section")
+
+                div {
+                  addClass("lexical-ribbon-buttons-container")
+                  section.modules.foreach(renderFallbackToolbarElement)
                 }
-                text = tab.name
+
+                div {
+                  addClass("lexical-ribbon-section-label")
+                  text = section.name
+                }
               }
             }
           }
+        }
+      }
+    }
+  }
 
+  private def renderFallbackMenuToolbar(elements: Seq[ToolbarElement])(using Component): Unit = {
+    val model = new ToolbarRegistry(elements.toList, ToolbarLayout.Menu).getModel
+
+    div {
+      addClass("lexical-menu")
+
+      div {
+        addClass("lexical-menu-bar")
+
+        model.tabs.foreach { tab =>
           div {
-            addClass("lexical-ribbon-content")
-            model.tabs.zipWithIndex.foreach { case (tab, tabIndex) =>
-              div {
-                addClass("lexical-ribbon-tab-content")
-                style {
-                  display = if (tabIndex == 0) "flex" else "none"
-                }
+            addClass("lexical-menu-item")
 
-                tab.sections.foreach { section =>
-                  div {
-                    addClass("lexical-ribbon-section")
+            div {
+              addClass("lexical-menu-trigger")
+              addClass("lexical-ribbon-button")
+              text = tab.name
+            }
 
+            div {
+              addClass("lexical-menu-panel")
+              addClass("lexical-dropdown-menu")
+              style {
+                display = "block"
+                position = "static"
+              }
+              val showSectionLabels =
+                !(tab.sections.length == 1 && tab.sections.headOption.exists(_.name == tab.name))
+
+              tab.sections.foreach { section =>
+                div {
+                  addClass("lexical-menu-section")
+
+                  if (showSectionLabels) {
                     div {
-                      addClass("lexical-ribbon-buttons-container")
-                      section.modules.foreach(renderFallbackToolbarElement)
-                    }
-
-                    div {
-                      addClass("lexical-ribbon-section-label")
+                      addClass("lexical-menu-section-label")
                       text = section.name
                     }
+                  }
+
+                  div {
+                    addClass("lexical-menu-section-content")
+                    section.modules.foreach(renderFallbackToolbarElement)
                   }
                 }
               }
@@ -156,6 +226,14 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
       }
     }
   }
+
+  private def renderFallbackFloatingToolbar(modules: Seq[EditorModule])(using Component): Unit =
+    if (modules.nonEmpty) {
+      div {
+        addClass("lexical-floating-toolbar")
+        modules.foreach(renderFallbackToolbarElement)
+      }
+    }
 
   private def renderFallbackToolbarElement(element: ToolbarElement)(using Component): Unit =
     element match {
@@ -388,6 +466,8 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
       editorDomCleanup = null
     }
 
+    cleanupFloatingToolbar()
+
     editorRegistrations.reverseIterator.foreach { unregister =>
       try unregister()
       catch {
@@ -441,24 +521,40 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
   private def renderToolbar(editor: LexicalEditor): Unit =
     if (toolbarHost != null) {
       val elements = collectToolbarElements()
+      val floatingModules = collectFloatingToolbarModules()
       val host = toolbarHost.nn
-      val showToolbar = $editableProperty.get && elements.nonEmpty
+      val showInlineToolbar =
+        $editableProperty.get &&
+          elements.nonEmpty &&
+          $toolbarMode != EditorToolbarMode.Floating
+      val showFloatingToolbar =
+        $editableProperty.get &&
+          floatingModules.nonEmpty &&
+          $toolbarMode == EditorToolbarMode.Floating
 
-      if (elements.isEmpty) {
+      if (elements.isEmpty || !showInlineToolbar) {
         host.innerHTML = ""
         toolbarRendered = false
       }
 
       host.style.display =
-        if (showToolbar) ""
+        if (showInlineToolbar) ""
         else "none"
 
-      if (showToolbar && !toolbarRendered) {
+      if (showInlineToolbar && !toolbarRendered) {
         host.innerHTML = ""
-        val registry = new ToolbarRegistry(elements.toList)
-        val manager = new ToolbarManager(editor, registry, new RibbonRenderer())
+        val registry = new ToolbarRegistry(elements.toList, inlineToolbarLayout())
+        val manager = new ToolbarManager(editor, registry, inlineToolbarRenderer())
         manager.createToolbar(host)
         toolbarRendered = true
+      }
+
+      if (showFloatingToolbar) {
+        if (floatingToolbarCleanup == null) {
+          floatingToolbarCleanup = new FloatingToolbarManager(editor, floatingModules).register()
+        }
+      } else {
+        cleanupFloatingToolbar()
       }
     }
 
@@ -598,11 +694,37 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
   private def collectToolbarElements(): Seq[ToolbarElement] =
     pluginComponents.iterator.flatMap(_.$toolbarElements).toSeq
 
+  private def collectFloatingToolbarModules(): Seq[EditorModule] =
+    collectToolbarElements().collect { case module: EditorModule => module }.distinct
+
   private def collectModules(): Seq[EditorModule] =
     (
       pluginComponents.iterator.flatMap(_.modules).toSeq ++
         collectToolbarElements().collect { case module: EditorModule => module }
       ).distinct
+
+  private def inlineToolbarLayout(): ToolbarLayout =
+    $toolbarMode match {
+      case EditorToolbarMode.Ribbon => ToolbarLayout.Ribbon
+      case EditorToolbarMode.Menu => ToolbarLayout.Menu
+      case EditorToolbarMode.Floating => ToolbarLayout.Ribbon
+    }
+
+  private def inlineToolbarRenderer(): ToolbarRenderer =
+    $toolbarMode match {
+      case EditorToolbarMode.Ribbon => new RibbonRenderer()
+      case EditorToolbarMode.Menu => new MenuRenderer()
+      case EditorToolbarMode.Floating => new RibbonRenderer()
+    }
+
+  private def cleanupFloatingToolbar(): Unit =
+    if (floatingToolbarCleanup != null) {
+      try floatingToolbarCleanup.nn.apply()
+      catch {
+        case _: Throwable =>
+      }
+      floatingToolbarCleanup = null
+    }
 
   private def defaultTheme(): EditorTheme =
     new EditorThemeBuilder()
@@ -636,6 +758,21 @@ object Editor extends HasPlaceholder[Editor] with HasEditable[Editor] {
 
   def valueProperty(using e: Editor): Property[js.Any | Null] =
     e.$valueProperty
+
+  def toolbarMode(using e: Editor): EditorToolbarMode =
+    e.$toolbarMode
+
+  def toolbarMode_=(using e: Editor)(mode: EditorToolbarMode): Unit =
+    e.$toolbarMode = mode
+
+  def ribbonToolbar(using e: Editor): Unit =
+    e.$toolbarMode = EditorToolbarMode.Ribbon
+
+  def menuToolbar(using e: Editor): Unit =
+    e.$toolbarMode = EditorToolbarMode.Menu
+
+  def floatingToolbar(using e: Editor): Unit =
+    e.$toolbarMode = EditorToolbarMode.Floating
 
 }
 

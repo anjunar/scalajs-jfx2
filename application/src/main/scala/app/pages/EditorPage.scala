@@ -4,6 +4,7 @@ import app.components.Showcase.*
 import app.domain.BlogDraft
 import jfx.action.Button.button
 import jfx.core.component.Component.*
+import jfx.core.state.Property
 import jfx.core.state.ReadOnlyProperty
 import app.DemoI18n
 import jfx.i18n.*
@@ -23,7 +24,10 @@ object EditorPage {
     if (draft.content.get == null) {
       draft.content.set(initialEditorValue)
     }
-    val contentProperty = draft.content
+    val ribbonContentProperty = Property(cloneLexicalState(initialEditorValue))
+    val menuContentProperty = Property(cloneLexicalState(initialEditorValue))
+    val floatingContentProperty = Property(cloneLexicalState(initialEditorValue))
+    val readonlyContentProperty = Property(cloneLexicalState(initialEditorValue))
 
     showcasePage(i18n"Editor", i18n"Lexical as an SSR-safe client island.") {
       vbox {
@@ -42,27 +46,70 @@ object EditorPage {
         )
 
         componentShowcase(
-          i18n"Live editor playground",
-          i18n"Write, use the toolbar, and see the readonly mirror directly below."
+          i18n"Toolbar modes",
+          i18n"Three synchronized editors render the same content with ribbon, menu, and floating toolbar modes."
         ) {
           vbox {
             style { gap = "16px" }
 
-            editor("editor-playground", standalone = true) {
-              val writableEditor = summon[jfx.form.Editor]
-              value = contentProperty.get
-              placeholder = DemoI18n.text(i18n"The writing surface activates on the client")
-              style {
-                width = "100%"
-                minHeight = "340px"
+            vbox {
+              style { gap = "12px" }
+              div {
+                style { fontWeight = "800" }
+                text = DemoI18n.text(i18n"Ribbon toolbar")
               }
-              installDefaultPlugins()
-              addDisposable(writableEditor.$valueProperty.observeWithoutInitial { nextValue =>
-                contentProperty.set(nextValue)
-              })
-              addDisposable(contentProperty.observeWithoutInitial { nextValue =>
-                writableEditor.$valueProperty.set(nextValue)
-              })
+              editor("editor-ribbon", standalone = true) {
+                val writableEditor = summon[jfx.form.Editor]
+                value = ribbonContentProperty.get
+                ribbonToolbar
+                placeholder = DemoI18n.text(i18n"The writing surface activates on the client")
+                style {
+                  width = "100%"
+                  minHeight = "340px"
+                }
+                installDefaultPlugins()
+                bindShowcaseEditor(writableEditor, ribbonContentProperty, readonlyContentProperty, draft)
+              }
+            }
+
+            vbox {
+              style { gap = "12px" }
+              div {
+                style { fontWeight = "800" }
+                text = DemoI18n.text(i18n"Menu toolbar")
+              }
+              editor("editor-menu", standalone = true) {
+                val writableEditor = summon[jfx.form.Editor]
+                value = menuContentProperty.get
+                menuToolbar
+                placeholder = DemoI18n.text(i18n"The writing surface activates on the client")
+                style {
+                  width = "100%"
+                  minHeight = "340px"
+                }
+                installDefaultPlugins()
+                bindShowcaseEditor(writableEditor, menuContentProperty, readonlyContentProperty, draft)
+              }
+            }
+
+            vbox {
+              style { gap = "12px" }
+              div {
+                style { fontWeight = "800" }
+                text = DemoI18n.text(i18n"Floating toolbar")
+              }
+              editor("editor-floating", standalone = true) {
+                val writableEditor = summon[jfx.form.Editor]
+                value = floatingContentProperty.get
+                floatingToolbar
+                placeholder = DemoI18n.text(i18n"Select text to open the floating toolbar")
+                style {
+                  width = "100%"
+                  minHeight = "340px"
+                }
+                installDefaultPlugins()
+                bindShowcaseEditor(writableEditor, floatingContentProperty, readonlyContentProperty, draft)
+              }
             }
 
             hbox {
@@ -70,19 +117,40 @@ object EditorPage {
 
               button(DemoI18n.text(i18n"SSR sample text")) {
                 onClick { _ =>
-                  contentProperty.set(initialEditorValue)
+                  setAllEditors(
+                    draft,
+                    readonlyContentProperty,
+                    ribbonContentProperty,
+                    menuContentProperty,
+                    floatingContentProperty,
+                    initialEditorValue
+                  )
                 }
               }
 
               button(DemoI18n.text(i18n"Short text")) {
                 onClick { _ =>
-                  contentProperty.set(lexicalState(DemoI18n.resolveNow(i18n"Short external property update. The editor adopts it after hydration.")))
+                  setAllEditors(
+                    draft,
+                    readonlyContentProperty,
+                    ribbonContentProperty,
+                    menuContentProperty,
+                    floatingContentProperty,
+                    lexicalState(DemoI18n.resolveNow(i18n"Short external property update. The editor adopts it after hydration."))
+                  )
                 }
               }
 
               button(DemoI18n.text(i18n"Set readonly content")) {
                 onClick { _ =>
-                  contentProperty.set(lexicalState(DemoI18n.resolveNow(i18n"This value was set outside the editor and is synchronized to both instances.")))
+                  setAllEditors(
+                    draft,
+                    readonlyContentProperty,
+                    ribbonContentProperty,
+                    menuContentProperty,
+                    floatingContentProperty,
+                    lexicalState(DemoI18n.resolveNow(i18n"This value was set outside the editor and is synchronized to all toolbar modes."))
+                  )
                 }
               }
             }
@@ -95,7 +163,7 @@ object EditorPage {
         ) {
           editor("editor-readonly", standalone = true) {
             val readonlyEditor = summon[jfx.form.Editor]
-            value = contentProperty.get
+            value = readonlyContentProperty.get
             editable = false
             placeholder = DemoI18n.text(i18n"Readonly")
             style {
@@ -103,7 +171,7 @@ object EditorPage {
               minHeight = "220px"
             }
             installDefaultPlugins()
-            addDisposable(contentProperty.observeWithoutInitial { nextValue =>
+            addDisposable(readonlyContentProperty.observeWithoutInitial { nextValue =>
               readonlyEditor.$valueProperty.set(nextValue)
             })
           }
@@ -217,6 +285,41 @@ Property Update:
     tablePlugin()
     codePlugin()
   }
+
+  private def bindShowcaseEditor(
+      editor: jfx.form.Editor,
+      editorContentProperty: Property[js.Any | Null],
+      readonlyContentProperty: Property[js.Any | Null],
+      draft: BlogDraft
+  )(using jfx.core.component.Component): Unit = {
+    addDisposable(editor.$valueProperty.observeWithoutInitial { nextValue =>
+      editorContentProperty.set(nextValue)
+      readonlyContentProperty.set(cloneLexicalState(nextValue))
+      draft.content.set(cloneLexicalState(nextValue))
+    })
+    addDisposable(editorContentProperty.observeWithoutInitial { nextValue =>
+      editor.$valueProperty.set(nextValue)
+    })
+  }
+
+  private def setAllEditors(
+      draft: BlogDraft,
+      readonlyContentProperty: Property[js.Any | Null],
+      ribbonContentProperty: Property[js.Any | Null],
+      menuContentProperty: Property[js.Any | Null],
+      floatingContentProperty: Property[js.Any | Null],
+      state: js.Any | Null
+  ): Unit = {
+    draft.content.set(cloneLexicalState(state))
+    readonlyContentProperty.set(cloneLexicalState(state))
+    ribbonContentProperty.set(cloneLexicalState(state))
+    menuContentProperty.set(cloneLexicalState(state))
+    floatingContentProperty.set(cloneLexicalState(state))
+  }
+
+  private def cloneLexicalState(state: js.Any | Null): js.Any | Null =
+    if (state == null) null
+    else js.JSON.parse(js.JSON.stringify(state))
 
   private def lexicalState(text: String): js.Any =
     js.Dynamic.literal(

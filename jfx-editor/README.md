@@ -8,10 +8,10 @@ plugins own editor-specific commands.
 ## Install
 
 ```scala
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.2.3"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-controls" % "2.2.3"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-forms" % "2.2.3"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-editor" % "2.2.3"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.2.4"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-controls" % "2.2.4"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-forms" % "2.2.4"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-editor" % "2.2.4"
 ```
 
 ## Productive Setup
@@ -32,6 +32,7 @@ DslRuntime.provide[DialogService](dialogs) {
   editor("body") {
     placeholder = "Write the article..."
     style { minHeight = "420px" }
+    ribbonToolbar()
 
     basePlugin()
     headingPlugin()
@@ -41,6 +42,22 @@ DslRuntime.provide[DialogService](dialogs) {
     tablePlugin()
     codePlugin()
   }
+}
+```
+
+Toolbar layout is now configurable directly in the editor DSL:
+
+```scala
+editor("body") {
+  ribbonToolbar()   // default
+}
+
+editor("body") {
+  menuToolbar()
+}
+
+editor("body") {
+  floatingToolbar()
 }
 ```
 

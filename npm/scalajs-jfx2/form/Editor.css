@@ -395,6 +395,70 @@
     background: var(--aj-accent-muted);
 }
 
+.editor .lexical-menu {
+    width: 100%;
+}
+
+.editor .lexical-menu-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.editor .lexical-menu-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 180px;
+}
+
+.editor .lexical-menu-trigger {
+    align-self: flex-start;
+}
+
+.editor .lexical-menu-trigger.active {
+    background: color-mix(in srgb, var(--aj-accent) 8%, transparent);
+    border-color: color-mix(in srgb, var(--aj-line-strong) 36%, transparent);
+}
+
+.editor .lexical-menu-panel {
+    position: static;
+    display: grid;
+    gap: 10px;
+    min-width: 220px;
+}
+
+.editor .lexical-menu-section {
+    display: grid;
+    gap: 8px;
+}
+
+.editor .lexical-menu-section-label {
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    color: var(--aj-ink-faint);
+    text-transform: uppercase;
+}
+
+.editor .lexical-menu-section-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.editor .lexical-menu-button {
+    min-height: 30px;
+}
+
+.editor .lexical-menu-dropdown {
+    display: inline-flex;
+}
+
+.editor .lexical-menu-dropdown-panel {
+    min-width: 180px;
+}
+
 .editor .lexical-floating-toolbar {
     display: inline-flex;
     flex-wrap: wrap;

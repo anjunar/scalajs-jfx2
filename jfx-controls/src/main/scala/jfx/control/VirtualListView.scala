@@ -688,16 +688,34 @@ object VirtualListView {
 
     override def afterCompose(): Unit =
       if (!RenderBackend.current.isServer) {
-        dom.window.requestAnimationFrame { _ =>
-          host.domNode.foreach {
-            case element: dom.html.Element =>
-              val height = element.offsetHeight.toDouble
-              if (height > 0) {
-                onMeasured(slot.index, height)
-              }
-            case _ =>
-          }
+        observeSizeChanges()
+      }
+
+    private def observeSizeChanges(): Unit = {
+      def measure(element: dom.html.Element): Unit = {
+        val height = element.offsetHeight.toDouble
+        if (height > 0) {
+          onMeasured(slot.index, height)
         }
       }
+
+      host.domNode.foreach {
+        case element: dom.html.Element =>
+          dom.window.requestAnimationFrame { _ =>
+            measure(element)
+          }
+
+          val observerCtor = js.Dynamic.global.selectDynamic("ResizeObserver")
+          if (js.typeOf(observerCtor) == "function") {
+            val callback: js.Function2[js.Array[js.Dynamic], js.Dynamic, Unit] = (_, _) => measure(element)
+            val observer = js.Dynamic.newInstance(observerCtor)(callback)
+            observer.observe(element)
+            addDisposable(() => {
+              observer.disconnect()
+            })
+          }
+        case _ =>
+      }
+    }
   }
 }
