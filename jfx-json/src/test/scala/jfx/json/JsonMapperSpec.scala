@@ -1,7 +1,7 @@
 package jfx.json
 
 import jfx.core.meta.PackageClassLoader
-import jfx.core.state.Property
+import jfx.core.state.{ListProperty, Property}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import reflect.macros.ReflectMacros
@@ -90,6 +90,20 @@ class JsonMapperSpec extends AnyFlatSpec with Matchers {
     restored.shouldBe(a[Circle])
     restored.asInstanceOf[Circle].radius.get.shouldBe(9)
   }
+
+  it should "serialize mutated local list properties" in {
+    val mapper = JsonMapper()
+    val parent = CommentThread()
+    val reply = Reply()
+    reply.text.set("Hallo")
+    parent.replies.addOne(reply)
+
+    val json = mapper.serialize(parent, JsonMapperSpec.commentThreadMeta)
+    val replies = json.selectDynamic("replies").asInstanceOf[js.Array[js.Dynamic]]
+
+    replies.length shouldBe 1
+    replies(0).selectDynamic("text").asInstanceOf[String] shouldBe "Hallo"
+  }
 }
 
 object JsonMapperSpec {
@@ -99,6 +113,8 @@ object JsonMapperSpec {
   val ignoredSecretMeta = loader.register(() => IgnoredSecret(), classOf[IgnoredSecret])
   val directionalIgnoreMeta = loader.register(() => DirectionalIgnore(), classOf[DirectionalIgnore])
   val circleMeta = loader.register(() => Circle(), classOf[Circle])
+  val replyMeta = loader.register(() => Reply(), classOf[Reply])
+  val commentThreadMeta = loader.register(() => CommentThread(), classOf[CommentThread])
 
   val shapeMeta = {
     val descriptor = ReflectMacros.reflectWithAccessors[Shape]
@@ -133,3 +149,11 @@ sealed abstract class Shape
 final class Circle(
   var radius: Property[Int] = Property(0)
 ) extends Shape
+
+final class Reply(
+  var text: Property[String] = Property("")
+)
+
+final class CommentThread(
+  var replies: ListProperty[Reply] = ListProperty()
+)

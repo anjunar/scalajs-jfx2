@@ -42,4 +42,14 @@ class ReactiveSpec extends AnyFlatSpec with Matchers {
     list.remove(1)
     list.get.toSeq shouldBe Seq("A", "C")
   }
+
+  it should "mark a locally created list as dirty after mutation" in {
+    val list = new ListProperty[String]()
+
+    list.isDirty shouldBe false
+
+    list += "reply"
+
+    list.isDirty shouldBe true
+  }
 }

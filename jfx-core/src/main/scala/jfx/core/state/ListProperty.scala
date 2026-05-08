@@ -17,13 +17,13 @@ class ListProperty[V](val underlying: js.Array[V] = js.Array[V]())
   private val listeners = mutable.ArrayBuffer.empty[js.Array[V] => Unit]
   private val changeListeners = mutable.ArrayBuffer.empty[Change[V] => Unit]
   private var disposableOwner: CompositeDisposable | Null = null
-  private var defaultValue : js.Array[V] = underlying
+  private var defaultValue : js.Array[V] = underlying.slice(0, underlying.length)
 
   override def get: js.Array[V] =
     underlying
 
   def setDefaultValue(newValue : js.Array[V]) : Unit = {
-    defaultValue = newValue
+    defaultValue = newValue.slice(0, newValue.length)
   }
 
   def isDirty : Boolean = ! arrayEquals(underlying, defaultValue)
