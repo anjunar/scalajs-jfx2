@@ -19,7 +19,7 @@ class Image extends Component {
     style {
       display = "inline-block"
       overflow = "hidden"
-      background = "var(--aj-canvas)"
+      background = "transparent"
     }
 
     condition($srcProperty.map(value => Option(value).exists(_.trim.nonEmpty))) {
