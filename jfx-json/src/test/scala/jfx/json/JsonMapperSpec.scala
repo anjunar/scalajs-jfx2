@@ -104,6 +104,25 @@ class JsonMapperSpec extends AnyFlatSpec with Matchers {
     replies.length shouldBe 1
     replies(0).selectDynamic("text").asInstanceOf[String] shouldBe "Hallo"
   }
+
+  it should "serialize nested property payload when only nested fields changed" in {
+    val mapper = JsonMapper()
+    val profile = Profile()
+    profile.id.set("user-1")
+    profile.info.get.id.set("info-1")
+    profile.info.get.firstName.set("Patrick1")
+    profile.info.get.firstName.setDefault("Patrick1")
+    profile.info.get.lastName.set("Tester")
+    profile.info.get.lastName.setDefault("Tester")
+    profile.info.get.firstName.set("Patrick")
+
+    val json = mapper.serialize(profile, JsonMapperSpec.profileMeta)
+    val info = json.selectDynamic("info").asInstanceOf[js.Dynamic]
+
+    info.selectDynamic("id").asInstanceOf[String].shouldBe("info-1")
+    info.selectDynamic("firstName").asInstanceOf[String].shouldBe("Patrick")
+    js.isUndefined(info.selectDynamic("lastName")).shouldBe(true)
+  }
 }
 
 object JsonMapperSpec {
@@ -115,6 +134,8 @@ object JsonMapperSpec {
   val circleMeta = loader.register(() => Circle(), classOf[Circle])
   val replyMeta = loader.register(() => Reply(), classOf[Reply])
   val commentThreadMeta = loader.register(() => CommentThread(), classOf[CommentThread])
+  val nestedInfoMeta = loader.register(() => NestedInfo(), classOf[NestedInfo])
+  val profileMeta = loader.register(() => Profile(), classOf[Profile])
 
   val shapeMeta = {
     val descriptor = ReflectMacros.reflectWithAccessors[Shape]
@@ -156,4 +177,17 @@ final class Reply(
 
 final class CommentThread(
   var replies: ListProperty[Reply] = ListProperty()
+)
+
+final class NestedInfo(
+  @(JsonId @field)()
+  var id: Property[String] = Property(""),
+  var firstName: Property[String] = Property(""),
+  var lastName: Property[String] = Property("")
+)
+
+final class Profile(
+  @(JsonId @field)()
+  var id: Property[String] = Property(""),
+  var info: Property[NestedInfo] = Property(NestedInfo())
 )

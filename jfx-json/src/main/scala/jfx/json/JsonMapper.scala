@@ -256,10 +256,50 @@ object JsonMapper {
     }
 
     value match {
-      case propertyValue: Property[?] => propertyValue.isDirty
-      case listProperty: ListProperty[?] => listProperty.isDirty
+      case propertyValue: Property[?] =>
+        propertyValue.isDirty || hasDirtyPayload(propertyValue.get, childContext(context, propertyElementType(context.expectedType)))
+      case listProperty: ListProperty[?] =>
+        listProperty.isDirty || listProperty.iterator.exists(item => hasDirtyPayload(item, childContext(context, listElementType(context.expectedType))))
       case _ => true
     }
+  }
+
+  private def hasDirtyPayload(value: Any, context: JsonContext): Boolean = {
+    if (value == null) {
+      false
+    } else {
+      val expectedType = context.resolve(context.expectedType)
+
+      expectedType match {
+        case descriptor if isPropertyType(descriptor) =>
+          val property = value.asInstanceOf[Property[Any]]
+          property.isDirty || hasDirtyPayload(property.get, childContext(context, propertyElementType(descriptor)))
+        case descriptor if isListPropertyType(descriptor) =>
+          val property = value.asInstanceOf[ListProperty[Any]]
+          property.isDirty || property.iterator.exists(item => hasDirtyPayload(item, childContext(context, listElementType(descriptor))))
+        case descriptor: ParameterizedTypeDescriptor =>
+          hasDirtyObjectPayload(value, descriptor.rawType, context.copy(expectedType = descriptor))
+        case descriptor: ClassDescriptor if !isPrimitiveType(descriptor.typeName) =>
+          hasDirtyObjectPayload(value, descriptor, context)
+        case _ =>
+          false
+      }
+    }
+  }
+
+  private def hasDirtyObjectPayload(model: Any, declaredDescriptor: ClassDescriptor, parentContext: JsonContext): Boolean = {
+    val runtimeDescriptor = serializationDescriptorForValue(model, declaredDescriptor)
+    val context = JsonContext(declaredDescriptor, typeBindings(parentContext.resolve(parentContext.expectedType), declaredDescriptor))
+
+    writableSerializableProperties(runtimeDescriptor)
+      .iterator
+      .filterNot(isJsonId)
+      .exists { property =>
+        val accessor = propertyAccessor(runtimeDescriptor, property)
+        val propertyValue = accessor.get(model.asInstanceOf[Any])
+        val fieldContext = childContext(context, property.propertyType)
+        shouldSerializeField(propertyValue, fieldContext, property)
+      }
   }
 
   private def serializePrimitive(value: Any, typeName: String): js.Any =
