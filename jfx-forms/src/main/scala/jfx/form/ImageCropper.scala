@@ -3,6 +3,7 @@ package jfx.form
 import jfx.core.component.Component
 import jfx.core.component.Component.*
 import jfx.core.state.{Disposable, ListProperty, Property, ReadOnlyProperty}
+import jfx.core.text.TextValue
 import jfx.domain.{Media, Thumbnail}
 import jfx.dsl.DslRuntime
 import jfx.control.Image.*
@@ -857,9 +858,11 @@ object ImageCropper extends HasPlaceholder[ImageCropper] with HasEditable[ImageC
   def thumbnailMaxHeight_=(using c: ImageCropper)(value: Int): Unit = c.$thumbnailMaxHeight = value
 
   def windowTitle(using c: ImageCropper): String = c.$windowTitle
-  def windowTitle_=(using c: ImageCropper)(value: String): Unit = c.$windowTitle = value
-  def windowTitle_=(using c: ImageCropper)(value: ReadOnlyProperty[String]): Unit =
-    c.addDisposable(value.observe(next => c.$windowTitle = Option(next).getOrElse("")))
+  def windowTitle_=[T](using c: ImageCropper)(value: T)(using textValue: TextValue[T]): Unit = {
+    val property = textValue.asReadOnlyProperty(value)
+    c.$windowTitle = Option(property.get).getOrElse("")
+    c.addDisposable(property.observe(next => c.$windowTitle = Option(next).getOrElse("")))
+  }
 
   def addValidator(validator: Validator)(using c: ImageCropper): Unit =
     c.addValidator(validator)

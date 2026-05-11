@@ -4,6 +4,7 @@ import jfx.core.component.Component
 import jfx.core.component.Component.*
 import jfx.core.state.Property
 import jfx.core.state.ReadOnlyProperty
+import jfx.core.text.TextValue
 import jfx.dsl.DslRuntime
 import jfx.statement.Condition.*
 
@@ -42,9 +43,12 @@ object Image {
   }
 
   def alt(using i: Image): String = i.$altProperty.get
-  def alt_=(value: String)(using i: Image): Unit = i.$altProperty.set(Option(value).getOrElse(""))
-  def alt_=(value: ReadOnlyProperty[String])(using i: Image): Unit = {
-    i.addDisposable(value.observe(v => i.$altProperty.set(Option(v).getOrElse(""))))
+  def alt_=[T](value: T)(using i: Image, textValue: TextValue[T]): Unit = {
+    val property = textValue.asReadOnlyProperty(value)
+    i.$altProperty.set(Option(property.get).getOrElse(""))
+    i.addDisposable(
+      property.observe(v => i.$altProperty.set(Option(v).getOrElse("")))
+    )
   }
 }
 

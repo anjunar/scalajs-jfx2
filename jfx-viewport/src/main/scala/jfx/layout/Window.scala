@@ -5,6 +5,7 @@ import jfx.core.component.{Box, Component, Text}
 import jfx.core.component.Component.*
 import jfx.core.render.DomHostElement
 import jfx.core.state.{Property, ReadOnlyProperty}
+import jfx.core.text.TextValue
 import jfx.dsl.DslRuntime
 import jfx.layout.Div.div
 import jfx.layout.Span.span
@@ -449,9 +450,11 @@ object Window {
   }
   
   def title(using w: Window): String = w.$title
-  def title_=(v: String)(using w: Window): Unit = w.$title = v
-  def title_=(v: ReadOnlyProperty[String])(using w: Window): Unit =
-    w.addDisposable(v.observe(next => w.$title = Option(next).getOrElse("")))
+  def title_=[T](v: T)(using w: Window, textValue: TextValue[T]): Unit = {
+    val property = textValue.asReadOnlyProperty(v)
+    w.$title = Option(property.get).getOrElse("")
+    w.addDisposable(property.observe(next => w.$title = Option(next).getOrElse("")))
+  }
   
   def draggable(using w: Window): Boolean = w.$draggable
   def draggable_=(v: Boolean)(using w: Window): Unit = w.$draggable = v

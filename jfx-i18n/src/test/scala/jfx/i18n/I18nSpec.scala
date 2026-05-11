@@ -1,7 +1,10 @@
 package jfx.i18n
 
 import jfx.core.state.Property
+import jfx.core.text.TextValue
+import jfx.dsl.DslRuntime
 import jfx.i18n.I18n.named
+import jfx.i18n.I18nRuntime.runtimeMessageTextValue
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -52,6 +55,25 @@ class I18nSpec extends AnyFlatSpec with Matchers {
     )
 
     val text = I18nResolver(catalog).resolve(message, locale)
+
+    text.get shouldBe "Delete document"
+    locale.set(I18nLocale("de"))
+    text.get shouldBe "Dokument loschen"
+  }
+
+  it should "resolve runtime messages directly as reactive text through the runtime service" in {
+    val locale = Property(I18nLocale("en"))
+    val message = i18n"Delete document"
+    val catalog = MessageCatalog(
+      I18n.entry(message.key).translations(
+        I18nLocale("de") -> "Dokument loschen"
+      )
+    )
+
+    var text: jfx.core.state.ReadOnlyProperty[String] = Property("")
+    DslRuntime.provide(I18nRuntime(locale, I18nResolver(catalog))) {
+      text = summon[TextValue[RuntimeMessage]].asReadOnlyProperty(message)
+    }
 
     text.get shouldBe "Delete document"
     locale.set(I18nLocale("de"))

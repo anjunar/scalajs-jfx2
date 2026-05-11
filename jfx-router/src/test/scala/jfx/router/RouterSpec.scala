@@ -53,4 +53,24 @@ class RouterSpec extends AnyFlatSpec with Matchers {
     }
     htmlAbout should include ("About")
   }
+
+  it should "allow configuring the loading view via DSL" in {
+    val html = Ssr.renderToString {
+      val appRouter = Router.router(Seq(asyncRoute("/") { page { div { text = "Home" } } }), "/") {
+        Router.loading {
+          div {
+            classes = Seq("custom-router-loading")
+            text = "Bitte warten"
+          }
+        }
+      }
+      div {
+        given Router = appRouter
+        appRouter.renderLoadingView()
+      }
+    }
+
+    html should include ("Bitte warten")
+    html should include ("custom-router-loading")
+  }
 }

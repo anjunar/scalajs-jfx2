@@ -1,6 +1,10 @@
 package jfx.i18n
 
 import jfx.core.state.ReadOnlyProperty
+import jfx.core.text.TextValue
+import jfx.dsl.DslRuntime
+
+import scala.language.implicitConversions
 
 final case class I18nLocale(code: String) {
   require(code.nonEmpty, "Locale code must not be empty")
@@ -114,6 +118,36 @@ final class I18nResolver(catalog: MessageCatalog) {
 }
 
 final case class NamedPlaceholder(name: String, value: Any)
+
+trait I18nRuntime {
+  def locale: ReadOnlyProperty[I18nLocale]
+  def resolver: I18nResolver
+
+  def text(message: RuntimeMessage): ReadOnlyProperty[String] =
+    resolver.resolve(message, locale)
+
+  def resolveNow(message: RuntimeMessage): String =
+    resolver.resolve(message, locale.get)
+}
+
+object I18nRuntime {
+  def apply(
+      localeProperty: ReadOnlyProperty[I18nLocale],
+      resolverInstance: I18nResolver
+  ): I18nRuntime =
+    new I18nRuntime {
+      override val locale: ReadOnlyProperty[I18nLocale] = localeProperty
+      override val resolver: I18nResolver = resolverInstance
+    }
+
+  given runtimeMessageToTextProperty: Conversion[RuntimeMessage, ReadOnlyProperty[String]] with
+    def apply(message: RuntimeMessage): ReadOnlyProperty[String] =
+      DslRuntime.service[I18nRuntime].text(message)
+
+  given runtimeMessageTextValue: TextValue[RuntimeMessage] with
+    override def asReadOnlyProperty(value: RuntimeMessage): ReadOnlyProperty[String] =
+      DslRuntime.service[I18nRuntime].text(value)
+}
 
 object I18n {
   def named(name: String, value: Any): NamedPlaceholder = {

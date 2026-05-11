@@ -68,6 +68,26 @@ val resolved = resolver.resolve(deleteMessage, locale)
 locale.set(I18nLocale("de"))
 ```
 
+## Reactive DSL
+
+Provide an `I18nRuntime` once and assign `RuntimeMessage` values directly in the UI DSL.
+
+```scala
+import jfx.dsl.DslRuntime
+import jfx.i18n.*
+
+val locale = Property(I18nLocale("en"))
+val resolver = I18nResolver(catalog)
+
+DslRuntime.provide(I18nRuntime(locale, resolver)) {
+  div {
+    text = i18n"Delete document"
+  }
+}
+```
+
+That keeps `text = i18n"..."` reactive without wrapping every message manually.
+
 ## Message State
 
 Catalog entries can record review state and stale sources.

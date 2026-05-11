@@ -5,8 +5,8 @@ Router provides route definitions, async route loading, current route context an
 ## Install
 
 ```scala
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.2.4"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-router" % "2.2.4"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.2.5-SNAPSHOT"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-router" % "2.2.5-SNAPSHOT"
 ```
 
 ## Router
@@ -15,7 +15,7 @@ libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-router" % "2.2.4"
 import jfx.core.component.Component.*
 import jfx.layout.Div.div
 import jfx.router.Route.*
-import jfx.router.Router.router
+import jfx.router.Router.{loading, router}
 
 router(Seq(
   asyncRoute("/") {
@@ -28,7 +28,14 @@ router(Seq(
       div { text = "Users" }
     }
   }
-))
+)) {
+  loading {
+    div {
+      classes = Seq("app-router-loading")
+      text = "Bitte warten ..."
+    }
+  }
+}
 ```
 
 ## Route Context
@@ -86,6 +93,23 @@ button("Open users") {
 ```
 
 Use `replace = true` when the current browser history entry should be replaced.
+
+## Loading View
+
+Async routes can render a custom loading view directly through the router DSL.
+
+```scala
+import jfx.router.Router.{loading, router}
+
+router(routes) {
+  loading {
+    div {
+      classes = Seq("app-router-loading")
+      text = "Inhalt wird geladen ..."
+    }
+  }
+}
+```
 
 ## Base Path
 

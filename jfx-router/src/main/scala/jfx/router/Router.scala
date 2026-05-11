@@ -28,6 +28,7 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component with 
   private given ExecutionContext = ExecutionContext.global
   private var renderToken = 0
   private var pendingRouteLoad: Option[js.Promise[Unit]] = None
+  private var loadingRenderer: Router ?=> Unit = Router.defaultLoadingRenderer
 
   val $stateProperty = Property(resolve(initialUrl))
   private val renderStateProperty: Property[RenderState] = Property(RoutePending)
@@ -48,10 +49,7 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component with 
       case RoutePending =>
         ()
       case RouteLoading =>
-        div {
-          $classes = Seq("jfx-router-loading")
-          text = "Loading..."
-        }
+        renderLoadingView()
       case RouteReady(context, factory) =>
         DslRuntime.provide(context) {
           factory(context)
@@ -130,6 +128,12 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component with 
     }
   }
 
+  private[router] def setLoadingRenderer(renderer: Router ?=> Unit): Unit =
+    loadingRenderer = renderer
+
+  private[router] def renderLoadingView(): Unit =
+    loadingRenderer(using this)
+
   private def resolve(url: String): RouterState = {
     val pathname = url.takeWhile(_ != '?')
     val search = url.drop(pathname.length)
@@ -152,12 +156,25 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component with 
 }
 
 object Router {
-  def router(routes: Seq[Route], initial: String = null): Router = {
+  private[router] def defaultLoadingRenderer(using Router): Unit =
+    div {
+      classes = Seq("jfx-router-loading")
+      text = "Loading..."
+    }
+
+  def router(routes: Seq[Route], initial: String = null): Router =
+    router(routes, initial)({})
+
+  def router(routes: Seq[Route], initial: String)(init: Router ?=> Unit): Router = {
     val startUrl = if (initial != null) initial else {
       if (RenderBackend.current.isServer) "/"
       else s"${window.location.pathname}${window.location.search}"
     }
-    DslRuntime.build(new Router(routes, startUrl)) {}
+    DslRuntime.build(new Router(routes, startUrl))(init)
   }
+
+  def loading(render: Router ?=> Unit)(using router: Router): Unit =
+    router.setLoadingRenderer(render)
+
   def navigate(path: String)(using r: Router): Unit = r.navigate(path)
 }

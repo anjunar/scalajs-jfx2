@@ -2,7 +2,7 @@ package jfx.action
 
 import jfx.core.component.Component
 import jfx.core.component.Component.*
-import jfx.core.state.ReadOnlyProperty
+import jfx.core.text.TextValue
 import jfx.dsl.DslRuntime
 import org.scalajs.dom
 
@@ -11,16 +11,13 @@ class Button extends Component {
 }
 
 object Button {
-  def button(textValue: String = "")(init: Button ?=> Unit): Button = {
+  def button()(init: Button ?=> Unit): Button = {
     DslRuntime.build(new Button()) { b ?=>
-      if (textValue.nonEmpty) {
-        text = textValue
-      }
       init
     }
   }
 
-  def button(textValue: ReadOnlyProperty[String])(init: Button ?=> Unit): Button = {
+  def button[T](textValue: T)(init: Button ?=> Unit)(using TextValue[T]): Button = {
     DslRuntime.build(new Button()) { b ?=>
       text = textValue
       init

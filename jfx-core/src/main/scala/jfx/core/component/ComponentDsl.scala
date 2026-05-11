@@ -2,6 +2,7 @@ package jfx.core.component
 
 import jfx.core.render.{HostElement, RenderBackend}
 import jfx.core.state.{Disposable, ReadOnlyProperty}
+import jfx.core.text.TextValue
 import org.scalajs.dom
 
 trait ComponentClassDsl {
@@ -33,12 +34,8 @@ trait ComponentClassDsl {
 trait ComponentTextDsl {
   def text(using c: Component): String = ""
 
-  def text_=(value: String)(using c: Component): Unit = {
-    Text.text(value)
-  }
-
-  def text_=(value: ReadOnlyProperty[String])(using c: Component): Unit = {
-    Text.text(value)
+  def text_=[T](value: T)(using textValue: TextValue[T], c: Component): Unit = {
+    Text.text(textValue.asReadOnlyProperty(value))
   }
 }
 

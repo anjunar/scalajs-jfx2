@@ -3,14 +3,14 @@ package jfx.form
 import jfx.core.component.{Box, Component}
 import jfx.core.component.Component.*
 import jfx.core.state.{Property, ReadOnlyProperty}
+import jfx.core.text.TextValue
 import jfx.layout.Div.div
 import jfx.layout.HorizontalLine.horizontalLine
 
 object InputContainer {
-  def inputContainer(placeholderText: String)(init: => Unit): Box =
-    inputContainer(Property(placeholderText))(init)
+  def inputContainer[T](placeholderText: T)(init: => Unit)(using textValue: TextValue[T]): Box = {
+    val placeholderProperty = textValue.asReadOnlyProperty(placeholderText)
 
-  def inputContainer(placeholderText: ReadOnlyProperty[String])(init: => Unit): Box = {
     div {
       addClass("jfx-input-container")
       val container = summon[Box]
@@ -20,7 +20,7 @@ object InputContainer {
         Box.box("span") {
           addClass("placeholder")
           addClass("jfx-input-container__placeholder")
-          text = placeholderText
+          text = placeholderProperty
         }
       }
 
@@ -43,7 +43,7 @@ object InputContainer {
       if (controls.nonEmpty) {
         val control = controls.head
 
-        container.addDisposable(placeholderText.observe { value =>
+        container.addDisposable(placeholderProperty.observe { value =>
           control.$placeholderProperty.set(value)
         })
 
