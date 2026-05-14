@@ -198,6 +198,8 @@ final class DataGrid[T](
           width_=(itemStateRevisionProperty.map(_ => s"${contentWidth}px"))
           minWidth = "100%"
           height_=(itemStateRevisionProperty.map(_ => s"${contentHeight}px"))
+          padding = s"${gap}px"
+          boxSizing = "border-box"
         }
 
         forEach(visibleCellsProperty) { cell =>
@@ -365,8 +367,8 @@ final class DataGrid[T](
       index = index,
       item = item,
       loaded = item != null,
-      top = row * rowStep,
-      left = column * columnStep,
+      top = outerGap + row * rowStep,
+      left = outerGap + column * columnStep,
       width = renderedItemWidth,
       height = itemHeight
     )
@@ -430,8 +432,8 @@ final class DataGrid[T](
 
   private def columnsFor(width: Double): Int = {
     val effectiveWidth = math.max(1.0, width)
-    val step = preferredColumnStep
-    math.max(1, math.floor((effectiveWidth + gap) / step).toInt)
+    val available = math.max(1.0, effectiveWidth - gap)
+    math.max(1, math.floor(available / preferredColumnStep).toInt)
   }
 
   private def rowCount: Int =
@@ -443,19 +445,19 @@ final class DataGrid[T](
   private def topForIndex(index: Int): Double = {
     val columns = columnCount
     val row = math.max(0, index) / math.max(1, columns)
-    row * rowStep
+    outerGap + row * rowStep
   }
 
   private def contentWidth: Double = {
     val columns = columnCount
     if (columns <= 0) 0.0
-    else columns * renderedItemWidth + math.max(0, columns - 1) * gap
+    else columns * renderedItemWidth + math.max(0, columns + 1) * gap
   }
 
   private def contentHeight: Double = {
     val rows = rowCount
     if (rows <= 0) 0.0
-    else rows * itemHeight + math.max(0, rows - 1) * gap
+    else rows * itemHeight + math.max(0, rows + 1) * gap
   }
 
   private def hasMoreCrawlPage: Boolean = {
@@ -540,7 +542,7 @@ final class DataGrid[T](
 
   private def renderedItemWidth: Double = {
     val columns = math.max(1, columnCount)
-    val totalGap = math.max(0, columns - 1) * gap
+    val totalGap = math.max(0, columns + 1) * gap
     val available = math.max(1.0, $viewportWidthProperty.get - totalGap)
     math.max(1.0, available / columns)
   }
@@ -550,6 +552,9 @@ final class DataGrid[T](
 
   private def gap: Double =
     math.max(0.0, $gapProperty.get)
+
+  private def outerGap: Double =
+    gap
 
   private def columnStep: Double =
     renderedItemWidth + gap

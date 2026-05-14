@@ -71,7 +71,8 @@ class DataGridSpec extends AnyFlatSpec with Matchers {
       }
     }
 
-    html should include regex "width: 390(?:\\.0)?px"
+    html should include regex "padding: 20(?:\\.0)?px"
+    html should include regex "width: 370(?:\\.0)?px"
     html should include regex "left: 410(?:\\.0)?px"
   }
 
