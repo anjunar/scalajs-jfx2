@@ -5,7 +5,7 @@ import app.components.Showcase.*
 import jfx.action.Button.button
 import jfx.control.DataGrid.*
 import jfx.core.component.Component.*
-import jfx.core.state.{ListProperty, Property, RemoteListProperty}
+import jfx.core.state.{ListProperty, Property, ReadOnlyProperty, RemoteListProperty}
 import jfx.i18n.*
 import jfx.layout.Div.div
 import jfx.layout.HBox.hbox
@@ -97,11 +97,13 @@ object DataGridPage {
 
         componentShowcase(
           i18n"Local DataGrid",
-          i18n"Fixed-height cards with reactive local mutations and width that fills the viewport."
+          i18n"Selection, keyboard access, click, double click, and local mutations in one interactive grid."
         ) {
           val localItems = ListProperty[ShowcaseTile]()
           localItems.setAll(buildShowcaseTiles(18))
           val cardCount = Property(localItems.length)
+          val selectedIndex = Property(-1)
+          val interactionText = Property(DemoI18n.resolveNow(i18n"Click a card or double click it."))
 
           vbox {
             style { gap = "16px" }
@@ -115,7 +117,23 @@ object DataGridPage {
               }
 
               dataGrid(localItems, itemWidthPx = 220, itemHeightPx = 180, gapPx = 16, overscanRows = 1) { (item, index) =>
-                renderTile(item, index)
+                renderTile(
+                  item,
+                  index,
+                  selected = selectedIndex.map(_ == index),
+                  onTileClick = tile => {
+                    selectedIndex.set(index)
+                    interactionText.set(
+                      DemoI18n.resolveNow(i18n"Click on ${I18n.named("title", tile.title)} at index ${I18n.named("index", index + 1)}")
+                    )
+                  },
+                  onTileDoubleClick = tile => {
+                    selectedIndex.set(index)
+                    interactionText.set(
+                      DemoI18n.resolveNow(i18n"Double click on ${I18n.named("title", tile.title)} at index ${I18n.named("index", index + 1)}")
+                    )
+                  }
+                )
               }
             }
 
@@ -132,15 +150,21 @@ object DataGridPage {
                 onClick { _ =>
                   localItems.setAll(buildShowcaseTiles(18))
                   cardCount.set(localItems.length)
+                  selectedIndex.set(-1)
+                  interactionText.set(DemoI18n.resolveNow(i18n"Click a card or double click it."))
                 }
               }
             }
 
             div {
               classes = Seq("showcase-result")
-              text = cardCount.map(count =>
-                DemoI18n.resolveNow(i18n"Total cards: ${I18n.named("count", count)}")
-              )
+              text =
+                interactionText.flatMap { interaction =>
+                  cardCount.map { count =>
+                    val base = DemoI18n.resolveNow(i18n"Total cards: ${I18n.named("count", count)}")
+                    s"$base | $interaction"
+                  }
+                }
             }
           }
         }
@@ -182,48 +206,6 @@ dataGrid(posts, itemWidthPx = 320, itemHeightPx = 180, gapPx = 16, crawlable = t
               crawlable = true
             ) { (item, index) =>
               renderTile(item, index)
-            }
-          }
-        }
-
-        componentShowcase(
-          i18n"Click and double click",
-          i18n"Cards can react to both gestures, which is useful for selection on click and opening details on double click."
-        ) {
-          val eventItems = ListProperty[ShowcaseTile]()
-          eventItems.setAll(buildShowcaseTiles(9))
-          val interactionText = Property(DemoI18n.resolveNow(i18n"Click a card or double click it."))
-
-          vbox {
-            style { gap = "16px" }
-
-            div {
-              style {
-                height = "420px"
-                border = "1px solid var(--aj-line)"
-                borderRadius = "8px"
-                overflow = "hidden"
-              }
-
-              dataGrid(eventItems, itemWidthPx = 220, itemHeightPx = 180, gapPx = 16, overscanRows = 1) { (item, index) =>
-                renderTile(
-                  item,
-                  index,
-                  onTileClick = tile =>
-                    interactionText.set(
-                      DemoI18n.resolveNow(i18n"Click on ${I18n.named("title", tile.title)} at index ${I18n.named("index", index + 1)}")
-                    ),
-                  onTileDoubleClick = tile =>
-                    interactionText.set(
-                      DemoI18n.resolveNow(i18n"Double click on ${I18n.named("title", tile.title)} at index ${I18n.named("index", index + 1)}")
-                    )
-                )
-              }
-            }
-
-            div {
-              classes = Seq("showcase-result")
-              text = interactionText
             }
           }
         }
@@ -297,6 +279,7 @@ SSR:
   private def renderTile(
     item: ShowcaseTile | Null,
     index: Int,
+    selected: ReadOnlyProperty[Boolean] = Property(false),
     onTileClick: ShowcaseTile => Unit = _ => (),
     onTileDoubleClick: ShowcaseTile => Unit = _ => ()
   ): Unit = {
@@ -304,20 +287,36 @@ SSR:
     val accent = tile.map(_.accent).getOrElse("var(--aj-line)")
 
     vbox {
+      classes = Seq("data-grid-showcase-card")
+      classIf("data-grid-showcase-card--selected", selected)
+
       tile.foreach { value =>
+        role = "button"
+        tabIndex = 0
+        attribute("aria-selected", selected.map(_.toString))
         onClick { _ => onTileClick(value) }
         onDoubleClick { _ => onTileDoubleClick(value) }
+        onKeyDown { event =>
+          event.key match {
+            case "Enter" =>
+              event.preventDefault()
+              onTileClick(value)
+            case " " | "Spacebar" =>
+              event.preventDefault()
+              onTileClick(value)
+            case _ =>
+          }
+        }
       }
 
       style {
         height = "100%"
         gap = "12px"
         padding = "16px"
-        border = "1px solid var(--aj-line-soft)"
         borderRadius = "8px"
-        background = "var(--aj-surface-overlay)"
         boxSizing = "border-box"
         overflow = "hidden"
+        cursor = if (tile.nonEmpty) "pointer" else "default"
       }
 
       div {
@@ -338,7 +337,10 @@ SSR:
 
         div {
           style { fontSize = "0.74rem"; fontWeight = "800"; color = "var(--aj-ink-muted)" }
-          text = tile.map(_.category).getOrElse(DemoI18n.resolveNow(i18n"Loading..."))
+          text = selected.map { isSelected =>
+            if (isSelected) DemoI18n.resolveNow(i18n"Selected")
+            else tile.map(_.category).getOrElse(DemoI18n.resolveNow(i18n"Loading..."))
+          }
         }
 
         div {
