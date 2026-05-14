@@ -94,6 +94,13 @@ object Main {
           tableViewPage(books)
         }.toJSPromise
       },
+      asyncRoute("/data-grid") {
+        val tiles = DataGridPage.createRemoteTiles(pageSize = 24)
+
+        tiles.reload(DataGridPage.ShowcaseTileQuery.first(24)).toFuture.map { _ =>
+          dataGridPage(tiles)
+        }.toJSPromise
+      },
       asyncRoute("/virtual-list") { page { VirtualListViewPage.render() } },
       asyncRoute("/layout") { page { LayoutPage.render() } },
       asyncRoute("/window") { page { WindowPage.render() } },
@@ -152,6 +159,7 @@ object Main {
 
               sidebarSection(i18n"Knowledge")
               navLink("/table-view", i18n"Data", i18n"Breathing and flowing")
+              navLink("/data-grid", i18n"DataGrid", i18n"Virtual cards at scale")
               navLink("/virtual-list", i18n"VirtualList", i18n"Endless expanses")
               navLink("/domain", i18n"Domain", i18n"Mapping & reflection")
             }
@@ -252,6 +260,13 @@ object Main {
   ): Route.Factory =
     Route.factory {
       TableViewPage.render(books)
+    }
+
+  private def dataGridPage(
+    tiles: RemoteListProperty[DataGridPage.ShowcaseTile, DataGridPage.ShowcaseTileQuery]
+  ): Route.Factory =
+    Route.factory {
+      DataGridPage.render(tiles)
     }
 
   private def createEditorDraft(): BlogDraft = {

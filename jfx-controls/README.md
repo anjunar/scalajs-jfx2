@@ -133,9 +133,30 @@ virtualList(rows, estimateHeightPx = 44, overscanPx = 240, crawlable = true) { (
 }
 ```
 
+## DataGrid
+
+`DataGrid` virtualizes predictable card grids. `itemWidthPx` defines the preferred card width used to pick the column count, while the rendered cards stretch across the measured viewport. `itemHeightPx` remains fixed so the grid can keep row math deterministic.
+
+```scala
+import jfx.control.DataGrid.*
+import jfx.core.component.Component.*
+import jfx.core.state.ListProperty
+import jfx.layout.Div.div
+
+val posts = ListProperty[String]()
+posts.setAll((1 to 10000).map(i => s"Post $i"))
+
+dataGrid(posts, itemWidthPx = 320, itemHeightPx = 220, gapPx = 16, crawlable = true) { (post, index) =>
+  div {
+    classes = Seq("post-card")
+    text = if (post == null) s"Loading $index" else post
+  }
+}
+```
+
 ## Remote Lists
 
-`TableView` and `VirtualListView` can consume `RemoteListProperty`.
+`TableView`, `VirtualListView`, and `DataGrid` can consume `RemoteListProperty`.
 
 ```scala
 import jfx.core.state.ListProperty
