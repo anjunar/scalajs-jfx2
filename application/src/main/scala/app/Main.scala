@@ -272,9 +272,6 @@ object Main {
   private def createEditorDraft(): BlogDraft = {
     val draft = new BlogDraft()
     draft.title.set("Editor draft loaded by the router")
-    draft.content.set(editorLexicalState(
-      DemoI18n.resolveNow(i18n"This draft was created in the route loader and then handed to the editor page after a short delay.")
-    ))
     draft
   }
 
@@ -286,32 +283,6 @@ object Main {
           case error: Throwable => reject(error)
         }
       }
-    )
-
-  private def editorLexicalState(text: String): js.Any =
-    js.Dynamic.literal(
-      root = js.Dynamic.literal(
-        `type` = "root",
-        version = 1,
-        indent = 0,
-        children = js.Array(
-          js.Dynamic.literal(
-            `type` = "paragraph",
-            version = 1,
-            indent = 0,
-            children = js.Array(
-              js.Dynamic.literal(
-                `type` = "text",
-                version = 1,
-                text = text,
-                detail = 0,
-                format = 0,
-                mode = "normal"
-              )
-            )
-          )
-        )
-      )
     )
 
   private def sidebarSection(title: RuntimeMessage) = {

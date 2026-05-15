@@ -4,6 +4,7 @@ import app.components.Showcase.*
 import app.domain.BlogDraft
 import jfx.action.Button.button
 import jfx.core.component.Component.*
+import jfx.core.render.RenderBackend
 import jfx.core.state.Property
 import jfx.core.state.ReadOnlyProperty
 import app.DemoI18n
@@ -13,21 +14,22 @@ import jfx.form.editor.plugins.{basePlugin, codePlugin, headingPlugin, imagePlug
 import jfx.layout.Div.div
 import jfx.layout.HBox.hbox
 import jfx.layout.VBox.vbox
+import org.scalajs.dom
 
 import scala.scalajs.js
+import scala.scalajs.js.timers.setTimeout
+import scala.util.control.NonFatal
 
 object EditorPage {
+  private val EditorStorageKey = "scalajs-jfx2.editor-showcase.content"
+  private val EditorStorageVersion = 3
+
   def render(draft: BlogDraft): Unit = {
-    val initialEditorText =
-      DemoI18n.resolveNow(i18n"This text already comes from the SSR fallback and is adopted by Lexical after hydration.")
-    val initialEditorValue = Option(draft.content.get).getOrElse(lexicalState(initialEditorText))
+    val initialEditorValue = Option(draft.content.get).getOrElse(showcaseDocumentState())
     if (draft.content.get == null) {
       draft.content.set(initialEditorValue)
     }
-    val ribbonContentProperty = Property(cloneLexicalState(initialEditorValue))
-    val menuContentProperty = Property(cloneLexicalState(initialEditorValue))
-    val floatingContentProperty = Property(cloneLexicalState(initialEditorValue))
-    val readonlyContentProperty = Property(cloneLexicalState(initialEditorValue))
+    val editorContentProperty = Property(cloneLexicalState(initialEditorValue))
 
     showcasePage(i18n"Editor", i18n"Lexical as an SSR-safe client island.") {
       vbox {
@@ -42,12 +44,12 @@ object EditorPage {
         metricStrip(
           i18n"SSR" -> i18n"Text is visible before hydration.",
           i18n"Toolbar" -> i18n"Plugins deliver their controls through the renderer.",
-          i18n"Readonly" -> i18n"editable = false hides the toolbar and locks Lexical."
+          i18n"Storage" -> i18n"The current editor state is saved in the browser."
         )
 
         componentShowcase(
-          i18n"Toolbar modes",
-          i18n"Three synchronized editors render the same content with ribbon, menu, and floating toolbar modes."
+          i18n"Editor showcase",
+          i18n"A single editor keeps the demo focused while still showing SSR, plugins, and local persistence."
         ) {
           vbox {
             style { gap = "16px" }
@@ -56,11 +58,11 @@ object EditorPage {
               style { gap = "12px" }
               div {
                 style { fontWeight = "800" }
-                text = DemoI18n.text(i18n"Ribbon toolbar")
+                text = DemoI18n.text(i18n"Editor")
               }
-              editor("editor-ribbon", standalone = true) {
+              editor("editor-showcase", standalone = true) {
                 val writableEditor = summon[jfx.form.Editor]
-                value = ribbonContentProperty.get
+                value = editorContentProperty.get
                 ribbonToolbar
                 placeholder = DemoI18n.text(i18n"The writing surface activates on the client")
                 style {
@@ -68,47 +70,7 @@ object EditorPage {
                   minHeight = "340px"
                 }
                 installDefaultPlugins()
-                bindShowcaseEditor(writableEditor, ribbonContentProperty, readonlyContentProperty, draft)
-              }
-            }
-
-            vbox {
-              style { gap = "12px" }
-              div {
-                style { fontWeight = "800" }
-                text = DemoI18n.text(i18n"Menu toolbar")
-              }
-              editor("editor-menu", standalone = true) {
-                val writableEditor = summon[jfx.form.Editor]
-                value = menuContentProperty.get
-                menuToolbar
-                placeholder = DemoI18n.text(i18n"The writing surface activates on the client")
-                style {
-                  width = "100%"
-                  minHeight = "340px"
-                }
-                installDefaultPlugins()
-                bindShowcaseEditor(writableEditor, menuContentProperty, readonlyContentProperty, draft)
-              }
-            }
-
-            vbox {
-              style { gap = "12px" }
-              div {
-                style { fontWeight = "800" }
-                text = DemoI18n.text(i18n"Floating toolbar")
-              }
-              editor("editor-floating", standalone = true) {
-                val writableEditor = summon[jfx.form.Editor]
-                value = floatingContentProperty.get
-                floatingToolbar
-                placeholder = DemoI18n.text(i18n"Select text to open the floating toolbar")
-                style {
-                  width = "100%"
-                  minHeight = "340px"
-                }
-                installDefaultPlugins()
-                bindShowcaseEditor(writableEditor, floatingContentProperty, readonlyContentProperty, draft)
+                bindShowcaseEditor(writableEditor, editorContentProperty, draft)
               }
             }
 
@@ -117,63 +79,49 @@ object EditorPage {
 
               button(DemoI18n.text(i18n"SSR sample text")) {
                 onClick { _ =>
-                  setAllEditors(
-                    draft,
-                    readonlyContentProperty,
-                    ribbonContentProperty,
-                    menuContentProperty,
-                    floatingContentProperty,
-                    initialEditorValue
-                  )
+                  setEditorState(draft, editorContentProperty, initialEditorValue)
                 }
               }
 
               button(DemoI18n.text(i18n"Short text")) {
                 onClick { _ =>
-                  setAllEditors(
+                  setEditorState(
                     draft,
-                    readonlyContentProperty,
-                    ribbonContentProperty,
-                    menuContentProperty,
-                    floatingContentProperty,
-                    lexicalState(DemoI18n.resolveNow(i18n"Short external property update. The editor adopts it after hydration."))
+                    editorContentProperty,
+                    paragraphDocumentState(DemoI18n.resolveNow(i18n"Short external property update. The editor adopts it after hydration."))
                   )
                 }
               }
 
-              button(DemoI18n.text(i18n"Set readonly content")) {
+              button(DemoI18n.text(i18n"Restore saved demo text")) {
                 onClick { _ =>
-                  setAllEditors(
+                  setEditorState(
                     draft,
-                    readonlyContentProperty,
-                    ribbonContentProperty,
-                    menuContentProperty,
-                    floatingContentProperty,
-                    lexicalState(DemoI18n.resolveNow(i18n"This value was set outside the editor and is synchronized to all toolbar modes."))
+                    editorContentProperty,
+                    paragraphDocumentState(DemoI18n.resolveNow(i18n"This value was set outside the editor and synchronized back into Lexical."))
                   )
                 }
               }
-            }
-          }
-        }
 
-        componentShowcase(
-          i18n"Readonly mirror",
-          i18n"The same editor component, but with editable = false: no toolbar, no editable root, same content."
-        ) {
-          editor("editor-readonly", standalone = true) {
-            val readonlyEditor = summon[jfx.form.Editor]
-            value = readonlyContentProperty.get
-            editable = false
-            placeholder = DemoI18n.text(i18n"Readonly")
-            style {
-              width = "100%"
-              minHeight = "220px"
+              button(DemoI18n.text(i18n"Save in browser")) {
+                onClick { _ =>
+                  saveEditorStateToBrowser(draft.content.get)
+                }
+              }
+
+              button(DemoI18n.text(i18n"Load saved copy")) {
+                onClick { _ =>
+                  loadEditorStateFromBrowser(allowLegacyState = true).foreach { storedState =>
+                    setEditorState(draft, editorContentProperty, storedState)
+                  }
+                }
+              }
             }
-            installDefaultPlugins()
-            addDisposable(readonlyContentProperty.observeWithoutInitial { nextValue =>
-              readonlyEditor.$valueProperty.set(nextValue)
-            })
+
+            div {
+              style { color = "var(--aj-ink-muted)" }
+              text = DemoI18n.text(i18n"Changes are also auto-saved in the browser, so you can restore the last editor state after a reload.")
+            }
           }
         }
 
@@ -189,7 +137,7 @@ object EditorPage {
             )
             detailCard(
               DemoI18n.text(i18n"Toolbar does not flicker"),
-              DemoI18n.text(i18n"Readonly renders the toolbar hidden on the server so hydration does not have to surprise the structure.")
+              DemoI18n.text(i18n"The editor shell stays stable, so hydration can activate Lexical without layout surprises.")
             )
             detailCard(
               DemoI18n.text(i18n"Text stays visible"),
@@ -244,11 +192,6 @@ object EditorPage {
     tablePlugin()
     codePlugin()
   }
-
-  editor("readonly", standalone = true) {
-    value = contentProperty.get
-    editable = false
-  }
 }""")
         }
 
@@ -274,6 +217,8 @@ Property Update:
         }
       }
     }
+
+    restoreStoredEditorStateOnClient(draft, editorContentProperty)
   }
 
   private def installDefaultPlugins()(using jfx.form.Editor): Unit = {
@@ -289,62 +234,288 @@ Property Update:
   private def bindShowcaseEditor(
       editor: jfx.form.Editor,
       editorContentProperty: Property[js.Any | Null],
-      readonlyContentProperty: Property[js.Any | Null],
       draft: BlogDraft
   )(using jfx.core.component.Component): Unit = {
     addDisposable(editor.$valueProperty.observeWithoutInitial { nextValue =>
       editorContentProperty.set(nextValue)
-      readonlyContentProperty.set(cloneLexicalState(nextValue))
       draft.content.set(cloneLexicalState(nextValue))
+      saveEditorStateToBrowser(nextValue)
     })
     addDisposable(editorContentProperty.observeWithoutInitial { nextValue =>
       editor.$valueProperty.set(nextValue)
     })
   }
 
-  private def setAllEditors(
+  private def setEditorState(
       draft: BlogDraft,
-      readonlyContentProperty: Property[js.Any | Null],
-      ribbonContentProperty: Property[js.Any | Null],
-      menuContentProperty: Property[js.Any | Null],
-      floatingContentProperty: Property[js.Any | Null],
+      editorContentProperty: Property[js.Any | Null],
       state: js.Any | Null
   ): Unit = {
     draft.content.set(cloneLexicalState(state))
-    readonlyContentProperty.set(cloneLexicalState(state))
-    ribbonContentProperty.set(cloneLexicalState(state))
-    menuContentProperty.set(cloneLexicalState(state))
-    floatingContentProperty.set(cloneLexicalState(state))
+    editorContentProperty.set(cloneLexicalState(state))
   }
 
   private def cloneLexicalState(state: js.Any | Null): js.Any | Null =
     if (state == null) null
     else js.JSON.parse(js.JSON.stringify(state))
 
-  private def lexicalState(text: String): js.Any =
+  private def restoreStoredEditorStateOnClient(
+      draft: BlogDraft,
+      editorContentProperty: Property[js.Any | Null]
+  ): Unit =
+    if (!RenderBackend.current.isServer) {
+      setTimeout(0) {
+        loadEditorStateFromBrowser(allowLegacyState = false).foreach { storedState =>
+          setEditorState(draft, editorContentProperty, storedState)
+        }
+      }
+    }
+
+  private def saveEditorStateToBrowser(state: js.Any | Null): Unit =
+    if (!RenderBackend.current.isServer && state != null) {
+      try {
+        val payload = js.Dynamic.literal(
+          version = EditorStorageVersion,
+          state = state
+        )
+        dom.window.localStorage.setItem(EditorStorageKey, js.JSON.stringify(payload))
+      }
+      catch { case NonFatal(_) => () }
+    }
+
+  private def loadEditorStateFromBrowser(allowLegacyState: Boolean): Option[js.Any] =
+    if (RenderBackend.current.isServer) {
+      None
+    } else {
+      try {
+        Option(dom.window.localStorage.getItem(EditorStorageKey))
+          .filter(_.trim.nonEmpty)
+          .flatMap { raw =>
+            val parsed = js.JSON.parse(raw)
+            val dynamic = parsed.asInstanceOf[js.Dynamic]
+            val storedVersion = dynamic.selectDynamic("version").asInstanceOf[js.UndefOr[Int]]
+            val storedState = dynamic.selectDynamic("state").asInstanceOf[js.UndefOr[js.Any]]
+
+            storedVersion.toOption match {
+              case Some(EditorStorageVersion) => storedState.toOption
+              case Some(_)                    => None
+              case None if allowLegacyState   => Some(parsed)
+              case None                       => None
+            }
+          }
+      } catch {
+        case NonFatal(_) => None
+      }
+    }
+
+  private def showcaseDocumentState(): js.Any =
+    lexicalRoot(
+      headingNode(
+        "h2",
+        textNode("Editor showcase: one document with all core content types")
+      ),
+      paragraphNode(
+        textNode("This sample is rendered on the server first, then hydrated into Lexical on the client. "),
+        textNode("It intentionally includes lists, an image, a table, and a code snippet", format = 1),
+        textNode(" so the showcase immediately covers the common editing cases.")
+      ),
+      headingNode(
+        "h3",
+        textNode("Checklist")
+      ),
+      listNode(
+        "bullet",
+        listItemNode(
+          paragraphNode(textNode("Keep the fallback readable before hydration."))
+        ),
+        listItemNode(
+          paragraphNode(textNode("Show rich content blocks, not just paragraphs."))
+        ),
+        listItemNode(
+          paragraphNode(textNode("Demonstrate how external state sync still works with complex content."))
+        )
+      ),
+      headingNode(
+        "h3",
+        textNode("Embedded image")
+      ),
+      paragraphNode(
+        textNode("A visual block should also be present in the demo document.")
+      ),
+      imageNode(
+        "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=80",
+        "Team collaborating around a laptop",
+        720
+      ),
+      headingNode(
+        "h3",
+        textNode("Planning table")
+      ),
+      tableNode(
+        tableRowNode(
+          tableCellNode(headerState = 3, paragraphNode(textNode("Area"))),
+          tableCellNode(headerState = 3, paragraphNode(textNode("Goal"))),
+          tableCellNode(headerState = 3, paragraphNode(textNode("Status")))
+        ),
+        tableRowNode(
+          tableCellNode(paragraphNode(textNode("SSR"))),
+          tableCellNode(paragraphNode(textNode("Content visible on first paint"))),
+          tableCellNode(paragraphNode(textNode("Done")))
+        ),
+        tableRowNode(
+          tableCellNode(paragraphNode(textNode("Hydration"))),
+          tableCellNode(paragraphNode(textNode("Lexical adopts the existing shell"))),
+          tableCellNode(paragraphNode(textNode("Done")))
+        ),
+        tableRowNode(
+          tableCellNode(paragraphNode(textNode("Persistence"))),
+          tableCellNode(paragraphNode(textNode("State survives reloads through local storage"))),
+          tableCellNode(paragraphNode(textNode("Enabled")))
+        )
+      ),
+      headingNode(
+        "h3",
+        textNode("Code snippet")
+      ),
+      codeMirrorNode(
+        "scala",
+        """editor("content", standalone = true) {
+  ribbonToolbar
+  basePlugin()
+  headingPlugin()
+  listPlugin()
+  imagePlugin()
+  tablePlugin()
+  codePlugin()
+}"""
+      ),
+      paragraphNode(
+        textNode("Use the toolbar to modify this content, then reload the page to verify the saved editor state is restored.")
+      )
+    )
+
+  private def paragraphDocumentState(text: String): js.Any =
+    lexicalRoot(
+      paragraphNode(textNode(text))
+    )
+
+  private def lexicalRoot(children: js.Any*): js.Any =
     js.Dynamic.literal(
       root = js.Dynamic.literal(
         `type` = "root",
         version = 1,
         indent = 0,
-        children = js.Array(
-          js.Dynamic.literal(
-            `type` = "paragraph",
-            version = 1,
-            indent = 0,
-            children = js.Array(
-              js.Dynamic.literal(
-                `type` = "text",
-                version = 1,
-                text = text,
-                detail = 0,
-                format = 0,
-                mode = "normal"
-              )
-            )
-          )
-        )
+        format = "",
+        direction = null,
+        children = js.Array(children*)
       )
+    )
+
+  private def paragraphNode(children: js.Any*): js.Any =
+    js.Dynamic.literal(
+      `type` = "paragraph",
+      version = 1,
+      indent = 0,
+      format = "",
+      direction = null,
+      children = js.Array(children*)
+    )
+
+  private def headingNode(tag: String, children: js.Any*): js.Any =
+    js.Dynamic.literal(
+      `type` = "heading",
+      version = 1,
+      indent = 0,
+      format = "",
+      direction = null,
+      tag = tag,
+      children = js.Array(children*)
+    )
+
+  private def listNode(listType: String, children: js.Any*): js.Any =
+    js.Dynamic.literal(
+      `type` = "list",
+      version = 1,
+      indent = 0,
+      format = "",
+      direction = null,
+      listType = listType,
+      start = 1,
+      tag = if (listType == "number") "ol" else "ul",
+      children = js.Array(children*)
+    )
+
+  private def listItemNode(children: js.Any*): js.Any =
+    js.Dynamic.literal(
+      `type` = "listitem",
+      version = 1,
+      indent = 0,
+      format = "",
+      direction = null,
+      value = 1,
+      checked = null,
+      children = js.Array(children*)
+    )
+
+  private def imageNode(src: String, altText: String, maxWidth: Int): js.Any =
+    js.Dynamic.literal(
+      `type` = "image",
+      version = 1,
+      src = src,
+      altText = altText,
+      maxWidth = maxWidth
+    )
+
+  private def tableNode(children: js.Any*): js.Any =
+    js.Dynamic.literal(
+      `type` = "table",
+      version = 1,
+      indent = 0,
+      format = "",
+      direction = null,
+      children = js.Array(children*)
+    )
+
+  private def tableRowNode(children: js.Any*): js.Any =
+    js.Dynamic.literal(
+      `type` = "tablerow",
+      version = 1,
+      height = null,
+      children = js.Array(children*)
+    )
+
+  private def tableCellNode(children: js.Any*): js.Any =
+    tableCellNode(headerState = 0, children*)
+
+  private def tableCellNode(headerState: Int, children: js.Any*): js.Any =
+    js.Dynamic.literal(
+      `type` = "tablecell",
+      version = 1,
+      colSpan = 1,
+      rowSpan = 1,
+      headerState = headerState,
+      width = null,
+      backgroundColor = null,
+      children = js.Array(children*)
+    )
+
+  private def codeMirrorNode(language: String, code: String): js.Any =
+    js.Dynamic.literal(
+      `type` = "codemirror",
+      version = 1,
+      code = code,
+      language = language,
+    )
+
+  private def textNode(text: String, format: Int = 0): js.Any =
+    js.Dynamic.literal(
+      `type` = "text",
+      version = 1,
+      text = text,
+      detail = 0,
+      format = format,
+      mode = "normal",
+      style = ""
     )
 
   private def detailCard(title: ReadOnlyProperty[String], body: ReadOnlyProperty[String]): Unit = {

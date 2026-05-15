@@ -413,10 +413,6 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
         .withNodes(defaultNodes())
         .withModules(collectModules() *)
 
-    if (initialValue != null) {
-      builder.withInitialState(initialValue)
-    }
-
     val editor = builder.build(root.nn)
     lexicalEditor = editor
     editor.setDialogService(new DefaultDialogService())
@@ -426,7 +422,7 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
     syncEditableSurface($editableProperty.get)
 
     if (initialValue != null) {
-      lastSeenValueJson = js.JSON.stringify(initialValue)
+      applyEditorState(editor, initialValue)
     } else {
       publishEditorState(editor, markDirty = false)
     }
@@ -608,16 +604,33 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
         return
       }
 
-      lastSeenValueJson = json
+      applyEditorState(lexicalEditor.nn, value)
+    }
 
-      try {
-        val state = lexicalEditor.nn.parseEditorState(value.asInstanceOf[js.Dynamic])
-        lexicalEditor.nn.setEditorState(state, js.Dynamic.literal())
+  private def applyEditorState(editor: LexicalEditor, value: js.Any | Null): Unit = {
+    try {
+      parseEditorState(editor, value).foreach { state =>
+        editor.setEditorState(state, js.Dynamic.literal())
+        editor.read(() => ())
         updatePreviewElement(value)
         refreshPlaceholder()
-      } catch {
-        case _: Throwable =>
+        lastSeenValueJson = js.JSON.stringify(value)
       }
+    } catch {
+      case _: Throwable =>
+    }
+  }
+
+  private def parseEditorState(editor: LexicalEditor, value: js.Any | Null): Option[js.Dynamic] =
+    if (value == null || js.isUndefined(value.asInstanceOf[js.Any])) {
+      None
+    } else if (js.typeOf(value.asInstanceOf[js.Any]) == "string") {
+      Option(value.asInstanceOf[String])
+        .map(_.trim)
+        .filter(_.nonEmpty)
+        .map(editor.parseEditorState)
+    } else {
+      Some(editor.parseEditorState(js.JSON.stringify(value)))
     }
 
   private def refreshPlaceholder(): Unit =
@@ -662,6 +675,11 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
       val text = dynamic.selectDynamic("text").asInstanceOf[js.Any]
       if (jsValueExists(text) && js.typeOf(text) == "string") {
         parts += text.asInstanceOf[String]
+      }
+
+      val code = dynamic.selectDynamic("code").asInstanceOf[js.Any]
+      if (jsValueExists(code) && js.typeOf(code) == "string") {
+        parts += code.asInstanceOf[String]
       }
 
       val childrenValue = dynamic.selectDynamic("children").asInstanceOf[js.Any]

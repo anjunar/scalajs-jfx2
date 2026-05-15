@@ -74,6 +74,21 @@ html[data-theme="light"] {
     --app-shell-intro-shadow: 0 18px 36px var(--aj-shadow-medium);
     --app-shell-card-shadow: 0 12px 28px var(--aj-shadow-medium);
     --app-shell-card-active-bg: linear-gradient(180deg, var(--aj-surface-overlay), var(--aj-accent-muted));
+
+    --aj-code-keyword: #7c5f22;
+    --aj-code-constant: #8a4a56;
+    --aj-code-number: #9a5c18;
+    --aj-code-string: #2f6f58;
+    --aj-code-comment: #7f867d;
+    --aj-code-type: #315f85;
+    --aj-code-function: #6b4da2;
+    --aj-code-variable: #3a4440;
+    --aj-code-operator: #6e786d;
+    --aj-code-accent: #7b6750;
+    --aj-code-bg: rgba(255, 250, 243, 0.88);
+    --aj-code-gutter-bg: rgba(62, 66, 58, 0.04);
+    --aj-code-selection: rgba(109, 123, 99, 0.18);
+    --aj-code-caret: #5b6953;
 }
 
 html[data-theme="dark"] {
@@ -145,6 +160,67 @@ html[data-theme="dark"] {
     --app-shell-intro-shadow: 0 18px 36px var(--aj-shadow-medium);
     --app-shell-card-shadow: 0 12px 28px var(--aj-shadow-medium);
     --app-shell-card-active-bg: linear-gradient(180deg, var(--aj-surface-overlay), var(--aj-accent-muted));
+
+    --aj-code-keyword: #d8b36d;
+    --aj-code-constant: #f09aa4;
+    --aj-code-number: #e0a960;
+    --aj-code-string: #89c9a8;
+    --aj-code-comment: #7f9184;
+    --aj-code-type: #8fc2e6;
+    --aj-code-function: #c9a8ff;
+    --aj-code-variable: #e6ebe3;
+    --aj-code-operator: #9aa69b;
+    --aj-code-accent: #d7c1a0;
+    --aj-code-bg: rgba(17, 20, 19, 0.92);
+    --aj-code-gutter-bg: rgba(255, 255, 255, 0.03);
+    --aj-code-selection: rgba(152, 167, 140, 0.24);
+    --aj-code-caret: #b1bf9f;
+}
+
+.codemirror-wrapper .cm-editor {
+    background: var(--aj-code-bg);
+    color: var(--aj-ink);
+    border: 1px solid var(--aj-line-soft);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.codemirror-wrapper .cm-scroller {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.codemirror-wrapper .cm-content,
+.codemirror-wrapper .cm-gutters {
+    background: var(--aj-code-bg);
+}
+
+.codemirror-wrapper .cm-gutters {
+    color: var(--aj-ink-faint);
+    border-right: 1px solid var(--aj-line-soft);
+    background: linear-gradient(180deg, var(--aj-code-gutter-bg), transparent);
+}
+
+.codemirror-wrapper .cm-activeLine,
+.codemirror-wrapper .cm-activeLineGutter {
+    background: color-mix(in srgb, var(--aj-accent-muted) 52%, transparent);
+}
+
+.codemirror-wrapper .cm-selectionBackground,
+.codemirror-wrapper .cm-content ::selection {
+    background: var(--aj-code-selection) !important;
+}
+
+.codemirror-wrapper .cm-cursor,
+.codemirror-wrapper .cm-dropCursor {
+    border-left-color: var(--aj-code-caret) !important;
+}
+
+.codemirror-wrapper .cm-focused {
+    outline: none;
+}
+
+.codemirror-wrapper .cm-editor.cm-focused {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--aj-accent) 36%, transparent);
 }
 html,
 body,
