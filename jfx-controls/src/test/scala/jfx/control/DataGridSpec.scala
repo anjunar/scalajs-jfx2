@@ -125,4 +125,51 @@ class DataGridSpec extends AnyFlatSpec with Matchers {
     html should include("top: 200px")
     html should include("href=\"?offset=9&amp;limit=4\"")
   }
+
+  it should "render a custom loading placeholder for empty remote grids" in {
+    val remote = remoteMembers(pageSize = 5)
+    remote.loadingProperty.set(true)
+
+    val html = Ssr.renderToString {
+      val grid = dataGrid(remote, itemWidthPx = 400, itemHeightPx = 100, gapPx = 0, overscanRows = 0) { (item, index) =>
+        div {
+          text = s"$index:${Option(item).getOrElse("loading")}"
+        }
+      }
+      given DataGrid[String] = grid
+      loadingPlaceholder {
+        div {
+          addClass("custom-grid-loading")
+          text = "Custom loading"
+        }
+      }
+      grid
+    }
+
+    html should include("custom-grid-loading")
+    html should include("Custom loading")
+  }
+
+  it should "render a custom empty placeholder for empty local grids" in {
+    val items = ListProperty[String]()
+
+    val html = Ssr.renderToString {
+      val grid = dataGrid(items, itemWidthPx = 400, itemHeightPx = 100, gapPx = 0, overscanRows = 0) { (item, index) =>
+        div {
+          text = s"$index:${Option(item).getOrElse("loading")}"
+        }
+      }
+      given DataGrid[String] = grid
+      emptyPlaceholder {
+        div {
+          addClass("custom-grid-empty")
+          text = "Nothing here yet"
+        }
+      }
+      grid
+    }
+
+    html should include("custom-grid-empty")
+    html should include("Nothing here yet")
+  }
 }

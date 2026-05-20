@@ -4,10 +4,11 @@ import jfx.control.Link.link
 import jfx.core.component.{Box, Component}
 import jfx.core.component.Component.*
 import jfx.core.render.RenderBackend
-import jfx.core.state.{CompositeDisposable, Disposable, ListProperty, Property, RemoteListProperty}
+import jfx.core.state.{CompositeDisposable, Disposable, ListProperty, Property, ReadOnlyProperty, RemoteListProperty}
 import jfx.dsl.DslRuntime
 import jfx.layout.Div.div
 import jfx.router.RouteContext
+import jfx.statement.ObserveRender.observeRender
 import jfx.statement.Condition.*
 import jfx.statement.ForEach.forEach
 import org.scalajs.dom
@@ -48,6 +49,7 @@ final class DataGrid[T](
   private val visibleCellsProperty = new ListProperty[DataGrid.VisibleCell[T]]()
   private val itemStateRevisionProperty = Property(0)
   private val remoteStateRevisionProperty = Property(0)
+  private val placeholderRevisionProperty = Property(0)
 
   private val pendingRangeLoads = mutable.Set.empty[(Int, Int)]
 
@@ -58,6 +60,8 @@ final class DataGrid[T](
   private var viewportMeasureScheduled = false
   private var routeContext: Option[RouteContext] = None
   private var initialScrollIndex = -1
+  private val loadingPlaceholderFactoryProperty = Property[() => Component | Null](() => null)
+  private val emptyPlaceholderFactoryProperty = Property[() => Component | Null](() => null)
 
   def $itemsProperty: Property[ListProperty[T]] =
     itemsRefProperty
@@ -83,6 +87,12 @@ final class DataGrid[T](
 
   def getRenderer: DataGrid.Renderer[T] =
     itemRenderer
+
+  def setLoadingPlaceholderFactory(factory: () => Component | Null): Unit =
+    loadingPlaceholderFactoryProperty.set(if (factory == null) (() => null) else factory)
+
+  def setEmptyPlaceholderFactory(factory: () => Component | Null): Unit =
+    emptyPlaceholderFactoryProperty.set(if (factory == null) (() => null) else factory)
 
   def refresh(): Unit =
     refreshItemState()
@@ -146,6 +156,8 @@ final class DataGrid[T](
     addDisposable($overscanRowsProperty.observe(_ => recomputeVisibleCells()))
     addDisposable($prefetchItemsProperty.observe(_ => recomputeVisibleCells()))
     addDisposable($crawlableProperty.observe(_ => refreshItemState()))
+    addDisposable(loadingPlaceholderFactoryProperty.observe(_ => bumpPlaceholderState()))
+    addDisposable(emptyPlaceholderFactoryProperty.observe(_ => bumpPlaceholderState()))
 
     if (!RenderBackend.current.isServer) {
       val (offset, _) = getCrawlParams
@@ -233,9 +245,8 @@ final class DataGrid[T](
               display = "flex"
             }
 
-            div {
-              addClass("jfx-data-grid-default-placeholder")
-              text = placeholderText
+            observeRender(placeholderRevisionProperty) { _ =>
+              renderPlaceholder(placeholderState)
             }
           }
         }
@@ -484,6 +495,47 @@ final class DataGrid[T](
     }
   }
 
+  private def placeholderTextProperty: ReadOnlyProperty[String] =
+    remoteStateRevisionProperty.map(_ => placeholderText)
+
+  private def placeholderState: DataGrid.PlaceholderState = {
+    val remote = currentRemoteItems
+    if (remote != null && remote.loadingProperty.get) {
+      DataGrid.PlaceholderState.Loading
+    } else if (remote != null && remote.errorProperty.get.nonEmpty) {
+      DataGrid.PlaceholderState.Error
+    } else {
+      DataGrid.PlaceholderState.Empty
+    }
+  }
+
+  private def renderPlaceholder(state: DataGrid.PlaceholderState)(using Component): Unit =
+    state match {
+      case DataGrid.PlaceholderState.Loading =>
+        renderPlaceholderFactory(loadingPlaceholderFactoryProperty.get, placeholderTextProperty.get)
+      case DataGrid.PlaceholderState.Empty =>
+        renderPlaceholderFactory(emptyPlaceholderFactoryProperty.get, placeholderTextProperty.get)
+      case DataGrid.PlaceholderState.Error =>
+        renderDefaultPlaceholder(placeholderTextProperty.get)
+    }
+
+  private def renderPlaceholderFactory(factory: () => Component | Null, fallbackText: String)(using Component): Unit = {
+    val rendered =
+      Option(factory)
+        .map(_())
+        .orNull
+
+    if (rendered == null) {
+      renderDefaultPlaceholder(fallbackText)
+    }
+  }
+
+  private def renderDefaultPlaceholder(message: String)(using Component): Unit =
+    div {
+      addClass("jfx-data-grid-default-placeholder")
+      text = message
+    }
+
   private def scheduleViewportMeasure(): Unit = {
     if (viewportMeasureScheduled || RenderBackend.current.isServer) return
 
@@ -531,6 +583,10 @@ final class DataGrid[T](
 
   private def bumpRemoteState(): Unit =
     remoteStateRevisionProperty.set(remoteStateRevisionProperty.get + 1)
+    bumpPlaceholderState()
+
+  private def bumpPlaceholderState(): Unit =
+    placeholderRevisionProperty.set(placeholderRevisionProperty.get + 1)
 
   private def discardPromise(promise: js.Promise[?]): Unit = {
     promise.toFuture.recover { case _ => () }
@@ -576,6 +632,12 @@ object DataGrid {
   private[control] val noopDisposable: Disposable = () => ()
 
   type Renderer[T] = (T | Null, Int) => Unit
+
+  enum PlaceholderState {
+    case Loading
+    case Empty
+    case Error
+  }
 
   private[control] final case class VisibleCell[T](
                                                     index: Int,
@@ -667,6 +729,12 @@ object DataGrid {
 
   def cellRenderer_=[T](value: Renderer[T])(using grid: DataGrid[T]): Unit =
     grid.setRenderer(value)
+
+  def loadingPlaceholder[T](factory: => Component | Null)(using grid: DataGrid[T]): Unit =
+    grid.setLoadingPlaceholderFactory(() => factory)
+
+  def emptyPlaceholder[T](factory: => Component | Null)(using grid: DataGrid[T]): Unit =
+    grid.setEmptyPlaceholderFactory(() => factory)
 
   private def dataGridCell[T](
                                cell: VisibleCell[T],

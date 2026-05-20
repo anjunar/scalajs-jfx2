@@ -154,6 +154,33 @@ dataGrid(posts, itemWidthPx = 320, itemHeightPx = 220, gapPx = 16, crawlable = t
 }
 ```
 
+Loading and empty placeholders can also be provided directly through the DSL.
+
+```scala
+val grid = dataGrid(posts, itemWidthPx = 320, itemHeightPx = 220, gapPx = 16) { (post, index) =>
+  div {
+    classes = Seq("post-card")
+    text = if (post == null) s"Loading $index" else post
+  }
+}
+
+given DataGrid[String] = grid
+
+loadingPlaceholder {
+  div {
+    classes = Seq("post-grid-loading")
+    text = "Loading articles..."
+  }
+}
+
+emptyPlaceholder {
+  div {
+    classes = Seq("post-grid-empty")
+    text = "No articles available."
+  }
+}
+```
+
 ## Remote Lists
 
 `TableView`, `VirtualListView`, and `DataGrid` can consume `RemoteListProperty`.
