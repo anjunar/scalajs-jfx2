@@ -24,6 +24,42 @@ class RouterSpec extends AnyFlatSpec with Matchers {
     match2.head.route.path shouldBe "/test"
   }
 
+  it should "resolve wildcard routes" in {
+    val routes = Seq(
+      asyncRoute("/") { page { div { text = "Root" } } },
+      asyncRoute("/*") { page { div { text = "Shell" } } }
+    )
+
+    val rootMatch = RouteMatcher.resolve(routes, "/")
+    rootMatch should have size 1
+    rootMatch.head.route.path shouldBe "/"
+
+    val nestedMatch = RouteMatcher.resolve(routes, "/blog/posts/post")
+    nestedMatch should have size 1
+    nestedMatch.head.route.path shouldBe "/*"
+    nestedMatch.head.params("*") shouldBe "blog/posts/post"
+  }
+
+  it should "resolve child routes" in {
+    val routes = Seq(
+      asyncRoute("/") {
+        page { div { text = "Root" } }
+      }.copy(
+        children = Seq(
+          asyncRoute("/docs/:slug") {
+            page { div { text = "Docs" } }
+          }
+        )
+      )
+    )
+
+    val matches = RouteMatcher.resolve(routes, "/docs/router")
+    matches should have size 2
+    matches.head.route.path shouldBe "/"
+    matches.last.route.path shouldBe "/docs/:slug"
+    matches.last.params("slug") shouldBe "router"
+  }
+
   it should "handle base paths correctly" in {
     val routes = Seq(
       asyncRoute("/") { page { div { text = "Root" } } }

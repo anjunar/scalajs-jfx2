@@ -71,35 +71,63 @@ object Route {
 object RouteMatcher {
   def resolve(routes: Seq[Route], path: String): List[RouteMatch] = {
     val normalized = normalize(path)
-    
-    def tryMatch(p: String): Option[List[RouteMatch]] =
-      routes
-        .iterator
-        .map(route => route -> matches(route.path, p))
-        .collectFirst {
-          case (route, Some(params)) => List(RouteMatch(route, normalized, params))
-        }
 
-    // 1. Try direct match
-    tryMatch(normalized).orElse {
-      // 2. Try matching without base paths
+    resolvePath(routes, normalized).orElse {
       val withoutBase = normalized
         .stripPrefix("/scalajs-jfx2")
         .stripPrefix("/scalajs-jfx")
-      
+
       val p = if (withoutBase.isEmpty) "/" else withoutBase
-      tryMatch(p)
+      resolvePath(routes, p)
     }.getOrElse(Nil)
+  }
+
+  private def resolvePath(routes: Seq[Route], path: String): Option[List[RouteMatch]] =
+    routes.iterator
+      .map(route => resolveRoute("/", route, path))
+      .collectFirst {
+        case Some(matches) => matches
+      }
+
+  private def resolveRoute(parentPath: String, route: Route, targetPath: String): Option[List[RouteMatch]] = {
+    val routePath = join(parentPath, route.path)
+
+    if (!prefixMatches(routePath, targetPath)) {
+      None
+    } else {
+      matches(routePath, targetPath) match {
+        case Some(params) =>
+          Some(List(RouteMatch(route, routePath, params)))
+
+        case None =>
+          route.children.iterator
+            .map(child => resolveRoute(routePath, child, targetPath))
+            .collectFirst {
+              case Some(childMatches) =>
+                RouteMatch(route, routePath, Map.empty) :: childMatches
+            }
+      }
+    }
   }
 
   private def matches(routePath: String, requestPath: String): Option[Map[String, String]] = {
     val routeSegments = segments(normalize(routePath))
     val requestSegments = segments(normalize(requestPath))
 
-    if (routeSegments.length != requestSegments.length) {
+    val wildcardIndex = routeSegments.indexOf("*")
+    if (wildcardIndex >= 0) {
+      matchSegments(routeSegments.take(wildcardIndex), requestSegments.take(wildcardIndex))
+        .filter(_ => requestSegments.length >= wildcardIndex)
+        .map(_ + ("*" -> requestSegments.drop(wildcardIndex).map(decode).mkString("/")))
+    } else if (routeSegments.length != requestSegments.length) {
       None
     } else {
-      routeSegments.zip(requestSegments).foldLeft(Option(Map.empty[String, String])) {
+      matchSegments(routeSegments, requestSegments)
+    }
+  }
+
+  private def matchSegments(routeSegments: Vector[String], requestSegments: Vector[String]): Option[Map[String, String]] =
+    routeSegments.zip(requestSegments).foldLeft(Option(Map.empty[String, String])) {
         case (None, _) => None
         case (Some(params), (routeSegment, requestSegment)) =>
           if (routeSegment.startsWith(":") && routeSegment.length > 1) {
@@ -109,7 +137,31 @@ object RouteMatcher {
           } else {
             None
           }
-      }
+    }
+
+  private def prefixMatches(routePath: String, requestPath: String): Boolean = {
+    val routeSegments = segments(normalize(routePath))
+    val requestSegments = segments(normalize(requestPath))
+
+    routePath == "/" ||
+      routeSegments.indexOf("*") >= 0 ||
+      (requestSegments.length >= routeSegments.length &&
+        routeSegments.zip(requestSegments).forall {
+          case (routeSegment, requestSegment) =>
+            routeSegment.startsWith(":") || routeSegment == requestSegment
+        })
+  }
+
+  private def join(parentPath: String, childPath: String): String = {
+    val parent = normalize(parentPath)
+    val child = Option(childPath).getOrElse("").trim
+
+    if (child.isEmpty || child == "/") {
+      parent
+    } else if (parent == "/") {
+      normalize(s"/${child.stripPrefix("/")}")
+    } else {
+      normalize(s"$parent/${child.stripPrefix("/")}")
     }
   }
 
