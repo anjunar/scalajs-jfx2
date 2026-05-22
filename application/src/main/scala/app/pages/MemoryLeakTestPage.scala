@@ -174,25 +174,26 @@ object MemoryLeakTestPage {
                     backgroundColor = "var(--aj-surface)"
                   }
 
-                  listView = virtualList[EditorRow] { list ?=>
+                  listView = virtualList[EditorRow] {
                     items = rows
                     estimateHeightPx = 420
                     overscanPx = 360
                     prefetchItems = 48
-                  } { (itemOrNull, index) =>
-                    val item = itemOrNull.asInstanceOf[EditorRow | Null]
-                    if (item == null) {
-                      div {
-                        style {
-                          height = "420px"
-                          padding = "18px"
-                          color = "var(--aj-ink-muted)"
-                          boxSizing = "border-box"
+                    cellRenderer = { (itemOrNull: EditorRow | Null, index: Int) =>
+                      val item = itemOrNull.asInstanceOf[EditorRow | Null]
+                      if (item == null) {
+                        div {
+                          style {
+                            height = "420px"
+                            padding = "18px"
+                            color = "var(--aj-ink-muted)"
+                            boxSizing = "border-box"
+                          }
+                          text = s"$index - Loading..."
                         }
-                        text = s"$index - Loading..."
+                      } else {
+                        editorRow(item.nn)
                       }
-                    } else {
-                      editorRow(item.nn)
                     }
                   }
                 }

@@ -46,15 +46,16 @@ class DataGridSpec extends AnyFlatSpec with Matchers {
     localItems.setAll((0 until 30).map(index => s"Item $index"))
 
     val html = Ssr.renderToString {
-      dataGrid[String] { grid ?=>
+      dataGrid[String] {
         items = localItems
         itemWidthPx = 400
         itemHeightPx = 100
         gapPx = 0
         overscanRows = 0
-      } { (item, index) =>
-        div {
-          text = s"$index:${Option(item).getOrElse("loading")}"
+        cellRenderer = { (item: String | Null, index: Int) =>
+          div {
+            text = s"$index:${Option(item).getOrElse("loading")}"
+          }
         }
       }
     }
@@ -70,15 +71,16 @@ class DataGridSpec extends AnyFlatSpec with Matchers {
     localItems.setAll((0 until 4).map(index => s"Item $index"))
 
     val html = Ssr.renderToString {
-      dataGrid[String] { grid ?=>
+      dataGrid[String] {
         items = localItems
         itemWidthPx = 300
         itemHeightPx = 100
         gapPx = 20
         overscanRows = 0
-      } { (item, index) =>
-        div {
-          text = s"$index:${Option(item).getOrElse("loading")}"
+        cellRenderer = { (item: String | Null, index: Int) =>
+          div {
+            text = s"$index:${Option(item).getOrElse("loading")}"
+          }
         }
       }
     }
@@ -94,19 +96,20 @@ class DataGridSpec extends AnyFlatSpec with Matchers {
     remote.hasMoreProperty.set(true)
 
     val html = Ssr.renderToString {
-      dataGrid[String] { grid ?=>
+      dataGrid[String] {
         items = remote
         itemWidthPx = 400
         itemHeightPx = 100
         gapPx = 0
         overscanRows = 0
-      } { (item, index) =>
-        div {
-          if (item == null) {
-            addClass("remote-placeholder")
-            text = s"Loading $index"
-          } else {
-            text = s"$index:$item"
+        cellRenderer = { (item: String | Null, index: Int) =>
+          div {
+            if (item == null) {
+              addClass("remote-placeholder")
+              text = s"Loading $index"
+            } else {
+              text = s"$index:$item"
+            }
           }
         }
       }
@@ -126,16 +129,17 @@ class DataGridSpec extends AnyFlatSpec with Matchers {
       router(Seq(
         asyncRoute("/") {
           page {
-            dataGrid[String] { grid ?=>
+            dataGrid[String] {
               items = localItems
               itemWidthPx = 400
               itemHeightPx = 100
               gapPx = 0
               overscanRows = 0
               crawlable = true
-            } { (item, index) =>
-              div {
-                text = s"$index:${Option(item).getOrElse("loading")}"
+              cellRenderer = { (item: String | Null, index: Int) =>
+                div {
+                  text = s"$index:${Option(item).getOrElse("loading")}"
+                }
               }
             }
           }
@@ -156,21 +160,22 @@ class DataGridSpec extends AnyFlatSpec with Matchers {
     remote.loadingProperty.set(true)
 
     val html = Ssr.renderToString {
-      dataGrid[String] { grid ?=>
+      dataGrid[String] {
         items = remote
         itemWidthPx = 400
         itemHeightPx = 100
         gapPx = 0
         overscanRows = 0
+        cellRenderer = { (item: String | Null, index: Int) =>
+          div {
+            text = s"$index:${Option(item).getOrElse("loading")}"
+          }
+        }
         loadingPlaceholder {
           div {
             addClass("custom-grid-loading")
             text = "Custom loading"
           }
-        }
-      } { (item, index) =>
-        div {
-          text = s"$index:${Option(item).getOrElse("loading")}"
         }
       }
     }
@@ -183,21 +188,22 @@ class DataGridSpec extends AnyFlatSpec with Matchers {
     val localItems = ListProperty[String]()
 
     val html = Ssr.renderToString {
-      dataGrid[String] { grid ?=>
+      dataGrid[String] {
         items = localItems
         itemWidthPx = 400
         itemHeightPx = 100
         gapPx = 0
         overscanRows = 0
+        cellRenderer = { (item: String | Null, index: Int) =>
+          div {
+            text = s"$index:${Option(item).getOrElse("loading")}"
+          }
+        }
         emptyPlaceholder {
           div {
             addClass("custom-grid-empty")
             text = "Nothing here yet"
           }
-        }
-      } { (item, index) =>
-        div {
-          text = s"$index:${Option(item).getOrElse("loading")}"
         }
       }
     }
@@ -211,21 +217,22 @@ class DataGridSpec extends AnyFlatSpec with Matchers {
     localItems.setAll((0 until 8).map(index => s"Item $index"))
 
     val html = Ssr.renderToString {
-      dataGrid[String] { grid ?=>
+      dataGrid[String] {
         items = localItems
         itemWidthPx = 400
         itemHeightPx = 100
         gapPx = 0
         overscanRows = 0
+        cellRenderer = { (item: String | Null, index: Int) =>
+          div {
+            text = s"$index:${Option(item).getOrElse("loading")}"
+          }
+        }
         header {
           div {
             addClass("custom-grid-header")
             text = "Grid header"
           }
-        }
-      } { (item, index) =>
-        div {
-          text = s"$index:${Option(item).getOrElse("loading")}"
         }
       }
     }

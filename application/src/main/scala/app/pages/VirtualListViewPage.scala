@@ -46,10 +46,24 @@ object VirtualListViewPage {
           vbox {
             style { height = "500px"; border = "1px solid var(--aj-line)"; borderRadius = "8px"; overflow = "hidden" }
 
-            virtualList[ShowcaseItem] { list ?=>
+            virtualList[ShowcaseItem] {
               items = showcaseItems
               estimateHeightPx = 64
               crawlable = true
+              cellRenderer = { (itemOrNull: ShowcaseItem | Null, index: Int) =>
+                val item = itemOrNull.asInstanceOf[ShowcaseItem]
+                div {
+                  style {
+                    height = if (item != null) s"${item.height}px" else "44px"
+                    backgroundColor = if (item != null) item.color else "transparent"
+                    display = "flex"
+                    alignItems = "center"
+                    padding = "0 16px"
+                    borderBottom = "1px solid var(--aj-line-faint)"
+                  }
+                  text = if (item != null) s"$index - ${item.title}" else s"$index - ${DemoI18n.resolveNow(i18n"Loading...")}"
+                }
+              }
               header {
                 div {
                   style {
@@ -71,19 +85,6 @@ object VirtualListViewPage {
                   }
                 }
               }
-            } { (itemOrNull, index) =>
-              val item = itemOrNull.asInstanceOf[ShowcaseItem]
-              div {
-                style {
-                  height = if (item != null) s"${item.height}px" else "44px"
-                  backgroundColor = if (item != null) item.color else "transparent"
-                  display = "flex"
-                  alignItems = "center"
-                  padding = "0 16px"
-                  borderBottom = "1px solid var(--aj-line-faint)"
-                }
-                text = if (item != null) s"$index - ${item.title}" else s"$index - ${DemoI18n.resolveNow(i18n"Loading...")}"
-              }
             }
           }
         }
@@ -101,19 +102,20 @@ object VirtualListViewPage {
         ) {
           codeBlock("scala", """val showcaseItems = new ListProperty[ShowcaseItem]()
 
-virtualList[ShowcaseItem] { list ?=>
+virtualList[ShowcaseItem] {
   items = showcaseItems
   estimateHeightPx = 64
   crawlable = true
+  cellRenderer = { (item: ShowcaseItem | Null, index: Int) =>
+    div {
+      style { height = s"${item.height}px" }
+      text = s"$index - ${item.title}"
+    }
+  }
   header {
     div {
       text = "Scrolling list header"
     }
-  }
-} { (item, index) =>
-  div {
-    style { height = s"${item.height}px" }
-    text = s"$index - ${item.title}"
   }
 }""")
         }

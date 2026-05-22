@@ -78,6 +78,8 @@ final class DataGrid[T] extends Box("div") {
 
   def setRenderer(renderer: DataGrid.Renderer[T]): Unit =
     itemRenderer = normalizeRenderer(renderer)
+    lastVisibleCells = Vector.empty
+    refreshItemState()
 
   def getRenderer: DataGrid.Renderer[T] =
     itemRenderer
@@ -716,12 +718,6 @@ object DataGrid {
 
   def dataGrid[T](init: DataGrid[T] ?=> Unit): DataGrid[T] =
     DslRuntime.build(new DataGrid[T]())(init)
-
-  def dataGrid[T](init: DataGrid[T] ?=> Unit)(renderer: Renderer[T]): DataGrid[T] = {
-    val grid = new DataGrid[T]()
-    grid.setRenderer(renderer)
-    DslRuntime.build(grid)(init)
-  }
 
   def items[T](using grid: DataGrid[T]): ListProperty[T] =
     grid.$items

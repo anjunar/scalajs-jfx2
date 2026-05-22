@@ -93,6 +93,8 @@ final class VirtualListView[T] extends Box("div") {
 
   def setRenderer(renderer: (T | Null, Int) => Unit): Unit =
     itemRenderer = if (renderer == null) ((_: T | Null, _: Int) => ()) else renderer
+    lastVisibleSlots = Vector.empty
+    refreshItemState()
 
   def setHeaderFactory(factory: () => Component | Null): Unit =
     headerFactoryProperty.set(if (factory == null) (() => null) else factory)
@@ -671,12 +673,6 @@ object VirtualListView {
 
   def virtualList[T](init: VirtualListView[T] ?=> Unit): VirtualListView[T] =
     DslRuntime.build(new VirtualListView[T])(init)
-
-  def virtualList[T](init: VirtualListView[T] ?=> Unit)(renderer: Renderer[T]): VirtualListView[T] = {
-    val list = new VirtualListView[T]
-    list.setRenderer(renderer)
-    DslRuntime.build(list)(init)
-  }
 
   type Renderer[T] = (T | Null, Int) => Unit
 

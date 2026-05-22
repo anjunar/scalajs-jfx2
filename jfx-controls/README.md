@@ -125,15 +125,16 @@ import jfx.layout.Div.div
 val rows = ListProperty[String]()
 rows.setAll((1 to 10000).map(i => s"Row $i"))
 
-virtualList[String] { list ?=>
+virtualList[String] {
   items = rows
   estimateHeightPx = 44
   overscanPx = 240
   crawlable = true
-} { (row, index) =>
-  div {
-    classes = Seq("row")
-    text = if (row == null) s"Loading $index" else row
+  cellRenderer = { (row: String | Null, index: Int) =>
+    div {
+      classes = Seq("row")
+      text = if (row == null) s"Loading $index" else row
+    }
   }
 }
 ```
@@ -151,16 +152,17 @@ import jfx.layout.Div.div
 val posts = ListProperty[String]()
 posts.setAll((1 to 10000).map(i => s"Post $i"))
 
-dataGrid[String] { grid ?=>
+dataGrid[String] {
   items = posts
   itemWidthPx = 320
   itemHeightPx = 220
   gapPx = 16
   crawlable = true
-} { (post, index) =>
-  div {
-    classes = Seq("post-card")
-    text = if (post == null) s"Loading $index" else post
+  cellRenderer = { (post: String | Null, index: Int) =>
+    div {
+      classes = Seq("post-card")
+      text = if (post == null) s"Loading $index" else post
+    }
   }
 }
 ```
@@ -168,11 +170,17 @@ dataGrid[String] { grid ?=>
 Loading and empty placeholders can also be provided directly through the DSL.
 
 ```scala
-val grid = dataGrid[String] { grid ?=>
+val grid = dataGrid[String] {
   items = posts
   itemWidthPx = 320
   itemHeightPx = 220
   gapPx = 16
+  cellRenderer = { (post: String | Null, index: Int) =>
+    div {
+      classes = Seq("post-card")
+      text = if (post == null) s"Loading $index" else post
+    }
+  }
   loadingPlaceholder {
     div {
       classes = Seq("post-grid-loading")
@@ -184,11 +192,6 @@ val grid = dataGrid[String] { grid ?=>
       classes = Seq("post-grid-empty")
       text = "No articles available."
     }
-  }
-} { (post, index) =>
-  div {
-    classes = Seq("post-card")
-    text = if (post == null) s"Loading $index" else post
   }
 }
 ```

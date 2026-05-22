@@ -48,14 +48,15 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
     localItems.setAll((0 until 30).map(index => s"Item $index"))
 
     val html = Ssr.renderToString {
-      virtualList[String] { list ?=>
+      virtualList[String] {
         items = localItems
         estimateHeightPx = 40
         overscanPx = 0
         prefetchItems = 4
-      } { (item, index) =>
-        div {
-          text = s"$index:${Option(item).getOrElse("loading")}"
+        cellRenderer = { (item: String | Null, index: Int) =>
+          div {
+            text = s"$index:${Option(item).getOrElse("loading")}"
+          }
         }
       }
     }
@@ -72,18 +73,19 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
     remote.hasMoreProperty.set(true)
 
     val html = Ssr.renderToString {
-      virtualList[String] { list ?=>
+      virtualList[String] {
         items = remote
         estimateHeightPx = 40
         overscanPx = 0
         prefetchItems = 4
-      } { (item, index) =>
-        div {
-          if (item == null) {
-            addClass("remote-placeholder")
-            text = s"Loading $index"
-          } else {
-            text = s"$index:$item"
+        cellRenderer = { (item: String | Null, index: Int) =>
+          div {
+            if (item == null) {
+              addClass("remote-placeholder")
+              text = s"Loading $index"
+            } else {
+              text = s"$index:$item"
+            }
           }
         }
       }
@@ -101,24 +103,25 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
     localItems.setAll((1 to 20).map(index => Row(s"Datensatz #$index", if (index % 3 == 0) 80.0 else 44.0)))
 
     val html = Ssr.renderToString {
-      virtualList[Row] { list ?=>
+      virtualList[Row] {
         items = localItems
         estimateHeightPx = 44
         overscanPx = 0
         prefetchItems = 4
-      } { (item, index) =>
-        val row = if (item == null) Row("Lädt...", 44.0) else item
-        div {
-          style {
-            height = s"${row.height}px"
-            display = "flex"
-            alignItems = "center"
-          }
+        cellRenderer = { (item: Row | Null, index: Int) =>
+          val row = if (item == null) Row("Lädt...", 44.0) else item
           div {
-            text = index.toString
-          }
-          div {
-            text = row.title
+            style {
+              height = s"${row.height}px"
+              display = "flex"
+              alignItems = "center"
+            }
+            div {
+              text = index.toString
+            }
+            div {
+              text = row.title
+            }
           }
         }
       }
@@ -143,24 +146,25 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
           overflow = "hidden"
         }
 
-        virtualList[Row] { list ?=>
+        virtualList[Row] {
           items = localItems
-        } { (item, index) =>
-          val row = if (item == null) Row("Lädt...", 44.0, "transparent") else item
-          div {
-            style {
-              height = s"${row.height}px"
-              padding = "0 16px"
-              display = "flex"
-              alignItems = "center"
-              background = row.color
-              boxSizing = "border-box"
-            }
+          cellRenderer = { (item: Row | Null, index: Int) =>
+            val row = if (item == null) Row("Lädt...", 44.0, "transparent") else item
             div {
-              text = index.toString
-            }
-            div {
-              text = row.title
+              style {
+                height = s"${row.height}px"
+                padding = "0 16px"
+                display = "flex"
+                alignItems = "center"
+                background = row.color
+                boxSizing = "border-box"
+              }
+              div {
+                text = index.toString
+              }
+              div {
+                text = row.title
+              }
             }
           }
         }
@@ -176,20 +180,21 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
     localItems.setAll((0 until 8).map(index => s"Item $index"))
 
     val html = Ssr.renderToString {
-      virtualList[String] { list ?=>
+      virtualList[String] {
         items = localItems
         estimateHeightPx = 40
         overscanPx = 0
         prefetchItems = 4
+        cellRenderer = { (item: String | Null, index: Int) =>
+          div {
+            text = s"$index:${Option(item).getOrElse("loading")}"
+          }
+        }
         header {
           div {
             addClass("custom-virtual-list-header")
             text = "Virtual header"
           }
-        }
-      } { (item, index) =>
-        div {
-          text = s"$index:${Option(item).getOrElse("loading")}"
         }
       }
     }
@@ -209,15 +214,16 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
         router(Seq(
           asyncRoute("/virtual-list") {
             page {
-              virtualList[String] { list ?=>
+              virtualList[String] {
                 items = routeItems
-              } { (item, index) =>
-                div {
+                cellRenderer = { (item: String | Null, index: Int) =>
                   div {
-                    text = index.toString
-                  }
-                  div {
-                    text = if (item == null) "Lädt..." else item
+                    div {
+                      text = index.toString
+                    }
+                    div {
+                      text = if (item == null) "Lädt..." else item
+                    }
                   }
                 }
               }
@@ -247,11 +253,12 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
         componentShowcase("Virtual") {
           vbox {
             style { height = "500px" }
-            virtualList[String] { list ?=>
+            virtualList[String] {
               items = showcaseItems
-            } { (item, index) =>
-              div {
-                text = s"$index:${if (item == null) "Lädt..." else item}"
+              cellRenderer = { (item: String | Null, index: Int) =>
+                div {
+                  text = s"$index:${if (item == null) "Lädt..." else item}"
+                }
               }
             }
           }
@@ -271,11 +278,12 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
 
       vbox {
         div { text = "before" }
-        virtualList[String] { list ?=>
+        virtualList[String] {
           items = pageItems
-        } { (item, index) =>
-          div {
-            text = s"$index:${if (item == null) "Lädt..." else item}"
+          cellRenderer = { (item: String | Null, index: Int) =>
+            div {
+              text = s"$index:${if (item == null) "Lädt..." else item}"
+            }
           }
         }
       }

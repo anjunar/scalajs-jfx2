@@ -112,7 +112,7 @@ object DataGridPage {
                 overflow = "hidden"
               }
 
-              dataGrid[ShowcaseTile] { grid ?=>
+              dataGrid[ShowcaseTile] {
                 items = remoteTiles
                 itemWidthPx = 240
                 itemHeightPx = 196
@@ -120,6 +120,25 @@ object DataGridPage {
                 overscanRows = 1
                 prefetchItems = 24
                 crawlable = true
+                cellRenderer = { (item: ShowcaseTile | Null, index: Int) =>
+                  renderTile(
+                    item,
+                    index,
+                    selected = selectedIndex.map(_ == index),
+                    onTileClick = tile => {
+                      selectedIndex.set(index)
+                      interactionText.set(
+                        DemoI18n.resolveNow(i18n"Click on ${I18n.named("title", tile.title)} at index ${I18n.named("index", index + 1)}")
+                      )
+                    },
+                    onTileDoubleClick = tile => {
+                      selectedIndex.set(index)
+                      interactionText.set(
+                        DemoI18n.resolveNow(i18n"Double click on ${I18n.named("title", tile.title)} at index ${I18n.named("index", index + 1)}")
+                      )
+                    }
+                  )
+                }
                 header {
                   div {
                     style {
@@ -141,24 +160,6 @@ object DataGridPage {
                     }
                   }
                 }
-              } { (item, index) =>
-                renderTile(
-                  item,
-                  index,
-                  selected = selectedIndex.map(_ == index),
-                  onTileClick = tile => {
-                    selectedIndex.set(index)
-                    interactionText.set(
-                      DemoI18n.resolveNow(i18n"Click on ${I18n.named("title", tile.title)} at index ${I18n.named("index", index + 1)}")
-                    )
-                  },
-                  onTileDoubleClick = tile => {
-                    selectedIndex.set(index)
-                    interactionText.set(
-                      DemoI18n.resolveNow(i18n"Double click on ${I18n.named("title", tile.title)} at index ${I18n.named("index", index + 1)}")
-                    )
-                  }
-                )
               }
             }
 
@@ -183,21 +184,22 @@ object DataGridPage {
           i18n"DataGrid DSL",
           i18n"The control owns virtualization; the renderer only describes one card."
         ) {
-          codeBlock("scala", """dataGrid[Post] { grid ?=>
+          codeBlock("scala", """dataGrid[Post] {
   items = posts
   itemWidthPx = 320
   itemHeightPx = 180
   gapPx = 16
   crawlable = true
+  cellRenderer = { (post: Post | Null, index: Int) =>
+    div {
+      classes = Seq("post-card")
+      text = if (post == null) s"Loading $index" else post.title
+    }
+  }
   header {
     div {
       text = "Scrolling grid header"
     }
-  }
-} { (post, index) =>
-  div {
-    classes = Seq("post-card")
-    text = if (post == null) s"Loading $index" else post.title
   }
 }""")
         }
