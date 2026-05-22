@@ -21,6 +21,7 @@ const routes = [
   route("/button", "Buttons | scalajs-jfx2", "Action controls in the JFX2 component DSL."),
   route("/input", "Inputs And Forms | scalajs-jfx2", "Typed input controls, form context, model binding, and validation."),
   route("/combo-box", "ComboBox | scalajs-jfx2", "Typed selection with stable identity and reactive state."),
+  route("/carousel", "Carousel | scalajs-jfx2", "Looping carousel control with explicit state, autoplay, and SSR-visible slides."),
   route("/table-view", "TableView | scalajs-jfx2", "Reactive table rendering with remote loading, sorting, and crawlable SSR slices."),
   route("/virtual-list", "VirtualList | scalajs-jfx2", "Virtualized list rendering with route-aware crawlable SSR."),
   route("/layout", "Layout | scalajs-jfx2", "Declarative layout primitives for Scala.js UI composition."),

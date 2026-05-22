@@ -3,6 +3,7 @@
 @import "./control/Link.css";
 
 @import "./control/DataGrid.css";
+@import "./control/Carousel.css";
 @import "./control/TableView.css";
 @import "./control/TableCell.css";
 @import "./control/VirtualListView.css";

@@ -87,6 +87,7 @@ object Main {
       asyncRoute("/button") { page { ButtonPage.render() } },
       asyncRoute("/input") { page { InputPage.render() } },
       asyncRoute("/combo-box") { page { ComboBoxPage.render() } },
+      asyncRoute("/carousel") { page { CarouselPage.render() } },
       asyncRoute("/table-view") {
         val books = TableViewPage.createRemoteBooks(pageSize = 50)
 
@@ -145,6 +146,7 @@ object Main {
               navLink("/button", i18n"Actions", i18n"The pulse of the app")
               navLink("/image", i18n"Images", i18n"Visual identity")
               navLink("/image-cropper", i18n"ImageCropper", i18n"Upload & crop")
+              navLink("/carousel", i18n"Carousel", i18n"Looping slides with SSR-visible states")
               
               sidebarSection(i18n"Conversation")
               navLink("/input", i18n"Forms", i18n"Natural dialogue")

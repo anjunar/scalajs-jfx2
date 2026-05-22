@@ -181,6 +181,27 @@ emptyPlaceholder {
 }
 ```
 
+## Carousel
+
+`Carousel` keeps a single active slide in the browser, wraps back to the first slide after the last one, and can advance itself on a timer. For SSR it can either expose every slide state in one server render or only the active slide.
+
+```scala
+import jfx.control.Carousel.*
+import jfx.core.component.Component.*
+import jfx.core.state.ListProperty
+import jfx.layout.Div.div
+
+val slides = ListProperty[String]()
+slides.setAll(Seq("North", "East", "South"))
+
+carousel(slides, autoAdvanceMs = 2800, ssrShowAllStates = true) { (slide, index) =>
+  div {
+    classes = Seq("hero-slide")
+    text = s"${index + 1}. $slide"
+  }
+}
+```
+
 ## Remote Lists
 
 `TableView`, `VirtualListView`, and `DataGrid` can consume `RemoteListProperty`.
