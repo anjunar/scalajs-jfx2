@@ -10,6 +10,7 @@ import jfx.layout.Div.div
 import jfx.router.RouteContext
 import jfx.statement.Condition.*
 import jfx.statement.ForEach.forEach
+import jfx.statement.ObserveRender.observeRender
 import org.scalajs.dom
 
 import scala.collection.mutable
@@ -39,6 +40,9 @@ final class VirtualListView[T](
 
   val $crawlableProperty = Property(initialCrawlable)
   private val defaultLimit = 50
+  private val headerFactoryProperty = Property[() => Component | Null](() => null)
+  private val headerRevisionProperty = Property(0)
+  private val headerHeightProperty = Property(0.0)
 
   private val visibleSlotsProperty = new ListProperty[VirtualListView.VisibleSlot[T]]()
   private val itemStateRevisionProperty = Property(0)
@@ -84,10 +88,11 @@ final class VirtualListView[T](
     if (total <= 0) return
 
     val clamped = math.max(0, math.min(total - 1, index))
-    $scrollTopProperty.set(offsetFor(clamped))
+    val nextScrollTop = headerHeight + offsetFor(clamped)
+    $scrollTopProperty.set(nextScrollTop)
     host.domNode.collect { case element: dom.html.Element =>
       element.querySelector(".jfx-virtual-list-viewport") match {
-        case viewport: dom.html.Element => viewport.scrollTop = $scrollTopProperty.get
+        case viewport: dom.html.Element => viewport.scrollTop = nextScrollTop
         case _                          =>
       }
     }
@@ -95,6 +100,9 @@ final class VirtualListView[T](
 
   def setRenderer(renderer: (T | Null, Int) => Unit): Unit =
     itemRenderer = if (renderer == null) ((_: T | Null, _: Int) => ()) else renderer
+
+  def setHeaderFactory(factory: () => Component | Null): Unit =
+    headerFactoryProperty.set(if (factory == null) (() => null) else factory)
 
   private def captureRouteContext(): Unit =
     routeContext = currentRouteContext()
@@ -140,6 +148,8 @@ final class VirtualListView[T](
       resetMeasurements()
       refreshItemState()
     })
+    addDisposable(headerFactoryProperty.observe(_ => bumpHeaderRevision()))
+    addDisposable(headerHeightProperty.observe(_ => refreshItemState()))
 
     if (!RenderBackend.current.isServer) {
       val (offset, _) = getCrawlParams
@@ -182,14 +192,34 @@ final class VirtualListView[T](
       div {
         addClass("jfx-virtual-list-content")
         style {
-          position = "relative"
           width = "100%"
           minHeight = "100%"
-          height_=(itemStateRevisionProperty.map(_ => s"${contentHeight}px"))
         }
 
-        forEach(visibleSlotsProperty) { slot =>
-          VirtualListView.virtualListCell(slot, itemRenderer, handleMeasuredHeight)
+        div {
+          addClass("jfx-virtual-list-header-slot")
+          style {
+            width = "100%"
+            boxSizing = "border-box"
+          }
+
+          observeRender(headerRevisionProperty) { _ =>
+            renderHeader()
+          }
+        }
+
+        div {
+          addClass("jfx-virtual-list-items-surface")
+          style {
+            position = "relative"
+            width = "100%"
+            minHeight = "100%"
+            height_=(itemStateRevisionProperty.map(_ => s"${contentHeight}px"))
+          }
+
+          forEach(visibleSlotsProperty) { slot =>
+            VirtualListView.virtualListCell(slot, itemRenderer, handleMeasuredHeight)
+          }
         }
 
         condition(itemStateRevisionProperty.map(_ => hasMoreCrawlPage)) {
@@ -216,6 +246,7 @@ final class VirtualListView[T](
   override def afterCompose(): Unit = {
     if (!RenderBackend.current.isServer) {
       scheduleViewportMeasure()
+      observeHeaderHeight()
       val listener: dom.Event => Unit = _ => scheduleViewportMeasure()
       dom.window.addEventListener("resize", listener)
       addDisposable(() => dom.window.removeEventListener("resize", listener))
@@ -313,8 +344,9 @@ final class VirtualListView[T](
 
     val viewportHeight = math.max(1.0, $viewportHeightProperty.get)
     val overscan = math.max(0.0, $overscanPxProperty.get)
-    val startOffset = math.max(0.0, $scrollTopProperty.get - overscan)
-    val endOffset = $scrollTopProperty.get + viewportHeight + overscan
+    val effectiveScrollTop = math.max(0.0, $scrollTopProperty.get - headerHeight)
+    val startOffset = math.max(0.0, effectiveScrollTop - overscan)
+    val endOffset = effectiveScrollTop + viewportHeight + overscan
     val maxSlots = maxSlotsForViewport(viewportHeight)
 
     val slots = mutable.ArrayBuffer.empty[VirtualListView.VisibleSlot[T]]
@@ -325,7 +357,7 @@ final class VirtualListView[T](
       val item = itemAt(index)
       val loaded = item != null
       val height = heightFor(index)
-      slots += VirtualListView.VisibleSlot(index, item, loaded, top, height)
+      slots += VirtualListView.VisibleSlot(index, item, loaded, headerHeight + top, height)
 
       top += height
       index += 1
@@ -586,11 +618,42 @@ final class VirtualListView[T](
       }
     }
 
+  private def observeHeaderHeight(): Unit =
+    host.domNode.collect { case element: dom.html.Element =>
+      element.querySelector(".jfx-virtual-list-header-slot") match {
+        case header: dom.html.Element =>
+          val measure = () => {
+            val next = math.max(0.0, header.offsetHeight.toDouble)
+            if (math.abs(headerHeightProperty.get - next) > 0.5) {
+              headerHeightProperty.set(next)
+            }
+          }
+
+          dom.window.requestAnimationFrame(_ => measure())
+
+          val resizeObserver = new dom.ResizeObserver((_, _) => measure())
+          resizeObserver.observe(header)
+          addDisposable(() => resizeObserver.disconnect())
+        case _ =>
+      }
+    }
+
   private def bumpItemState(): Unit =
     itemStateRevisionProperty.set(itemStateRevisionProperty.get + 1)
 
   private def bumpRemoteState(): Unit =
     remoteStateRevisionProperty.set(remoteStateRevisionProperty.get + 1)
+
+  private def bumpHeaderRevision(): Unit =
+    headerRevisionProperty.set(headerRevisionProperty.get + 1)
+
+  private def renderHeader()(using Component): Unit = {
+    val factory = headerFactoryProperty.get
+    if (factory != null) {
+      factory()
+      ()
+    }
+  }
 
   private def discardPromise(promise: js.Promise[?]): Unit = {
     promise.toFuture.recover { case _ => () }
@@ -599,6 +662,9 @@ final class VirtualListView[T](
 
   private def estimateHeight: Double =
     math.max(1.0, $estimateHeightProperty.get)
+
+  private def headerHeight: Double =
+    math.max(0.0, headerHeightProperty.get)
 
   private def defaultTailPadding: Int =
     math.max($prefetchItemsProperty.get * 3, $prefetchItemsProperty.get)
@@ -684,6 +750,9 @@ object VirtualListView {
 
   def crawlable_=(value: Boolean)(using v: VirtualListView[?]): Unit =
     v.$crawlableProperty.set(value)
+
+  def header[T](factory: => Component | Null)(using v: VirtualListView[T]): Unit =
+    v.setHeaderFactory(() => factory)
 
   private def virtualListCell[T](
                                   slot: VisibleSlot[T],

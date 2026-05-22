@@ -10,6 +10,7 @@ import jfx.layout.Div.div
 import jfx.router.RouteContext
 import jfx.statement.Condition.*
 import jfx.statement.ForEach.forEach
+import jfx.statement.ObserveRender.observeRender
 import jfx.control.TableRow.*
 import org.scalajs.dom
 
@@ -40,6 +41,9 @@ final class TableView[S] extends Box("div") {
   val $selectedItemProperty = Property[S | Null](null)
   val $placeholderProperty = Property[Component | Null](null)
   val $rowDoubleClickHandlerProperty: Property[Option[S => Unit]] = Property(None)
+  private val headerFactoryProperty = Property[() => Component | Null](() => null)
+  private val headerRevisionProperty = Property(0)
+  private val contentHeaderHeightProperty = Property(0.0)
 
   private case class VisibleRow(index: Int, item: Option[S])
   private val visibleRowsProperty = new ListProperty[VisibleRow]()
@@ -77,6 +81,9 @@ final class TableView[S] extends Box("div") {
 
   def setFixedCellSize(value: Double): Unit =
     $rowHeightProperty.set(value)
+
+  def setHeaderFactory(factory: () => Component | Null): Unit =
+    headerFactoryProperty.set(if (factory == null) (() => null) else factory)
 
   private def captureRouteContext(): Unit =
     routeContext = currentRouteContext()
@@ -171,7 +178,8 @@ final class TableView[S] extends Box("div") {
       (start, end)
     } else {
       val rowHeight = math.max(1.0, $rowHeightProperty.get)
-      val firstVisible = math.floor($scrollTopProperty.get / rowHeight).toInt
+      val effectiveScrollTop = math.max(0.0, $scrollTopProperty.get - contentHeaderHeight)
+      val firstVisible = math.floor(effectiveScrollTop / rowHeight).toInt
       val visibleCount = math.ceil(math.max(1.0, $viewportHeightProperty.get) / rowHeight).toInt + 1
       val start = math.max(0, firstVisible - TableView.overscanRows)
       val end = math.min(total, firstVisible + visibleCount + TableView.overscanRows)
@@ -273,6 +281,8 @@ final class TableView[S] extends Box("div") {
     addDisposable($rowHeightProperty.observe(_ => recomputeVisibleRows()))
     addDisposable($crawlableProperty.observe(_ => refreshItemState()))
     addDisposable($selectedIndexProperty.observe(_ => refreshSelectedItem()))
+    addDisposable(headerFactoryProperty.observe(_ => bumpHeaderRevision()))
+    addDisposable(contentHeaderHeightProperty.observe(_ => refreshItemState()))
 
     if (!RenderBackend.current.isServer) {
       val (offset, _) = getCrawlParams
@@ -364,34 +374,55 @@ final class TableView[S] extends Box("div") {
         div {
           addClass("jfx-table-content")
           style {
-            position = "relative"
             width_=(totalColumnWidthProperty.map(width => s"${width}px"))
             minWidth_=(totalColumnWidthProperty.map(width => s"${width}px"))
-            if (!RenderBackend.current.isServer) {
-              height_=(contentHeightProperty)
+          }
+
+          div {
+            addClass("jfx-table-content-header")
+            style {
+              width_=(totalColumnWidthProperty.map(width => s"${width}px"))
+              minWidth_=(totalColumnWidthProperty.map(width => s"${width}px"))
+              boxSizing = "border-box"
+            }
+
+            observeRender(headerRevisionProperty) { _ =>
+              renderContentHeader()
             }
           }
 
-          condition(hasRowsProperty) {
-            thenDo {
-              forEach(visibleRowsProperty) { rowDef =>
-                div {
-                  addClass("jfx-table-row-slot")
-                  style {
-                    position = "absolute"
-                    top = s"${rowDef.index * $rowHeightProperty.get}px"
-                    left = "0"
-                    width_=(totalColumnWidthProperty.map(width => s"${width}px"))
-                    height = s"${$rowHeightProperty.get}px"
-                    display = "flex"
-                  }
+          div {
+            addClass("jfx-table-rows-surface")
+            style {
+              position = "relative"
+              width_=(totalColumnWidthProperty.map(width => s"${width}px"))
+              minWidth_=(totalColumnWidthProperty.map(width => s"${width}px"))
+              if (!RenderBackend.current.isServer) {
+                height_=(contentHeightProperty)
+              }
+            }
 
-                  tableRow[S] {
-                    rowDef.item match {
-                      case Some(value) =>
-                        rowItem(rowDef.index, value, TableView.this, $columns.get.toSeq, $rowHeightProperty.get)
-                      case None =>
-                        placeholderRow(rowDef.index, TableView.this, $columns.get.toSeq, $rowHeightProperty.get)
+            condition(hasRowsProperty) {
+              thenDo {
+                forEach(visibleRowsProperty) { rowDef =>
+                  div {
+                    addClass("jfx-table-row-slot")
+                    style {
+                      position = "absolute"
+                      top = s"${rowDef.index * $rowHeightProperty.get}px"
+                      left = "0"
+                      width_=(totalColumnWidthProperty.map(width => s"${width}px"))
+                      height = s"${$rowHeightProperty.get}px"
+                      display = "flex"
+                    }
+
+                    tableRow[S] {
+                      rowDef.item match {
+                        case Some(value) =>
+                          rowItem(rowDef.index, value, TableView.this, $columns.get.toSeq, $rowHeightProperty.get)
+                        case None =>
+                          placeholderRow(rowDef.index, TableView.this, $columns.get.toSeq, $rowHeightProperty.get)
+                      }
                     }
                   }
                 }
@@ -440,6 +471,7 @@ final class TableView[S] extends Box("div") {
   override def afterCompose(): Unit = {
     if (!RenderBackend.current.isServer) {
       scheduleViewportMeasure()
+      observeContentHeaderHeight()
 
       host.domNode.collect { case element: dom.html.Element =>
         val observedElement =
@@ -476,6 +508,26 @@ final class TableView[S] extends Box("div") {
           updateViewportSize(viewport)
         case _ =>
           updateViewportSize(element)
+      }
+    }
+
+  private def observeContentHeaderHeight(): Unit =
+    host.domNode.collect { case element: dom.html.Element =>
+      element.querySelector(".jfx-table-content-header") match {
+        case header: dom.html.Element =>
+          val measure = () => {
+            val next = math.max(0.0, header.offsetHeight.toDouble)
+            if (math.abs(contentHeaderHeightProperty.get - next) > 0.5) {
+              contentHeaderHeightProperty.set(next)
+            }
+          }
+
+          dom.window.requestAnimationFrame(_ => measure())
+
+          val resizeObserver = new dom.ResizeObserver((_, _) => measure())
+          resizeObserver.observe(header)
+          addDisposable(() => resizeObserver.disconnect())
+        case _ =>
       }
     }
 
@@ -565,6 +617,17 @@ final class TableView[S] extends Box("div") {
   private[control] def fireRowDoubleClick(item: S): Unit =
     $rowDoubleClickHandlerProperty.get.foreach(handler => handler(item))
 
+  private def bumpHeaderRevision(): Unit =
+    headerRevisionProperty.set(headerRevisionProperty.get + 1)
+
+  private def renderContentHeader()(using Component): Unit = {
+    val factory = headerFactoryProperty.get
+    if (factory != null) {
+      factory()
+      ()
+    }
+  }
+
   private def resolveRenderedColumnWidths(
     columns: Seq[TableColumn[S, ?]],
     viewportWidth: Double
@@ -642,6 +705,9 @@ final class TableView[S] extends Box("div") {
     }
     buffer.toVector
   }
+
+  private def contentHeaderHeight: Double =
+    math.max(0.0, contentHeaderHeightProperty.get)
 }
 
 object TableView {
@@ -690,6 +756,9 @@ object TableView {
 
   def placeholder[S](using t: TableView[S]): Component | Null = t.$placeholderProperty.get
   def placeholder_=[S](v: Component | Null)(using t: TableView[S]): Unit = t.$placeholderProperty.set(v)
+
+  def header[S](factory: => Component | Null)(using t: TableView[S]): Unit =
+    t.setHeaderFactory(() => factory)
 
   def onRowDoubleClick[S](handler: S => Unit)(using t: TableView[S]): Unit =
     t.setRowDoubleClickHandler(handler)

@@ -2,13 +2,12 @@ package app.pages
 
 import app.DemoI18n
 import app.components.Showcase.*
-import jfx.action.Button.button
+import jfx.control.DataGrid
 import jfx.control.DataGrid.*
 import jfx.core.component.Component.*
 import jfx.core.state.{ListProperty, Property, ReadOnlyProperty, RemoteListProperty}
 import jfx.i18n.*
 import jfx.layout.Div.div
-import jfx.layout.HBox.hbox
 import jfx.layout.VBox.vbox
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -86,22 +85,19 @@ object DataGridPage {
         sectionIntro(
           i18n"Grid virtualization",
           i18n"Card collections should stay light even when they grow.",
-          i18n"DataGrid is for predictable tile grids: media cards, article teasers, catalog entries. It derives the column count from a preferred card width, stretches the rendered cards to the viewport, and keeps the row height deterministic."
+          i18n"This page now uses a single large grid example so the new scrolling header can be inspected without competing demo variants."
         )
 
         metricStrip(
-          i18n"320x180" -> i18n"Preferred footprint with viewport-scaled width.",
-          i18n"16px" -> i18n"Gap keeps density readable.",
-          i18n"Prefetch" -> i18n"Remote windows load before the user reaches them."
+          i18n"180" -> i18n"Remote cards in the example.",
+          i18n"240x196" -> i18n"Preferred footprint with viewport-scaled width.",
+          i18n"Header" -> i18n"A custom header scrolls with the same content surface"
         )
 
         componentShowcase(
-          i18n"Local DataGrid",
-          i18n"Selection, keyboard access, click, double click, and local mutations in one interactive grid."
+          i18n"Scrolling header with large grid",
+          i18n"A single remote example keeps enough cards on screen to make the scrolling header behavior obvious."
         ) {
-          val localItems = ListProperty[ShowcaseTile]()
-          localItems.setAll(buildShowcaseTiles(18))
-          val cardCount = Property(localItems.length)
           val selectedIndex = Property(-1)
           val interactionText = Property(DemoI18n.resolveNow(i18n"Click a card or double click it."))
 
@@ -116,7 +112,15 @@ object DataGridPage {
                 overflow = "hidden"
               }
 
-              dataGrid(localItems, itemWidthPx = 220, itemHeightPx = 180, gapPx = 16, overscanRows = 1) { (item, index) =>
+              val grid = dataGrid(
+                remoteTiles,
+                itemWidthPx = 240,
+                itemHeightPx = 196,
+                gapPx = 16,
+                overscanRows = 1,
+                prefetchItems = 24,
+                crawlable = true
+              ) { (item, index) =>
                 renderTile(
                   item,
                   index,
@@ -135,77 +139,35 @@ object DataGridPage {
                   }
                 )
               }
-            }
-
-            hbox {
-              classes = Seq("showcase-action-row")
-              button(DemoI18n.text(i18n"Add card")) {
-                onClick { _ =>
-                  val next = buildShowcaseTiles(localItems.length + 1).last
-                  localItems += next
-                  cardCount.set(localItems.length)
+              header {
+                div {
+                  style {
+                    padding = "16px"
+                    background = "var(--aj-surface)"
+                    borderBottom = "1px solid var(--aj-line)"
+                    display = "flex"
+                    justifyContent = "space-between"
+                    gap = "16px"
+                    flexWrap = "wrap"
+                  }
+                  div {
+                    style { fontWeight = "800" }
+                    text = DemoI18n.resolveNow(i18n"180 remote cards with a scrolling grid header")
+                  }
+                  div {
+                    style { color = "var(--aj-ink-muted)" }
+                    text = DemoI18n.resolveNow(i18n"Keyboard and pointer interactions stay on the tiles while the extra header moves with the grid content.")
+                  }
                 }
-              }
-              button(DemoI18n.text(i18n"Reset grid")) {
-                onClick { _ =>
-                  localItems.setAll(buildShowcaseTiles(18))
-                  cardCount.set(localItems.length)
-                  selectedIndex.set(-1)
-                  interactionText.set(DemoI18n.resolveNow(i18n"Click a card or double click it."))
-                }
-              }
+              }(using grid)
             }
 
             div {
               classes = Seq("showcase-result")
-              text =
-                interactionText.flatMap { interaction =>
-                  cardCount.map { count =>
-                    val base = DemoI18n.resolveNow(i18n"Total cards: ${I18n.named("count", count)}")
-                    s"$base | $interaction"
-                  }
-                }
-            }
-          }
-        }
-
-        apiSection(
-          i18n"DataGrid DSL",
-          i18n"The control owns virtualization; the renderer only describes one card."
-        ) {
-          codeBlock("scala", """val posts = ListProperty[Post]()
-posts.setAll(seedPosts)
-
-dataGrid(posts, itemWidthPx = 320, itemHeightPx = 180, gapPx = 16, crawlable = true) { (post, index) =>
-  div {
-    classes = Seq("post-card")
-    text = if (post == null) s"Loading $index" else post.title
-  }
-}""")
-        }
-
-        componentShowcase(
-          i18n"Range-aware grid",
-          i18n"RemoteListProperty can hydrate the visible window and keep SSR crawl pages honest."
-        ) {
-          div {
-            style {
-              height = "520px"
-              border = "1px solid var(--aj-line)"
-              borderRadius = "8px"
-              overflow = "hidden"
-            }
-
-            dataGrid(
-              remoteTiles,
-              itemWidthPx = 240,
-              itemHeightPx = 196,
-              gapPx = 16,
-              overscanRows = 1,
-              prefetchItems = 24,
-              crawlable = true
-            ) { (item, index) =>
-              renderTile(item, index)
+              text = interactionText.map { interaction =>
+                val base = DemoI18n.resolveNow(i18n"Total cards: 180")
+                s"$base | $interaction"
+              }
             }
           }
         }
@@ -213,32 +175,30 @@ dataGrid(posts, itemWidthPx = 320, itemHeightPx = 180, gapPx = 16, crawlable = t
         insightGrid(
           (i18n"Shared sizing", i18n"Same row math, flexible width", i18n"Preferred width chooses the column count; rendered width stretches to fill the viewport."),
           (i18n"Windowed loading", i18n"Prefetch stays close to view", i18n"The grid can request nearby ranges before the user hits empty space."),
+          (i18n"Header", i18n"Extra content shares the scroll flow", i18n"The optional header is part of the same scrolled surface as the virtualized cards."),
           (i18n"Crawlable SSR", i18n"Real pagination for crawlers", i18n"offset and limit describe a repeatable HTML window while the client still upgrades to free scrolling.")
         )
 
-        componentShowcase(
-          i18n"Shared dimensions are the contract",
-          i18n"DataGrid keeps height fixed and distributes the card width across the measured viewport."
+        apiSection(
+          i18n"DataGrid DSL",
+          i18n"The control owns virtualization; the renderer only describes one card."
         ) {
-          div {
-            style { display = "flex"; gap = "14px"; flexWrap = "wrap" }
-            logicCard(
-              "contentWidth / contentHeight",
-              i18n"Derived from column count, rendered tile width, fixed height, and gap to size the scroll surface."
-            )
-            logicCard(
-              "visibleRange",
-              i18n"Calculates start and end from scrollTop, viewportHeight, column count, and overscan rows."
-            )
-            logicCard(
-              "prefetchItems",
-              i18n"Defines how far remote loading reaches beyond the visible cards."
-            )
-            logicCard(
-              "crawlable",
-              i18n"In SSR the grid uses offset/limit and renders a real More link for the next window."
-            )
-          }
+          codeBlock("scala", """val grid = dataGrid(posts, itemWidthPx = 320, itemHeightPx = 180, gapPx = 16, crawlable = true) { (post, index) =>
+  div {
+    classes = Seq("post-card")
+    text = if (post == null) s"Loading $index" else post.title
+  }
+}
+
+given DataGrid[Post] = grid
+
+header {
+  div {
+    text = "Scrolling grid header"
+  }
+}
+
+grid""")
         }
 
         apiSection(
@@ -373,21 +333,6 @@ SSR:
           overflow = "hidden"
         }
         text = DemoI18n.resolveNow(i18n"Open window")
-      }
-    }
-  }
-
-  private def logicCard(title: String, body: RuntimeMessage): Unit = {
-    vbox {
-      classes = Seq("showcase-result")
-      style { gap = "8px"; flex = "1 1 260px"; marginTop = "0" }
-      div {
-        style { fontWeight = "800" }
-        text = title
-      }
-      div {
-        style { color = "var(--aj-ink-muted)" }
-        text = DemoI18n.text(body)
       }
     }
   }

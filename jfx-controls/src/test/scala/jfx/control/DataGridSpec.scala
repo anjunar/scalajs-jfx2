@@ -172,4 +172,30 @@ class DataGridSpec extends AnyFlatSpec with Matchers {
     html should include("custom-grid-empty")
     html should include("Nothing here yet")
   }
+
+  it should "render a custom scrolling header before the grid surface" in {
+    val items = ListProperty[String]()
+    items.setAll((0 until 8).map(index => s"Item $index"))
+
+    val html = Ssr.renderToString {
+      val grid = dataGrid(items, itemWidthPx = 400, itemHeightPx = 100, gapPx = 0, overscanRows = 0) { (item, index) =>
+        div {
+          text = s"$index:${Option(item).getOrElse("loading")}"
+        }
+      }
+      given DataGrid[String] = grid
+      header {
+        div {
+          addClass("custom-grid-header")
+          text = "Grid header"
+        }
+      }
+      grid
+    }
+
+    html should include("jfx-data-grid-header-slot")
+    html should include("custom-grid-header")
+    html should include("Grid header")
+    html should include("0:Item 0")
+  }
 }

@@ -154,6 +154,32 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
     html should include("Datensatz #10")
   }
 
+  it should "render a custom scrolling header before the virtualized surface" in {
+    val items = ListProperty[String]()
+    items.setAll((0 until 8).map(index => s"Item $index"))
+
+    val html = Ssr.renderToString {
+      val list = virtualList(items, estimateHeightPx = 40, overscanPx = 0, prefetchItems = 4) { (item, index) =>
+        div {
+          text = s"$index:${Option(item).getOrElse("loading")}"
+        }
+      }
+      given VirtualListView[String] = list
+      header {
+        div {
+          addClass("custom-virtual-list-header")
+          text = "Virtual header"
+        }
+      }
+      list
+    }
+
+    html should include("jfx-virtual-list-header-slot")
+    html should include("custom-virtual-list-header")
+    html should include("Virtual header")
+    html should include("0:Item 0")
+  }
+
   it should "render through router and viewport in SSR" in {
     val items = new ListProperty[String]()
     items.setAll((1 to 1000).map(index => s"Datensatz #$index"))

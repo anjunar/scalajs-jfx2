@@ -8,9 +8,9 @@ import jfx.core.state.{CompositeDisposable, Disposable, ListProperty, Property, 
 import jfx.dsl.DslRuntime
 import jfx.layout.Div.div
 import jfx.router.RouteContext
-import jfx.statement.ObserveRender.observeRender
 import jfx.statement.Condition.*
 import jfx.statement.ForEach.forEach
+import jfx.statement.ObserveRender.observeRender
 import org.scalajs.dom
 
 import scala.collection.mutable
@@ -45,6 +45,9 @@ final class DataGrid[T](
 
   val $crawlableProperty = Property(initialCrawlable)
   private val defaultLimit = 50
+  private val headerFactoryProperty = Property[() => Component | Null](() => null)
+  private val headerRevisionProperty = Property(0)
+  private val headerHeightProperty = Property(0.0)
 
   private val visibleCellsProperty = new ListProperty[DataGrid.VisibleCell[T]]()
   private val itemStateRevisionProperty = Property(0)
@@ -93,6 +96,9 @@ final class DataGrid[T](
 
   def setEmptyPlaceholderFactory(factory: () => Component | Null): Unit =
     emptyPlaceholderFactoryProperty.set(if (factory == null) (() => null) else factory)
+
+  def setHeaderFactory(factory: () => Component | Null): Unit =
+    headerFactoryProperty.set(if (factory == null) (() => null) else factory)
 
   def refresh(): Unit =
     refreshItemState()
@@ -158,6 +164,8 @@ final class DataGrid[T](
     addDisposable($crawlableProperty.observe(_ => refreshItemState()))
     addDisposable(loadingPlaceholderFactoryProperty.observe(_ => bumpPlaceholderState()))
     addDisposable(emptyPlaceholderFactoryProperty.observe(_ => bumpPlaceholderState()))
+    addDisposable(headerFactoryProperty.observe(_ => bumpHeaderRevision()))
+    addDisposable(headerHeightProperty.observe(_ => refreshItemState()))
 
     if (!RenderBackend.current.isServer) {
       val (offset, _) = getCrawlParams
@@ -206,16 +214,37 @@ final class DataGrid[T](
       div {
         addClass("jfx-data-grid-content")
         style {
-          position = "relative"
           width_=(itemStateRevisionProperty.map(_ => s"${contentWidth}px"))
           minWidth = "100%"
-          height_=(itemStateRevisionProperty.map(_ => s"${contentHeight}px"))
           padding = s"${gap}px"
           boxSizing = "border-box"
         }
 
-        forEach(visibleCellsProperty) { cell =>
-          DataGrid.dataGridCell(cell, itemRenderer)
+        div {
+          addClass("jfx-data-grid-header-slot")
+          style {
+            width = "100%"
+            boxSizing = "border-box"
+            marginBottom = s"${gap}px"
+          }
+
+          observeRender(headerRevisionProperty) { _ =>
+            renderHeader()
+          }
+        }
+
+        div {
+          addClass("jfx-data-grid-items-surface")
+          style {
+            position = "relative"
+            width_=(itemStateRevisionProperty.map(_ => s"${surfaceWidth}px"))
+            minWidth = "100%"
+            height_=(itemStateRevisionProperty.map(_ => s"${contentHeight}px"))
+          }
+
+          forEach(visibleCellsProperty) { cell =>
+            DataGrid.dataGridCell(cell, itemRenderer)
+          }
         }
       }
 
@@ -257,6 +286,7 @@ final class DataGrid[T](
   override def afterCompose(): Unit = {
     if (!RenderBackend.current.isServer) {
       scheduleViewportMeasure()
+      observeHeaderHeight()
 
       host.domNode.collect { case element: dom.html.Element =>
         val observedElement =
@@ -358,7 +388,8 @@ final class DataGrid[T](
     } else {
       val columns = columnCount
       val rows = rowCountFor(total, columns)
-      val firstVisibleRow = math.floor(math.max(0.0, $scrollTopProperty.get) / rowStep).toInt
+      val effectiveScrollTop = math.max(0.0, $scrollTopProperty.get - contentTopOffset)
+      val firstVisibleRow = math.floor(effectiveScrollTop / rowStep).toInt
       val visibleRows = math.ceil(math.max(1.0, $viewportHeightProperty.get) / rowStep).toInt + 1
       val overscan = math.max(0, $overscanRowsProperty.get)
       val startRow = math.max(0, firstVisibleRow - overscan)
@@ -378,7 +409,7 @@ final class DataGrid[T](
       index = index,
       item = item,
       loaded = item != null,
-      top = outerGap + row * rowStep,
+      top = row * rowStep,
       left = outerGap + column * columnStep,
       width = renderedItemWidth,
       height = itemHeight
@@ -456,7 +487,7 @@ final class DataGrid[T](
   private def topForIndex(index: Int): Double = {
     val columns = columnCount
     val row = math.max(0, index) / math.max(1, columns)
-    outerGap + row * rowStep
+    contentTopOffset + row * rowStep
   }
 
   private def contentWidth: Double = {
@@ -465,10 +496,16 @@ final class DataGrid[T](
     else columns * renderedItemWidth + math.max(0, columns + 1) * gap
   }
 
+  private def surfaceWidth: Double = {
+    val columns = columnCount
+    if (columns <= 0) 0.0
+    else columns * renderedItemWidth + math.max(0, columns - 1) * gap
+  }
+
   private def contentHeight: Double = {
     val rows = rowCount
     if (rows <= 0) 0.0
-    else rows * itemHeight + math.max(0, rows + 1) * gap
+    else rows * itemHeight + math.max(0, rows - 1) * gap
   }
 
   private def hasMoreCrawlPage: Boolean = {
@@ -557,6 +594,26 @@ final class DataGrid[T](
       }
     }
 
+  private def observeHeaderHeight(): Unit =
+    host.domNode.collect { case element: dom.html.Element =>
+      element.querySelector(".jfx-data-grid-header-slot") match {
+        case header: dom.html.Element =>
+          val measure = () => {
+            val next = math.max(0.0, header.offsetHeight.toDouble)
+            if (math.abs(headerHeightProperty.get - next) > 0.5) {
+              headerHeightProperty.set(next)
+            }
+          }
+
+          dom.window.requestAnimationFrame(_ => measure())
+
+          val resizeObserver = new dom.ResizeObserver((_, _) => measure())
+          resizeObserver.observe(header)
+          addDisposable(() => resizeObserver.disconnect())
+        case _ =>
+      }
+    }
+
   private def updateViewportSize(element: dom.html.Element): Unit = {
     val width = element.clientWidth.toDouble
     val height = element.clientHeight.toDouble
@@ -588,6 +645,9 @@ final class DataGrid[T](
   private def bumpPlaceholderState(): Unit =
     placeholderRevisionProperty.set(placeholderRevisionProperty.get + 1)
 
+  private def bumpHeaderRevision(): Unit =
+    headerRevisionProperty.set(headerRevisionProperty.get + 1)
+
   private def discardPromise(promise: js.Promise[?]): Unit = {
     promise.toFuture.recover { case _ => () }
     ()
@@ -595,6 +655,12 @@ final class DataGrid[T](
 
   private def itemWidth: Double =
     math.max(1.0, $itemWidthProperty.get)
+
+  private def headerHeight: Double =
+    math.max(0.0, headerHeightProperty.get)
+
+  private def contentTopOffset: Double =
+    outerGap + headerHeight + (if (headerHeight > 0.5) gap else 0.0)
 
   private def renderedItemWidth: Double = {
     val columns = math.max(1, columnCount)
@@ -626,6 +692,14 @@ final class DataGrid[T](
 
   private def normalizeRenderer(renderer: DataGrid.Renderer[T]): DataGrid.Renderer[T] =
     if (renderer == null) ((_: T | Null, _: Int) => ()) else renderer
+
+  private def renderHeader()(using Component): Unit = {
+    val factory = headerFactoryProperty.get
+    if (factory != null) {
+      factory()
+      ()
+    }
+  }
 }
 
 object DataGrid {
@@ -735,6 +809,9 @@ object DataGrid {
 
   def emptyPlaceholder[T](factory: => Component | Null)(using grid: DataGrid[T]): Unit =
     grid.setEmptyPlaceholderFactory(() => factory)
+
+  def header[T](factory: => Component | Null)(using grid: DataGrid[T]): Unit =
+    grid.setHeaderFactory(() => factory)
 
   private def dataGridCell[T](
                                cell: VisibleCell[T],

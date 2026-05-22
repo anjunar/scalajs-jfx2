@@ -8,6 +8,7 @@ import jfx.router.Router.router
 import jfx.control.TableView.*
 import jfx.control.TableColumn.*
 import jfx.core.component.Component.*
+import jfx.layout.Div.div
 
 class TableViewSsrSpec extends AnyFlatSpec with Matchers {
 
@@ -43,5 +44,29 @@ class TableViewSsrSpec extends AnyFlatSpec with Matchers {
     // Der "More items" Link sollte auf die nächste Seite zeigen
     html should include ("href=\"?offset=10&amp;limit=5\"")
     html should include ("More items...")
+  }
+
+  it should "render a custom scrolling content header inside the table body" in {
+    val html = Ssr.renderToString {
+      tableView[String] {
+        items = Seq("Alice", "Bob", "Cara")
+
+        column[String, String]("Name") { item =>
+          text = item
+        }
+
+        header {
+          div {
+            addClass("custom-table-body-header")
+            text = "Table body header"
+          }
+        }
+      }
+    }
+
+    html should include("jfx-table-content-header")
+    html should include("custom-table-body-header")
+    html should include("Table body header")
+    html should include("Alice")
   }
 }

@@ -1,14 +1,14 @@
 package app.pages
 
 import app.DemoI18n
+import app.components.Showcase.*
+import jfx.control.VirtualListView
 import jfx.control.VirtualListView.*
 import jfx.core.component.Component.*
 import jfx.core.state.ListProperty
 import jfx.i18n.*
 import jfx.layout.Div.div
-import jfx.layout.HBox.hbox
 import jfx.layout.VBox.vbox
-import app.components.Showcase.*
 
 object VirtualListViewPage {
 
@@ -22,18 +22,18 @@ object VirtualListViewPage {
         sectionIntro(
           i18n"Virtualization",
           i18n"Many rows should still feel light.",
-          i18n"This demo shows elements with different heights. The list must keep scroll position, visible range, and placeholders aligned even though only a slice is actually rendered."
+          i18n"This demo keeps exactly one long list on screen so the scrolling header and the variable row heights are easy to inspect together."
         )
 
         metricStrip(
           DemoI18n.resolveNow(i18n"1000") -> DemoI18n.resolveNow(i18n"records in the showcase"),
           DemoI18n.resolveNow(i18n"44-120px") -> DemoI18n.resolveNow(i18n"variable row heights for real layout tension"),
-          DemoI18n.resolveNow(i18n"Viewport") -> DemoI18n.resolveNow(i18n"Only what the user needs right now is rendered")
+          DemoI18n.resolveNow(i18n"Header") -> DemoI18n.resolveNow(i18n"A custom header scrolls with the same content surface")
         )
 
         componentShowcase(
-          i18n"Variable row heights",
-          i18n"Short, medium, and tall rows test whether the scrollbar stays stable."
+          i18n"Scrolling header with long list",
+          i18n"A single large example shows the new scrolling header together with short, medium, and tall rows."
         ) {
           val items = new ListProperty[ShowcaseItem]()
           val data = (1 to 1000).map { i =>
@@ -46,7 +46,7 @@ object VirtualListViewPage {
           vbox {
             style { height = "500px"; border = "1px solid var(--aj-line)"; borderRadius = "8px"; overflow = "hidden" }
 
-            virtualList(items, estimateHeightPx = 64, crawlable = true) { (itemOrNull, index) =>
+            val list = virtualList(items, estimateHeightPx = 64, crawlable = true) { (itemOrNull, index) =>
               val item = itemOrNull.asInstanceOf[ShowcaseItem]
               div {
                 style {
@@ -60,6 +60,27 @@ object VirtualListViewPage {
                 text = if (item != null) s"$index - ${item.title}" else s"$index - ${DemoI18n.resolveNow(i18n"Loading...")}"
               }
             }
+            header {
+              div {
+                style {
+                  padding = "16px"
+                  background = "var(--aj-surface)"
+                  borderBottom = "1px solid var(--aj-line)"
+                  display = "flex"
+                  justifyContent = "space-between"
+                  gap = "16px"
+                  flexWrap = "wrap"
+                }
+                div {
+                  style { fontWeight = "800" }
+                  text = DemoI18n.resolveNow(i18n"1,000 records with a scrolling list header")
+                }
+                div {
+                  style { color = "var(--aj-ink-muted)" }
+                  text = DemoI18n.resolveNow(i18n"Short, medium, and tall rows stay aligned while the header moves with the same scroll surface.")
+                }
+              }
+            }(using list)
           }
         }
 
@@ -67,21 +88,31 @@ object VirtualListViewPage {
           (i18n"Cursor", i18n"Only visible children count", i18n"Virtual containers must insert and remove physical DOM nodes in a controlled way."),
           (i18n"SEO", i18n"SSR renders a crawl window", i18n"With crawlable = true the list uses offset/limit and gives crawlers real next pages."),
           (i18n"Heights", i18n"Estimation and measurement must agree", i18n"Variable row heights must not make scroll position jump."),
-          (i18n"Data", i18n"Lists remain properties", i18n"When data changes, the view reacts without manual DOM synchronization in the template.")
+          (i18n"Header", i18n"Extra content shares the scroll flow", i18n"The optional header is defined once and scrolls together with the rows below it.")
         )
 
         apiSection(
           i18n"VirtualList usage",
-          i18n"The row function describes only the visible content. Virtualization remains the component's job."
+          i18n"The row function describes the visible content, and the header uses the same component-level API."
         ) {
           codeBlock("scala", """val items = new ListProperty[ShowcaseItem]()
 
-virtualList(items, estimateHeightPx = 64, crawlable = true) { (item, index) =>
+val list = virtualList(items, estimateHeightPx = 64, crawlable = true) { (item, index) =>
   div {
     style { height = s"${item.height}px" }
     text = s"$index - ${item.title}"
   }
-}""")
+}
+
+given VirtualListView[ShowcaseItem] = list
+
+header {
+  div {
+    text = "Scrolling list header"
+  }
+}
+
+list""")
         }
 
         apiSection(
@@ -108,14 +139,6 @@ SSR:
           codeBlock("scala", """asyncRoute("/virtual-list") {
   page {
     VirtualListViewPage.render()
-  }
-}
-
-// In der Page:
-virtualList(items, estimateHeightPx = 64, crawlable = true) { (item, index) =>
-  div {
-    style { height = s"${item.height}px" }
-    text = s"$index - ${item.title}"
   }
 }""")
         }
