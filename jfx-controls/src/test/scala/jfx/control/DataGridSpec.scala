@@ -42,11 +42,17 @@ class DataGridSpec extends AnyFlatSpec with Matchers {
   }
 
   "DataGrid SSR" should "render only the visible local grid cells" in {
-    val items = ListProperty[String]()
-    items.setAll((0 until 30).map(index => s"Item $index"))
+    val localItems = ListProperty[String]()
+    localItems.setAll((0 until 30).map(index => s"Item $index"))
 
     val html = Ssr.renderToString {
-      dataGrid(items, itemWidthPx = 400, itemHeightPx = 100, gapPx = 0, overscanRows = 0) { (item, index) =>
+      dataGrid[String] { grid ?=>
+        items = localItems
+        itemWidthPx = 400
+        itemHeightPx = 100
+        gapPx = 0
+        overscanRows = 0
+      } { (item, index) =>
         div {
           text = s"$index:${Option(item).getOrElse("loading")}"
         }
@@ -60,11 +66,17 @@ class DataGridSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "stretch fixed grid columns to the viewport width" in {
-    val items = ListProperty[String]()
-    items.setAll((0 until 4).map(index => s"Item $index"))
+    val localItems = ListProperty[String]()
+    localItems.setAll((0 until 4).map(index => s"Item $index"))
 
     val html = Ssr.renderToString {
-      dataGrid(items, itemWidthPx = 300, itemHeightPx = 100, gapPx = 20, overscanRows = 0) { (item, index) =>
+      dataGrid[String] { grid ?=>
+        items = localItems
+        itemWidthPx = 300
+        itemHeightPx = 100
+        gapPx = 20
+        overscanRows = 0
+      } { (item, index) =>
         div {
           text = s"$index:${Option(item).getOrElse("loading")}"
         }
@@ -82,7 +94,13 @@ class DataGridSpec extends AnyFlatSpec with Matchers {
     remote.hasMoreProperty.set(true)
 
     val html = Ssr.renderToString {
-      dataGrid(remote, itemWidthPx = 400, itemHeightPx = 100, gapPx = 0, overscanRows = 0) { (item, index) =>
+      dataGrid[String] { grid ?=>
+        items = remote
+        itemWidthPx = 400
+        itemHeightPx = 100
+        gapPx = 0
+        overscanRows = 0
+      } { (item, index) =>
         div {
           if (item == null) {
             addClass("remote-placeholder")
@@ -101,14 +119,21 @@ class DataGridSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "render crawlable windows from query params" in {
-    val items = ListProperty[String]()
-    items.setAll((0 until 20).map(index => s"Member $index"))
+    val localItems = ListProperty[String]()
+    localItems.setAll((0 until 20).map(index => s"Member $index"))
 
     val html = Ssr.renderToString {
       router(Seq(
         asyncRoute("/") {
           page {
-            dataGrid(items, itemWidthPx = 400, itemHeightPx = 100, gapPx = 0, overscanRows = 0, crawlable = true) { (item, index) =>
+            dataGrid[String] { grid ?=>
+              items = localItems
+              itemWidthPx = 400
+              itemHeightPx = 100
+              gapPx = 0
+              overscanRows = 0
+              crawlable = true
+            } { (item, index) =>
               div {
                 text = s"$index:${Option(item).getOrElse("loading")}"
               }
@@ -131,19 +156,23 @@ class DataGridSpec extends AnyFlatSpec with Matchers {
     remote.loadingProperty.set(true)
 
     val html = Ssr.renderToString {
-      val grid = dataGrid(remote, itemWidthPx = 400, itemHeightPx = 100, gapPx = 0, overscanRows = 0) { (item, index) =>
+      dataGrid[String] { grid ?=>
+        items = remote
+        itemWidthPx = 400
+        itemHeightPx = 100
+        gapPx = 0
+        overscanRows = 0
+        loadingPlaceholder {
+          div {
+            addClass("custom-grid-loading")
+            text = "Custom loading"
+          }
+        }
+      } { (item, index) =>
         div {
           text = s"$index:${Option(item).getOrElse("loading")}"
         }
       }
-      given DataGrid[String] = grid
-      loadingPlaceholder {
-        div {
-          addClass("custom-grid-loading")
-          text = "Custom loading"
-        }
-      }
-      grid
     }
 
     html should include("custom-grid-loading")
@@ -151,22 +180,26 @@ class DataGridSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "render a custom empty placeholder for empty local grids" in {
-    val items = ListProperty[String]()
+    val localItems = ListProperty[String]()
 
     val html = Ssr.renderToString {
-      val grid = dataGrid(items, itemWidthPx = 400, itemHeightPx = 100, gapPx = 0, overscanRows = 0) { (item, index) =>
+      dataGrid[String] { grid ?=>
+        items = localItems
+        itemWidthPx = 400
+        itemHeightPx = 100
+        gapPx = 0
+        overscanRows = 0
+        emptyPlaceholder {
+          div {
+            addClass("custom-grid-empty")
+            text = "Nothing here yet"
+          }
+        }
+      } { (item, index) =>
         div {
           text = s"$index:${Option(item).getOrElse("loading")}"
         }
       }
-      given DataGrid[String] = grid
-      emptyPlaceholder {
-        div {
-          addClass("custom-grid-empty")
-          text = "Nothing here yet"
-        }
-      }
-      grid
     }
 
     html should include("custom-grid-empty")
@@ -174,23 +207,27 @@ class DataGridSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "render a custom scrolling header before the grid surface" in {
-    val items = ListProperty[String]()
-    items.setAll((0 until 8).map(index => s"Item $index"))
+    val localItems = ListProperty[String]()
+    localItems.setAll((0 until 8).map(index => s"Item $index"))
 
     val html = Ssr.renderToString {
-      val grid = dataGrid(items, itemWidthPx = 400, itemHeightPx = 100, gapPx = 0, overscanRows = 0) { (item, index) =>
+      dataGrid[String] { grid ?=>
+        items = localItems
+        itemWidthPx = 400
+        itemHeightPx = 100
+        gapPx = 0
+        overscanRows = 0
+        header {
+          div {
+            addClass("custom-grid-header")
+            text = "Grid header"
+          }
+        }
+      } { (item, index) =>
         div {
           text = s"$index:${Option(item).getOrElse("loading")}"
         }
       }
-      given DataGrid[String] = grid
-      header {
-        div {
-          addClass("custom-grid-header")
-          text = "Grid header"
-        }
-      }
-      grid
     }
 
     html should include("jfx-data-grid-header-slot")

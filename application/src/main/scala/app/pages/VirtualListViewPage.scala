@@ -35,18 +35,43 @@ object VirtualListViewPage {
           i18n"Scrolling header with long list",
           i18n"A single large example shows the new scrolling header together with short, medium, and tall rows."
         ) {
-          val items = new ListProperty[ShowcaseItem]()
+          val showcaseItems = new ListProperty[ShowcaseItem]()
           val data = (1 to 1000).map { i =>
             val h = if (i % 5 == 0) 120.0 else if (i % 3 == 0) 80.0 else 44.0
             val c = if (h > 100) "#fecaca" else if (h > 50) "#fed7aa" else "transparent"
             ShowcaseItem(DemoI18n.resolveNow(i18n"Record #$i"), h, c)
           }
-          items.setAll(data)
+          showcaseItems.setAll(data)
 
           vbox {
             style { height = "500px"; border = "1px solid var(--aj-line)"; borderRadius = "8px"; overflow = "hidden" }
 
-            val list = virtualList(items, estimateHeightPx = 64, crawlable = true) { (itemOrNull, index) =>
+            virtualList[ShowcaseItem] { list ?=>
+              items = showcaseItems
+              estimateHeightPx = 64
+              crawlable = true
+              header {
+                div {
+                  style {
+                    padding = "16px"
+                    background = "var(--aj-surface)"
+                    borderBottom = "1px solid var(--aj-line)"
+                    display = "flex"
+                    justifyContent = "space-between"
+                    gap = "16px"
+                    flexWrap = "wrap"
+                  }
+                  div {
+                    style { fontWeight = "800" }
+                    text = DemoI18n.resolveNow(i18n"1,000 records with a scrolling list header")
+                  }
+                  div {
+                    style { color = "var(--aj-ink-muted)" }
+                    text = DemoI18n.resolveNow(i18n"Short, medium, and tall rows stay aligned while the header moves with the same scroll surface.")
+                  }
+                }
+              }
+            } { (itemOrNull, index) =>
               val item = itemOrNull.asInstanceOf[ShowcaseItem]
               div {
                 style {
@@ -60,27 +85,6 @@ object VirtualListViewPage {
                 text = if (item != null) s"$index - ${item.title}" else s"$index - ${DemoI18n.resolveNow(i18n"Loading...")}"
               }
             }
-            header {
-              div {
-                style {
-                  padding = "16px"
-                  background = "var(--aj-surface)"
-                  borderBottom = "1px solid var(--aj-line)"
-                  display = "flex"
-                  justifyContent = "space-between"
-                  gap = "16px"
-                  flexWrap = "wrap"
-                }
-                div {
-                  style { fontWeight = "800" }
-                  text = DemoI18n.resolveNow(i18n"1,000 records with a scrolling list header")
-                }
-                div {
-                  style { color = "var(--aj-ink-muted)" }
-                  text = DemoI18n.resolveNow(i18n"Short, medium, and tall rows stay aligned while the header moves with the same scroll surface.")
-                }
-              }
-            }(using list)
           }
         }
 
@@ -95,24 +99,23 @@ object VirtualListViewPage {
           i18n"VirtualList usage",
           i18n"The row function describes the visible content, and the header uses the same component-level API."
         ) {
-          codeBlock("scala", """val items = new ListProperty[ShowcaseItem]()
+          codeBlock("scala", """val showcaseItems = new ListProperty[ShowcaseItem]()
 
-val list = virtualList(items, estimateHeightPx = 64, crawlable = true) { (item, index) =>
+virtualList[ShowcaseItem] { list ?=>
+  items = showcaseItems
+  estimateHeightPx = 64
+  crawlable = true
+  header {
+    div {
+      text = "Scrolling list header"
+    }
+  }
+} { (item, index) =>
   div {
     style { height = s"${item.height}px" }
     text = s"$index - ${item.title}"
   }
-}
-
-given VirtualListView[ShowcaseItem] = list
-
-header {
-  div {
-    text = "Scrolling list header"
-  }
-}
-
-list""")
+}""")
         }
 
         apiSection(

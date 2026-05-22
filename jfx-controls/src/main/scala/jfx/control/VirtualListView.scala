@@ -18,27 +18,20 @@ import scala.concurrent.ExecutionContext
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 
-final class VirtualListView[T](
-                                initialItems: ListProperty[T] | Null = null,
-                                initialEstimateHeight: Double = 44.0,
-                                initialOverscanPx: Double = 240.0,
-                                initialPrefetchItems: Int = 80,
-                                initialCrawlable: Boolean = false,
-                                initialRenderer: (T | Null, Int) => Unit = (_: T | Null, _: Int) => ()
-                              ) extends Box("div") {
+final class VirtualListView[T] extends Box("div") {
 
   private given ExecutionContext = ExecutionContext.global
 
-  private val itemsRefProperty = Property[ListProperty[T]](normalizeItems(initialItems))
+  private val itemsRefProperty = Property[ListProperty[T]](normalizeItems(null))
 
-  val $estimateHeightProperty = Property(initialEstimateHeight)
-  val $overscanPxProperty = Property(initialOverscanPx)
-  val $prefetchItemsProperty = Property(math.max(1, initialPrefetchItems))
+  val $estimateHeightProperty = Property(44.0)
+  val $overscanPxProperty = Property(240.0)
+  val $prefetchItemsProperty = Property(80)
 
   val $scrollTopProperty = Property(0.0)
   val $viewportHeightProperty = Property(400.0)
 
-  val $crawlableProperty = Property(initialCrawlable)
+  val $crawlableProperty = Property(false)
   private val defaultLimit = 50
   private val headerFactoryProperty = Property[() => Component | Null](() => null)
   private val headerRevisionProperty = Property(0)
@@ -55,7 +48,7 @@ final class VirtualListView[T](
   private var lastVisibleSlots = Vector.empty[VirtualListView.VisibleSlot[T]]
   private var prefixDirtyFrom: Int = Int.MaxValue
   private var tailPaddingItems: Int = defaultTailPadding
-  private var itemRenderer: (T | Null, Int) => Unit = initialRenderer
+  private var itemRenderer: (T | Null, Int) => Unit = (_: T | Null, _: Int) => ()
   private var itemsObserver: Disposable = VirtualListView.noopDisposable
   private var remoteItemsObserver: Disposable = VirtualListView.noopDisposable
   private var viewportMeasureScheduled = false
@@ -676,6 +669,15 @@ final class VirtualListView[T](
 object VirtualListView {
   private[control] val noopDisposable: Disposable = () => ()
 
+  def virtualList[T](init: VirtualListView[T] ?=> Unit): VirtualListView[T] =
+    DslRuntime.build(new VirtualListView[T])(init)
+
+  def virtualList[T](init: VirtualListView[T] ?=> Unit)(renderer: Renderer[T]): VirtualListView[T] = {
+    val list = new VirtualListView[T]
+    list.setRenderer(renderer)
+    DslRuntime.build(list)(init)
+  }
+
   type Renderer[T] = (T | Null, Int) => Unit
 
   private[control] final case class VisibleSlot[T](
@@ -685,27 +687,6 @@ object VirtualListView {
                                                     top: Double,
                                                     height: Double
                                                   )
-
-  def virtualList[T](items: ListProperty[T])(renderer: Renderer[T]): VirtualListView[T] =
-    virtualList(items, estimateHeightPx = 44, overscanPx = 240, prefetchItems = 80)(renderer)
-
-  def virtualList[T](
-                      items: ListProperty[T],
-                      estimateHeightPx: Int = 44,
-                      overscanPx: Int = 240,
-                      prefetchItems: Int = 80,
-                      crawlable: Boolean = false
-                    )(renderer: Renderer[T]): VirtualListView[T] =
-    DslRuntime.build(
-      new VirtualListView[T](
-        initialItems = items,
-        initialEstimateHeight = estimateHeightPx.toDouble,
-        initialOverscanPx = overscanPx.toDouble,
-        initialPrefetchItems = prefetchItems,
-        initialCrawlable = crawlable,
-        initialRenderer = renderer
-      )
-    ) {}
 
   def items[T](using v: VirtualListView[T]): ListProperty[T] =
     v.$items
@@ -750,6 +731,12 @@ object VirtualListView {
 
   def crawlable_=(value: Boolean)(using v: VirtualListView[?]): Unit =
     v.$crawlableProperty.set(value)
+
+  def cellRenderer[T](using v: VirtualListView[T]): Renderer[T] =
+    v.itemRenderer
+
+  def cellRenderer_=[T](value: Renderer[T])(using v: VirtualListView[T]): Unit =
+    v.setRenderer(value)
 
   def header[T](factory: => Component | Null)(using v: VirtualListView[T]): Unit =
     v.setHeaderFactory(() => factory)

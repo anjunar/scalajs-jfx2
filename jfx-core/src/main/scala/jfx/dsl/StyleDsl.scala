@@ -66,6 +66,8 @@ object StyleDsl {
 
   def marginBottom(using s: StyleProxy): String = ""
   def marginBottom_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("margin-bottom", v)
+  def marginBottom_=(v: ReadOnlyProperty[String])(using s: StyleProxy, c: Component): Unit =
+    c.addDisposable(v.observe(s.host.setStyle("margin-bottom", _)))
 
   def marginLeft(using s: StyleProxy): String = ""
   def marginLeft_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("margin-left", v)
@@ -92,6 +94,8 @@ object StyleDsl {
 
   def padding(using s: StyleProxy): String = ""
   def padding_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("padding", v)
+  def padding_=(v: ReadOnlyProperty[String])(using s: StyleProxy, c: Component): Unit =
+    c.addDisposable(v.observe(s.host.setStyle("padding", _)))
 
   def background(using s: StyleProxy): String = ""
   def background_=(v: String)(using s: StyleProxy): Unit = s.host.setStyle("background", v)

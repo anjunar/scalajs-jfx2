@@ -18,32 +18,23 @@ import scala.concurrent.ExecutionContext
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 
-final class DataGrid[T](
-                         initialItems: ListProperty[T] | Null = null,
-                         initialItemWidth: Double = 320.0,
-                         initialItemHeight: Double = 220.0,
-                         initialGap: Double = 16.0,
-                         initialOverscanRows: Int = 2,
-                         initialPrefetchItems: Int = 40,
-                         initialCrawlable: Boolean = false,
-                         initialRenderer: DataGrid.Renderer[T] = (_: T | Null, _: Int) => ()
-                       ) extends Box("div") {
+final class DataGrid[T] extends Box("div") {
 
   private given ExecutionContext = ExecutionContext.global
 
-  private val itemsRefProperty = Property[ListProperty[T]](normalizeItems(initialItems))
+  private val itemsRefProperty = Property[ListProperty[T]](normalizeItems(null))
 
-  val $itemWidthProperty = Property(initialItemWidth)
-  val $itemHeightProperty = Property(initialItemHeight)
-  val $gapProperty = Property(initialGap)
-  val $overscanRowsProperty = Property(math.max(0, initialOverscanRows))
-  val $prefetchItemsProperty = Property(math.max(1, initialPrefetchItems))
+  val $itemWidthProperty = Property(320.0)
+  val $itemHeightProperty = Property(220.0)
+  val $gapProperty = Property(16.0)
+  val $overscanRowsProperty = Property(2)
+  val $prefetchItemsProperty = Property(40)
 
   val $scrollTopProperty = Property(0.0)
   val $viewportWidthProperty = Property(800.0)
   val $viewportHeightProperty = Property(400.0)
 
-  val $crawlableProperty = Property(initialCrawlable)
+  val $crawlableProperty = Property(false)
   private val defaultLimit = 50
   private val headerFactoryProperty = Property[() => Component | Null](() => null)
   private val headerRevisionProperty = Property(0)
@@ -57,7 +48,7 @@ final class DataGrid[T](
   private val pendingRangeLoads = mutable.Set.empty[(Int, Int)]
 
   private var lastVisibleCells = Vector.empty[DataGrid.VisibleCell[T]]
-  private var itemRenderer: DataGrid.Renderer[T] = normalizeRenderer(initialRenderer)
+  private var itemRenderer: DataGrid.Renderer[T] = normalizeRenderer((_: T | Null, _: Int) => ())
   private var itemsObserver: Disposable = DataGrid.noopDisposable
   private var remoteItemsObserver: Disposable = DataGrid.noopDisposable
   private var viewportMeasureScheduled = false
@@ -216,7 +207,7 @@ final class DataGrid[T](
         style {
           width_=(itemStateRevisionProperty.map(_ => s"${contentWidth}px"))
           minWidth = "100%"
-          padding = s"${gap}px"
+          padding_=($gapProperty.map(value => s"${math.max(0.0, value)}px"))
           boxSizing = "border-box"
         }
 
@@ -225,7 +216,7 @@ final class DataGrid[T](
           style {
             width = "100%"
             boxSizing = "border-box"
-            marginBottom = s"${gap}px"
+            marginBottom_=($gapProperty.map(value => s"${math.max(0.0, value)}px"))
           }
 
           observeRender(headerRevisionProperty) { _ =>
@@ -726,27 +717,11 @@ object DataGrid {
   def dataGrid[T](init: DataGrid[T] ?=> Unit): DataGrid[T] =
     DslRuntime.build(new DataGrid[T]())(init)
 
-  def dataGrid[T](
-                   items: ListProperty[T],
-                   itemWidthPx: Int = 320,
-                   itemHeightPx: Int = 220,
-                   gapPx: Int = 16,
-                   overscanRows: Int = 2,
-                   prefetchItems: Int = 40,
-                   crawlable: Boolean = false
-                 )(renderer: Renderer[T]): DataGrid[T] =
-    DslRuntime.build(
-      new DataGrid[T](
-        initialItems = items,
-        initialItemWidth = itemWidthPx.toDouble,
-        initialItemHeight = itemHeightPx.toDouble,
-        initialGap = gapPx.toDouble,
-        initialOverscanRows = overscanRows,
-        initialPrefetchItems = prefetchItems,
-        initialCrawlable = crawlable,
-        initialRenderer = renderer
-      )
-    ) {}
+  def dataGrid[T](init: DataGrid[T] ?=> Unit)(renderer: Renderer[T]): DataGrid[T] = {
+    val grid = new DataGrid[T]()
+    grid.setRenderer(renderer)
+    DslRuntime.build(grid)(init)
+  }
 
   def items[T](using grid: DataGrid[T]): ListProperty[T] =
     grid.$items

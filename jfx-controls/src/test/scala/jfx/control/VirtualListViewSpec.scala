@@ -44,11 +44,16 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
   }
 
   "VirtualListView SSR" should "render local items from the assigned ListProperty" in {
-    val items = ListProperty[String]()
-    items.setAll((0 until 30).map(index => s"Item $index"))
+    val localItems = ListProperty[String]()
+    localItems.setAll((0 until 30).map(index => s"Item $index"))
 
     val html = Ssr.renderToString {
-      virtualList(items, estimateHeightPx = 40, overscanPx = 0, prefetchItems = 4) { (item, index) =>
+      virtualList[String] { list ?=>
+        items = localItems
+        estimateHeightPx = 40
+        overscanPx = 0
+        prefetchItems = 4
+      } { (item, index) =>
         div {
           text = s"$index:${Option(item).getOrElse("loading")}"
         }
@@ -67,7 +72,12 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
     remote.hasMoreProperty.set(true)
 
     val html = Ssr.renderToString {
-      virtualList(remote, estimateHeightPx = 40, overscanPx = 0, prefetchItems = 4) { (item, index) =>
+      virtualList[String] { list ?=>
+        items = remote
+        estimateHeightPx = 40
+        overscanPx = 0
+        prefetchItems = 4
+      } { (item, index) =>
         div {
           if (item == null) {
             addClass("remote-placeholder")
@@ -87,11 +97,16 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
 
   it should "render nested row content in SSR" in {
     final case class Row(title: String, height: Double)
-    val items = ListProperty[Row]()
-    items.setAll((1 to 20).map(index => Row(s"Datensatz #$index", if (index % 3 == 0) 80.0 else 44.0)))
+    val localItems = ListProperty[Row]()
+    localItems.setAll((1 to 20).map(index => Row(s"Datensatz #$index", if (index % 3 == 0) 80.0 else 44.0)))
 
     val html = Ssr.renderToString {
-      virtualList(items, estimateHeightPx = 44, overscanPx = 0, prefetchItems = 4) { (item, index) =>
+      virtualList[Row] { list ?=>
+        items = localItems
+        estimateHeightPx = 44
+        overscanPx = 0
+        prefetchItems = 4
+      } { (item, index) =>
         val row = if (item == null) Row("Lädt...", 44.0) else item
         div {
           style {
@@ -115,8 +130,8 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
 
   it should "render inside a fixed-height wrapper in SSR" in {
     final case class Row(title: String, height: Double, color: String)
-    val items = new ListProperty[Row]()
-    items.setAll((1 to 1000).map { index =>
+    val localItems = new ListProperty[Row]()
+    localItems.setAll((1 to 1000).map { index =>
       val height = if (index % 5 == 0) 120.0 else if (index % 3 == 0) 80.0 else 44.0
       Row(s"Datensatz #$index", height, "transparent")
     })
@@ -128,7 +143,9 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
           overflow = "hidden"
         }
 
-        virtualList(items) { (item, index) =>
+        virtualList[Row] { list ?=>
+          items = localItems
+        } { (item, index) =>
           val row = if (item == null) Row("Lädt...", 44.0, "transparent") else item
           div {
             style {
@@ -155,23 +172,26 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "render a custom scrolling header before the virtualized surface" in {
-    val items = ListProperty[String]()
-    items.setAll((0 until 8).map(index => s"Item $index"))
+    val localItems = ListProperty[String]()
+    localItems.setAll((0 until 8).map(index => s"Item $index"))
 
     val html = Ssr.renderToString {
-      val list = virtualList(items, estimateHeightPx = 40, overscanPx = 0, prefetchItems = 4) { (item, index) =>
+      virtualList[String] { list ?=>
+        items = localItems
+        estimateHeightPx = 40
+        overscanPx = 0
+        prefetchItems = 4
+        header {
+          div {
+            addClass("custom-virtual-list-header")
+            text = "Virtual header"
+          }
+        }
+      } { (item, index) =>
         div {
           text = s"$index:${Option(item).getOrElse("loading")}"
         }
       }
-      given VirtualListView[String] = list
-      header {
-        div {
-          addClass("custom-virtual-list-header")
-          text = "Virtual header"
-        }
-      }
-      list
     }
 
     html should include("jfx-virtual-list-header-slot")
@@ -181,15 +201,17 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "render through router and viewport in SSR" in {
-    val items = new ListProperty[String]()
-    items.setAll((1 to 1000).map(index => s"Datensatz #$index"))
+    val routeItems = new ListProperty[String]()
+    routeItems.setAll((1 to 1000).map(index => s"Datensatz #$index"))
 
     val html = Ssr.renderToString {
       viewport {
         router(Seq(
           asyncRoute("/virtual-list") {
             page {
-              virtualList(items) { (item, index) =>
+              virtualList[String] { list ?=>
+                items = routeItems
+              } { (item, index) =>
                 div {
                   div {
                     text = index.toString
@@ -217,15 +239,17 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
         }
       }
 
-    val items = new ListProperty[String]()
-    items.setAll((1 to 1000).map(index => s"Datensatz #$index"))
+    val showcaseItems = new ListProperty[String]()
+    showcaseItems.setAll((1 to 1000).map(index => s"Datensatz #$index"))
 
     val html = Ssr.renderToString {
       vbox {
         componentShowcase("Virtual") {
           vbox {
             style { height = "500px" }
-            virtualList(items) { (item, index) =>
+            virtualList[String] { list ?=>
+              items = showcaseItems
+            } { (item, index) =>
               div {
                 text = s"$index:${if (item == null) "Lädt..." else item}"
               }
@@ -242,12 +266,14 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
 
   it should "render a Unit page through router in SSR" in {
     def pageContent(): Unit = {
-      val items = new ListProperty[String]()
-      items.setAll((1 to 1000).map(index => s"Datensatz #$index"))
+      val pageItems = new ListProperty[String]()
+      pageItems.setAll((1 to 1000).map(index => s"Datensatz #$index"))
 
       vbox {
         div { text = "before" }
-        virtualList(items) { (item, index) =>
+        virtualList[String] { list ?=>
+          items = pageItems
+        } { (item, index) =>
           div {
             text = s"$index:${if (item == null) "Lädt..." else item}"
           }

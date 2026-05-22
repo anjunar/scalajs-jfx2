@@ -174,7 +174,12 @@ object MemoryLeakTestPage {
                     backgroundColor = "var(--aj-surface)"
                   }
 
-                  listView = virtualList(rows, estimateHeightPx = 420, overscanPx = 360, prefetchItems = 48) { (itemOrNull, index) =>
+                  listView = virtualList[EditorRow] { list ?=>
+                    items = rows
+                    estimateHeightPx = 420
+                    overscanPx = 360
+                    prefetchItems = 48
+                  } { (itemOrNull, index) =>
                     val item = itemOrNull.asInstanceOf[EditorRow | Null]
                     if (item == null) {
                       div {

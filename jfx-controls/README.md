@@ -117,7 +117,7 @@ tableRow[Book] {
 ## VirtualListView
 
 ```scala
-import jfx.control.VirtualListView.virtualList
+import jfx.control.VirtualListView.*
 import jfx.core.component.Component.*
 import jfx.core.state.ListProperty
 import jfx.layout.Div.div
@@ -125,7 +125,12 @@ import jfx.layout.Div.div
 val rows = ListProperty[String]()
 rows.setAll((1 to 10000).map(i => s"Row $i"))
 
-virtualList(rows, estimateHeightPx = 44, overscanPx = 240, crawlable = true) { (row, index) =>
+virtualList[String] { list ?=>
+  items = rows
+  estimateHeightPx = 44
+  overscanPx = 240
+  crawlable = true
+} { (row, index) =>
   div {
     classes = Seq("row")
     text = if (row == null) s"Loading $index" else row
@@ -146,7 +151,13 @@ import jfx.layout.Div.div
 val posts = ListProperty[String]()
 posts.setAll((1 to 10000).map(i => s"Post $i"))
 
-dataGrid(posts, itemWidthPx = 320, itemHeightPx = 220, gapPx = 16, crawlable = true) { (post, index) =>
+dataGrid[String] { grid ?=>
+  items = posts
+  itemWidthPx = 320
+  itemHeightPx = 220
+  gapPx = 16
+  crawlable = true
+} { (post, index) =>
   div {
     classes = Seq("post-card")
     text = if (post == null) s"Loading $index" else post
@@ -157,26 +168,27 @@ dataGrid(posts, itemWidthPx = 320, itemHeightPx = 220, gapPx = 16, crawlable = t
 Loading and empty placeholders can also be provided directly through the DSL.
 
 ```scala
-val grid = dataGrid(posts, itemWidthPx = 320, itemHeightPx = 220, gapPx = 16) { (post, index) =>
+val grid = dataGrid[String] { grid ?=>
+  items = posts
+  itemWidthPx = 320
+  itemHeightPx = 220
+  gapPx = 16
+  loadingPlaceholder {
+    div {
+      classes = Seq("post-grid-loading")
+      text = "Loading articles..."
+    }
+  }
+  emptyPlaceholder {
+    div {
+      classes = Seq("post-grid-empty")
+      text = "No articles available."
+    }
+  }
+} { (post, index) =>
   div {
     classes = Seq("post-card")
     text = if (post == null) s"Loading $index" else post
-  }
-}
-
-given DataGrid[String] = grid
-
-loadingPlaceholder {
-  div {
-    classes = Seq("post-grid-loading")
-    text = "Loading articles..."
-  }
-}
-
-emptyPlaceholder {
-  div {
-    classes = Seq("post-grid-empty")
-    text = "No articles available."
   }
 }
 ```

@@ -112,15 +112,36 @@ object DataGridPage {
                 overflow = "hidden"
               }
 
-              val grid = dataGrid(
-                remoteTiles,
-                itemWidthPx = 240,
-                itemHeightPx = 196,
-                gapPx = 16,
-                overscanRows = 1,
-                prefetchItems = 24,
+              dataGrid[ShowcaseTile] { grid ?=>
+                items = remoteTiles
+                itemWidthPx = 240
+                itemHeightPx = 196
+                gapPx = 16
+                overscanRows = 1
+                prefetchItems = 24
                 crawlable = true
-              ) { (item, index) =>
+                header {
+                  div {
+                    style {
+                      padding = "16px"
+                      background = "var(--aj-surface)"
+                      borderBottom = "1px solid var(--aj-line)"
+                      display = "flex"
+                      justifyContent = "space-between"
+                      gap = "16px"
+                      flexWrap = "wrap"
+                    }
+                    div {
+                      style { fontWeight = "800" }
+                      text = DemoI18n.resolveNow(i18n"180 remote cards with a scrolling grid header")
+                    }
+                    div {
+                      style { color = "var(--aj-ink-muted)" }
+                      text = DemoI18n.resolveNow(i18n"Keyboard and pointer interactions stay on the tiles while the extra header moves with the grid content.")
+                    }
+                  }
+                }
+              } { (item, index) =>
                 renderTile(
                   item,
                   index,
@@ -139,27 +160,6 @@ object DataGridPage {
                   }
                 )
               }
-              header {
-                div {
-                  style {
-                    padding = "16px"
-                    background = "var(--aj-surface)"
-                    borderBottom = "1px solid var(--aj-line)"
-                    display = "flex"
-                    justifyContent = "space-between"
-                    gap = "16px"
-                    flexWrap = "wrap"
-                  }
-                  div {
-                    style { fontWeight = "800" }
-                    text = DemoI18n.resolveNow(i18n"180 remote cards with a scrolling grid header")
-                  }
-                  div {
-                    style { color = "var(--aj-ink-muted)" }
-                    text = DemoI18n.resolveNow(i18n"Keyboard and pointer interactions stay on the tiles while the extra header moves with the grid content.")
-                  }
-                }
-              }(using grid)
             }
 
             div {
@@ -183,22 +183,23 @@ object DataGridPage {
           i18n"DataGrid DSL",
           i18n"The control owns virtualization; the renderer only describes one card."
         ) {
-          codeBlock("scala", """val grid = dataGrid(posts, itemWidthPx = 320, itemHeightPx = 180, gapPx = 16, crawlable = true) { (post, index) =>
+          codeBlock("scala", """dataGrid[Post] { grid ?=>
+  items = posts
+  itemWidthPx = 320
+  itemHeightPx = 180
+  gapPx = 16
+  crawlable = true
+  header {
+    div {
+      text = "Scrolling grid header"
+    }
+  }
+} { (post, index) =>
   div {
     classes = Seq("post-card")
     text = if (post == null) s"Loading $index" else post.title
   }
-}
-
-given DataGrid[Post] = grid
-
-header {
-  div {
-    text = "Scrolling grid header"
-  }
-}
-
-grid""")
+}""")
         }
 
         apiSection(
