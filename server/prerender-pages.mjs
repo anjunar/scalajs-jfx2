@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -8,31 +8,38 @@ const rootDir = resolve(__dirname, "..");
 const docsDir = resolve(rootDir, "docs");
 const templatePath = resolve(docsDir, "index.html");
 const scalaTargetDir = resolve(rootDir, "application", "target");
+const appMainPath = resolve(rootDir, "application", "src", "main", "scala", "app", "Main.scala");
 const scalaJsBundle = resolveScalaJsBundle();
 
 const siteUrl = "https://anjunar.github.io/scalajs-jfx2";
 
-const routes = [
-  route(
+const routeMeta = new Map([
+  [
     "/",
-    "scalajs-jfx2 | Scala.js UI Library",
-    "A Scala.js UI library for declarative components, SSR, hydration, typed controls, runtime metadata, and source-first I18n."
-  ),
-  route("/button", "Buttons | scalajs-jfx2", "Action controls in the JFX2 component DSL."),
-  route("/input", "Inputs And Forms | scalajs-jfx2", "Typed input controls, form context, model binding, and validation."),
-  route("/combo-box", "ComboBox | scalajs-jfx2", "Typed selection with stable identity and reactive state."),
-  route("/carousel", "Carousel | scalajs-jfx2", "Looping carousel control with explicit state, autoplay, and SSR-visible slides."),
-  route("/table-view", "TableView | scalajs-jfx2", "Reactive table rendering with remote loading, sorting, and crawlable SSR slices."),
-  route("/virtual-list", "VirtualList | scalajs-jfx2", "Virtualized list rendering with route-aware crawlable SSR."),
-  route("/layout", "Layout | scalajs-jfx2", "Declarative layout primitives for Scala.js UI composition."),
-  route("/window", "Windows | scalajs-jfx2", "Overlay and window components with persistent page state."),
-  route("/domain", "Domain Metadata | scalajs-jfx2", "Runtime class descriptors, reflected properties, validators, forms, and JSON mapping."),
-  route("/image", "Images | scalajs-jfx2", "Image components and visual content handling in JFX2."),
-  route("/image-cropper", "ImageCropper | scalajs-jfx2", "Client-side image cropper control for form workflows."),
-  route("/editor", "Editor | scalajs-jfx2", "Lexical-backed editor integration as a normal JFX2 form control."),
-  route("/hydration-repro", "Hydration | scalajs-jfx2", "Hydration-focused editor route for direct-load SSR and client attach verification."),
-  route("/memory-leak-test", "Memory Leak Test | scalajs-jfx2", "Stress test 1000 Lexical editors through a VirtualList mount, scroll, and unmount lifecycle."),
-];
+    {
+      title: "scalajs-jfx2 | Scala.js UI Library",
+      description:
+        "A Scala.js UI library for declarative components, SSR, hydration, typed controls, runtime metadata, and source-first I18n.",
+    },
+  ],
+  ["/button", { title: "Buttons | scalajs-jfx2", description: "Action controls in the JFX2 component DSL." }],
+  ["/input", { title: "Inputs And Forms | scalajs-jfx2", description: "Typed input controls, form context, model binding, and validation." }],
+  ["/combo-box", { title: "ComboBox | scalajs-jfx2", description: "Typed selection with stable identity and reactive state." }],
+  ["/carousel", { title: "Carousel | scalajs-jfx2", description: "Looping carousel control with explicit state, autoplay, and SSR-visible slides." }],
+  ["/table-view", { title: "TableView | scalajs-jfx2", description: "Reactive table rendering with remote loading, sorting, and crawlable SSR slices." }],
+  ["/data-grid", { title: "DataGrid | scalajs-jfx2", description: "Reactive card-grid rendering with virtualized data windows, selection, and crawlable SSR slices." }],
+  ["/virtual-list", { title: "VirtualList | scalajs-jfx2", description: "Virtualized list rendering with route-aware crawlable SSR." }],
+  ["/layout", { title: "Layout | scalajs-jfx2", description: "Declarative layout primitives for Scala.js UI composition." }],
+  ["/window", { title: "Windows | scalajs-jfx2", description: "Overlay and window components with persistent page state." }],
+  ["/domain", { title: "Domain Metadata | scalajs-jfx2", description: "Runtime class descriptors, reflected properties, validators, forms, and JSON mapping." }],
+  ["/image", { title: "Images | scalajs-jfx2", description: "Image components and visual content handling in JFX2." }],
+  ["/image-cropper", { title: "ImageCropper | scalajs-jfx2", description: "Client-side image cropper control for form workflows." }],
+  ["/editor", { title: "Editor | scalajs-jfx2", description: "Lexical-backed editor integration as a normal JFX2 form control." }],
+  ["/hydration-repro", { title: "Hydration | scalajs-jfx2", description: "Hydration-focused editor route for direct-load SSR and client attach verification." }],
+  ["/memory-leak-test", { title: "Memory Leak Test | scalajs-jfx2", description: "Stress test 1000 Lexical editors through a VirtualList mount, scroll, and unmount lifecycle." }],
+]);
+
+const routes = resolveRoutes();
 
 assertBuilt();
 
@@ -137,6 +144,7 @@ function assertBuilt() {
   const missing = [
     [templatePath, "docs/index.html"],
     [scalaJsBundle, "Scala.js fullOptJS bundle"],
+    [appMainPath, "application/src/main/scala/app/Main.scala"],
   ].filter(([path]) => !existsSync(path));
 
   if (missing.length === 0) {
@@ -166,4 +174,35 @@ function resolveScalaJsBundle() {
   }
 
   return resolve(scalaTargetDir, "scala-3.x", ...bundleSuffix);
+}
+
+function resolveRoutes() {
+  const routerSource = existsSync(appMainPath) ? readFileSync(appMainPath, "utf8") : "";
+  const appRoutes = extractAsyncRoutes(routerSource);
+  const missingMeta = appRoutes.filter((path) => !routeMeta.has(path));
+  const unusedMeta = [...routeMeta.keys()].filter((path) => !appRoutes.includes(path));
+
+  if (missingMeta.length > 0 || unusedMeta.length > 0) {
+    const lines = [];
+
+    if (missingMeta.length > 0) {
+      lines.push(`Missing prerender metadata for routes:\n${missingMeta.map((path) => `- ${path}`).join("\n")}`);
+    }
+
+    if (unusedMeta.length > 0) {
+      lines.push(`Prerender metadata exists for removed routes:\n${unusedMeta.map((path) => `- ${path}`).join("\n")}`);
+    }
+
+    throw new Error(`${lines.join("\n\n")}\n\nUpdate server/prerender-pages.mjs to match application/src/main/scala/app/Main.scala.`);
+  }
+
+  return appRoutes.map((path) => {
+    const { title, description } = routeMeta.get(path);
+    return route(path, title, description);
+  });
+}
+
+function extractAsyncRoutes(source) {
+  const matches = [...source.matchAll(/asyncRoute\("([^"]+)"\)/g)];
+  return [...new Set(matches.map(([, path]) => path))];
 }

@@ -231,7 +231,7 @@ object Main {
               }
               div {
                 classes = Seq("app-toolbar__version")
-                text = DemoI18n.text(i18n"v2.2.4")
+                text = DemoI18n.text(i18n"v2.2.7")
               }
             }
 
