@@ -54,7 +54,7 @@ lazy val jfxCore = Project(id = "scalajs-jfx2-core", base = file("jfx-core"))
   .settings(
     name := "scalajs-jfx2-core",
     moduleName := "scalajs-jfx2-core",
-    libraryDependencies += "com.anjunar" %%% "scala-reflect" % "1.1.0"
+    libraryDependencies += "com.anjunar" %%% "scala-reflect" % "1.1.2"
   )
   .settings(commonLibrarySettings)
   .settings(commonJsSettings)
@@ -95,7 +95,7 @@ lazy val jfxJson = Project(id = "scalajs-jfx2-json", base = file("jfx-json"))
   .settings(
     name := "scalajs-jfx2-json",
     moduleName := "scalajs-jfx2-json",
-    libraryDependencies += "com.anjunar" %%% "scala-reflect" % "1.1.0"
+    libraryDependencies += "com.anjunar" %%% "scala-reflect" % "1.1.2"
   )
   .settings(commonLibrarySettings)
   .settings(commonJsSettings)
@@ -126,7 +126,7 @@ lazy val jfxEditor = Project(id = "scalajs-jfx2-editor", base = file("jfx-editor
   .settings(
     name := "scalajs-jfx2-editor",
     moduleName := "scalajs-jfx2-editor",
-    libraryDependencies += "com.anjunar" %%% "scalajs-lexical" % "1.2.1-SNAPSHOT"
+    libraryDependencies += "com.anjunar" %%% "scalajs-lexical" % "1.2.2"
   )
   .settings(commonLibrarySettings)
   .settings(commonJsSettings)
