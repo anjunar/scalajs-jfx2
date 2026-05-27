@@ -38,6 +38,11 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
   private var $toolbarMode: EditorToolbarMode = EditorToolbarMode.Ribbon
   private val editorRegistrations = mutable.ArrayBuffer.empty[js.Function0[Unit]]
   private val pluginComponents = mutable.ArrayBuffer.empty[EditorPlugin]
+  private val BoldFormatBit = 1
+  private val ItalicFormatBit = 2
+  private val StrikethroughFormatBit = 4
+  private val UnderlineFormatBit = 8
+  private val CodeFormatBit = 16
 
   override protected def composeFallback(): Unit = {
     given Component = this
@@ -72,7 +77,8 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
   private def renderFallbackContent(): Unit = {
     given Component = this
 
-    val previewText = extractPreviewText($valueProperty.get)
+    val previewValue = $valueProperty.get
+    val previewText = extractPreviewText(previewValue)
 
     div {
       addClass("jfx-editor")
@@ -85,7 +91,9 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
 
           div {
             addClass("jfx-editor__preview")
-            previewText.foreach(value => text = value)
+            addClass("lexical-read-only")
+            addClass("lexical-editor-input")
+            renderPreviewContent(previewValue)
           }
 
           div {
@@ -290,7 +298,9 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
 
             div {
               addClass("jfx-editor__preview")
-              text = previewProperty
+              addClass("lexical-read-only")
+              addClass("lexical-editor-input")
+              renderPreviewContent($valueProperty.get)
             }
 
             EditorLiveRoot(_ => ())
@@ -669,6 +679,248 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
       Option(parts.mkString(" ").trim).filter(_.nonEmpty)
     }
 
+  private def renderPreviewContent(value: js.Any | Null)(using Component): Unit =
+    previewRootNode(value).foreach(renderPreviewNode)
+
+  private def previewRootNode(value: js.Any | Null): Option[js.Any] =
+    if (value == null || js.isUndefined(value.asInstanceOf[js.Any])) {
+      None
+    } else if (js.typeOf(value.asInstanceOf[js.Any]) == "string") {
+      val text = value.asInstanceOf[String].trim
+      if (text.isEmpty) None
+      else Some(
+        js.Dynamic.literal(
+          `type` = "root",
+          children = js.Array[js.Any](
+            js.Dynamic.literal(
+              `type` = "paragraph",
+              children = js.Array[js.Any](
+                js.Dynamic.literal(
+                  `type` = "text",
+                  text = text,
+                  format = 0
+                )
+              )
+            )
+          )
+        ).asInstanceOf[js.Any]
+      )
+    } else {
+      val root = value.asInstanceOf[js.Dynamic].selectDynamic("root").asInstanceOf[js.Any]
+      if (jsValueExists(root)) Some(root)
+      else Some(value.asInstanceOf[js.Any])
+    }
+
+  private def renderPreviewNode(node: js.Any)(using Component): Unit =
+    if (jsValueExists(node)) {
+      previewNodeType(node) match {
+        case "root" =>
+          previewChildren(node).foreach(renderPreviewNode)
+
+        case "paragraph" =>
+          Box.box("p") {
+            addClass("lexical-paragraph")
+            previewChildren(node).foreach(renderPreviewNode)
+          }
+
+        case "heading" =>
+          val tag = previewNodeTag(node)
+          Box.box(tag) {
+            addClass(s"lexical-heading-$tag")
+            previewChildren(node).foreach(renderPreviewNode)
+          }
+
+        case "quote" =>
+          Box.box("blockquote") {
+            addClass("lexical-quote")
+            previewChildren(node).foreach(renderPreviewNode)
+          }
+
+        case "list" =>
+          val listTag = if (previewListType(node) == "number") "ol" else "ul"
+          val listClass = if (listTag == "ol") "lexical-list-ol" else "lexical-list-ul"
+          Box.box(listTag) {
+            addClass(listClass)
+            previewChildren(node).foreach(renderPreviewNode)
+          }
+
+        case "listitem" =>
+          Box.box("li") {
+            addClass("lexical-listitem")
+            previewChildren(node).foreach(renderPreviewNode)
+          }
+
+        case "link" =>
+          Box.box("a") {
+            attribute("href", previewUrl(node))
+            previewChildren(node).foreach(renderPreviewNode)
+          }
+
+        case "horizontalrule" =>
+          Box.box("hr") {
+            addClass("lexical-horizontal-rule")
+          }
+
+        case "linebreak" =>
+          Box.box("br") {}
+
+        case "code" =>
+          Box.box("pre") {
+            addClass("jfx-editor-code")
+            Box.box("code") {
+              addClass("jfx-editor-code__content")
+              text = previewCodeText(node)
+            }
+          }
+
+        case "image" =>
+          Box.box("img") {
+            attribute("src", previewUrl(node, field = "src"))
+            attribute("alt", previewAltText(node))
+            previewDimension(node, "width").foreach(width => attribute("width", width.toString))
+            style {
+              maxWidth = "100%"
+              height = "auto"
+            }
+          }
+
+        case "text" =>
+          renderPreviewTextNode(previewTextValue(node), previewFormat(node))
+
+        case _ =>
+          previewChildren(node).foreach(renderPreviewNode)
+      }
+    }
+
+  private def renderPreviewTextNode(value: String, format: Int)(using Component): Unit =
+    if (value.nonEmpty) {
+      if ((format & CodeFormatBit) != 0) {
+        Box.box("code") {
+          text = value
+        }
+      } else if ((format & BoldFormatBit) != 0) {
+        Box.box("strong") {
+          renderPreviewTextNode(value, format & ~BoldFormatBit)
+        }
+      } else if ((format & ItalicFormatBit) != 0) {
+        Box.box("em") {
+          renderPreviewTextNode(value, format & ~ItalicFormatBit)
+        }
+      } else if ((format & UnderlineFormatBit) != 0) {
+        Box.box("u") {
+          renderPreviewTextNode(value, format & ~UnderlineFormatBit)
+        }
+      } else if ((format & StrikethroughFormatBit) != 0) {
+        Box.box("s") {
+          renderPreviewTextNode(value, format & ~StrikethroughFormatBit)
+        }
+      } else {
+        text = value
+      }
+    }
+
+  private def previewNodeType(node: js.Any): String =
+    previewString(node, "type")
+      .orElse(previewString(node, "nodeType"))
+      .getOrElse("")
+
+  private def previewNodeTag(node: js.Any): String =
+    previewString(node, "tag")
+      .orElse(previewExtraString(node, "tag"))
+      .filter(tag => tag == "h1" || tag == "h2" || tag == "h3")
+      .getOrElse("h1")
+
+  private def previewListType(node: js.Any): String =
+    previewString(node, "listType")
+      .orElse(previewExtraString(node, "listType"))
+      .getOrElse("bullet")
+
+  private def previewUrl(node: js.Any, field: String = "url"): String =
+    previewString(node, field)
+      .orElse(previewExtraString(node, field))
+      .getOrElse("")
+
+  private def previewAltText(node: js.Any): String =
+    previewString(node, "altText")
+      .orElse(previewExtraString(node, "altText"))
+      .getOrElse("")
+
+  private def previewTextValue(node: js.Any): String =
+    previewString(node, "text").getOrElse("")
+
+  private def previewCodeText(node: js.Any): String = {
+    val explicit = previewString(node, "code").filter(_.nonEmpty)
+    explicit.getOrElse {
+      val parts = mutable.ArrayBuffer.empty[String]
+      previewChildren(node).foreach(child => collectText(child, parts))
+      parts.mkString
+    }
+  }
+
+  private def previewFormat(node: js.Any): Int =
+    previewInt(node, "format").getOrElse(0)
+
+  private def previewDimension(node: js.Any, field: String): Option[Int] =
+    previewInt(node, field).orElse(previewExtraInt(node, field))
+
+  private def previewChildren(node: js.Any): Seq[js.Any] = {
+    val childrenValue = node.asInstanceOf[js.Dynamic].selectDynamic("children").asInstanceOf[js.Any]
+    if (jsValueExists(childrenValue)) {
+      try childrenValue.asInstanceOf[js.Array[js.Any]].toSeq
+      catch {
+        case _: Throwable => Seq.empty
+      }
+    } else {
+      Seq.empty
+    }
+  }
+
+  private def previewString(node: js.Any, field: String): Option[String] = {
+    val value = node.asInstanceOf[js.Dynamic].selectDynamic(field).asInstanceOf[js.Any]
+    if (jsValueExists(value) && js.typeOf(value) == "string") Some(value.asInstanceOf[String]) else None
+  }
+
+  private def previewInt(node: js.Any, field: String): Option[Int] = {
+    val value = node.asInstanceOf[js.Dynamic].selectDynamic(field).asInstanceOf[js.Any]
+    if (!jsValueExists(value)) {
+      None
+    } else {
+      js.typeOf(value) match {
+        case "number" => Some(value.asInstanceOf[Double].toInt)
+        case "string" => value.asInstanceOf[String].trim.toIntOption
+        case _ => None
+      }
+    }
+  }
+
+  private def previewExtraString(node: js.Any, field: String): Option[String] = {
+    val extra = node.asInstanceOf[js.Dynamic].selectDynamic("extra").asInstanceOf[js.Any]
+    if (jsValueExists(extra)) {
+      val value = extra.asInstanceOf[js.Dynamic].selectDynamic(field).asInstanceOf[js.Any]
+      if (jsValueExists(value) && js.typeOf(value) == "string") Some(value.asInstanceOf[String]) else None
+    } else {
+      None
+    }
+  }
+
+  private def previewExtraInt(node: js.Any, field: String): Option[Int] = {
+    val extra = node.asInstanceOf[js.Dynamic].selectDynamic("extra").asInstanceOf[js.Any]
+    if (jsValueExists(extra)) {
+      val value = extra.asInstanceOf[js.Dynamic].selectDynamic(field).asInstanceOf[js.Any]
+      if (!jsValueExists(value)) {
+        None
+      } else {
+        js.typeOf(value) match {
+          case "number" => Some(value.asInstanceOf[Double].toInt)
+          case "string" => value.asInstanceOf[String].trim.toIntOption
+          case _ => None
+        }
+      }
+    } else {
+      None
+    }
+  }
+
   private def collectText(value: js.Any, parts: mutable.ArrayBuffer[String]): Unit =
     if (jsValueExists(value)) {
       val dynamic = value.asInstanceOf[js.Dynamic]
@@ -701,6 +953,7 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
         Seq(
           LexicalRichText.HeadingNode,
           LexicalRichText.QuoteNode,
+          HorizontalRuleNode,
           LexicalList.ListNode,
           LexicalList.ListItemNode,
           LexicalLink.LinkNode,
@@ -752,6 +1005,7 @@ class Editor(val $name: String, override val $standalone: Boolean = false)
       .withHeading(1, "lexical-heading-h1")
       .withHeading(2, "lexical-heading-h2")
       .withHeading(3, "lexical-heading-h3")
+      .withHorizontalRule("lexical-horizontal-rule")
       .withList("ul", "lexical-list-ul")
 
       .withList("ol", "lexical-list-ol")

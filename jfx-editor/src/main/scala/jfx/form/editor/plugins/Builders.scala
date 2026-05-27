@@ -14,6 +14,9 @@ def listPlugin(init: ListPlugin ?=> Unit = {})(using editor: Editor): ListPlugin
 def tablePlugin(init: TablePlugin ?=> Unit = {})(using editor: Editor): TablePlugin =
   TablePlugin.tablePlugin(init)
 
+def horizontalRulePlugin(init: HorizontalRulePlugin ?=> Unit = {})(using editor: Editor): HorizontalRulePlugin =
+  HorizontalRulePlugin.horizontalRulePlugin(init)
+
 def linkPlugin(init: LinkPlugin ?=> Unit = {})(using editor: Editor): LinkPlugin =
   LinkPlugin.linkPlugin(init)
 
