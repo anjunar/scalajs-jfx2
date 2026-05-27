@@ -141,10 +141,10 @@ SSR:
           i18n"Async route usage",
           i18n"The route remains the SSR shell. The VirtualList itself is configured with crawlable = true and reads offset/limit from the route context."
         ) {
-          codeBlock("scala", """asyncRoute("/virtual-list") {
-  page {
+          codeBlock("scala", """route("/virtual-list") { context =>
+  Future.successful(Route.component {
     VirtualListViewPage.render()
-  }
+  })
 }""")
         }
       }

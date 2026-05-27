@@ -4,8 +4,9 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import jfx.layout.Div.div
 import jfx.core.component.Component.*
-import jfx.router.Route.{asyncRoute, page}
+import jfx.router.Route.{component, route}
 import jfx.router.Router.router
+import scala.concurrent.Future
 
 class SsrSpec extends AnyFlatSpec with Matchers {
 
@@ -35,11 +36,7 @@ class SsrSpec extends AnyFlatSpec with Matchers {
 
   it should "render router content" in {
     val routes = Seq(
-      asyncRoute("/") {
-        page {
-          div { text = "Home" }
-        }
-      }
+      route("/") { _ => Future.successful(component { div { text = "Home" } }) }
     )
     val html = Ssr.renderToString {
       router(routes, "/")

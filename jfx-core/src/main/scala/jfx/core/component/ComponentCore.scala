@@ -22,6 +22,7 @@ trait ComponentCore extends Disposable {
   def afterCompose(): Unit = {}
 
   def bindCursor: Cursor = _bindCursor
+  def isBound: Boolean = _bindCursor != null
   private[jfx] def registry: ServiceRegistry = _registry
   def isVirtual: Boolean = tagName == ""
 

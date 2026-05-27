@@ -3,12 +3,13 @@ package jfx.control
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import jfx.ssr.Ssr
-import jfx.router.Route.{asyncRoute, page}
+import jfx.router.Route.{component, route}
 import jfx.router.Router.router
 import jfx.control.TableView.*
 import jfx.control.TableColumn.*
 import jfx.core.component.Component.*
 import jfx.layout.Div.div
+import scala.concurrent.Future
 
 class TableViewSsrSpec extends AnyFlatSpec with Matchers {
 
@@ -17,8 +18,8 @@ class TableViewSsrSpec extends AnyFlatSpec with Matchers {
     
     val html = Ssr.renderToString {
       router(Seq(
-        asyncRoute("/") {
-          page {
+        route("/") { _ =>
+          Future.successful(component {
             tableView[String] {
               crawlable = true
               items = members
@@ -26,7 +27,7 @@ class TableViewSsrSpec extends AnyFlatSpec with Matchers {
                 text = item
               }
             }
-          }
+          })
         }
       ), "/?offset=5&limit=5")
     }

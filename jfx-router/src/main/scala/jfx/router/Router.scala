@@ -2,7 +2,7 @@ package jfx.router
 
 import jfx.core.component.Component
 import jfx.core.component.Component.*
-import jfx.core.render.{AsyncRenderPending, RenderBackend}
+import jfx.core.render.{AsyncRenderPending, HydrationRenderBackend, RenderBackend}
 import jfx.core.state.Property
 import jfx.dsl.DslRuntime
 import jfx.layout.Div.div
@@ -10,6 +10,7 @@ import jfx.statement.ObserveRender.observeRender
 import org.scalajs.dom
 import org.scalajs.dom.window
 
+import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
@@ -18,10 +19,12 @@ import scala.util.{Failure, Success}
 class Router(val routes: Seq[Route], initialUrl: String) extends Component with AsyncRenderPending {
   override def tagName: String = "" 
 
+  private final case class LoadedRoute(component: Component, context: RouteContext)
+
   private sealed trait RenderState
   private case object RoutePending extends RenderState
   private case object RouteLoading extends RenderState
-  private final case class RouteReady(context: RouteContext, render: Route.Factory) extends RenderState
+  private case object RouteReady extends RenderState
   private final case class RouteFailure(error: Throwable) extends RenderState
   private final case class RouteNotFound(path: String) extends RenderState
 
@@ -29,9 +32,11 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component with 
   private var renderToken = 0
   private var pendingRouteLoad: Option[js.Promise[Unit]] = None
   private var loadingRenderer: Router ?=> Unit = Router.defaultLoadingRenderer
+  private val statefulComponents = mutable.LinkedHashMap.empty[String, Component]
 
   val $stateProperty = Property(resolve(initialUrl))
   private val renderStateProperty: Property[RenderState] = Property(RoutePending)
+  private val currentRouteProperty: Property[LoadedRoute | Null] = Property(null)
   val $loadingProperty: Property[Boolean] = Property(false)
   val $errorProperty: Property[Option[Throwable]] = Property(None)
 
@@ -45,15 +50,15 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component with 
   }
 
   override def compose(): Unit = {
+    DslRuntime.build(new RouteOutlet(currentRouteProperty)) {}
+
     observeRender(renderStateProperty) {
       case RoutePending =>
         ()
       case RouteLoading =>
         renderLoadingView()
-      case RouteReady(context, factory) =>
-        DslRuntime.provide(context) {
-          factory(context)
-        }
+      case RouteReady =>
+        ()
       case RouteFailure(error) =>
         div {
           $classes = Seq("jfx-router-error")
@@ -79,6 +84,7 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component with 
     renderToken += 1
     val token = renderToken
     val state = $stateProperty.get
+    clearDetachedCurrentComponent()
     pendingRouteLoad = None
     $errorProperty.set(None)
     $loadingProperty.set(false)
@@ -87,36 +93,56 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component with 
       case Some(m) =>
         val ctx = RouteContext(state.path, state.url, m.fullPath, m.params, state.queryParams, state, m)
         val backend = RenderBackend.current
+        val componentKey = state.url
 
         try {
-          val routeLoad = m.route.load(ctx)
-          routeLoad.immediate match {
-            case Some(factory) =>
-              renderStateProperty.set(RouteReady(ctx, factory))
+          statefulComponents.get(componentKey).filter(_ => m.route.stateful) match {
+            case Some(component) =>
+              currentRouteProperty.set(LoadedRoute(component, ctx))
+              renderStateProperty.set(RouteReady)
 
             case None =>
-              $loadingProperty.set(true)
-              renderStateProperty.set(RouteLoading)
-
-              val loaded = routeLoad.promise.toFuture
-              val rendered = loaded.transform { result =>
-                RenderBackend.withBackend(backend) {
-                  if (token == renderToken) {
-                    pendingRouteLoad = None
-                    $loadingProperty.set(false)
-                    result match {
-                      case Success(factory) =>
-                        renderStateProperty.set(RouteReady(ctx, factory))
-                      case Failure(error) =>
-                        $errorProperty.set(Some(error))
-                        renderStateProperty.set(RouteFailure(error))
-                    }
+              val loaded = m.route.load(ctx)
+              loaded.value match {
+                case Some(Success(component)) =>
+                  if (m.route.stateful) {
+                    statefulComponents.update(componentKey, component)
                   }
-                }
-                Success(())
-              }
+                  currentRouteProperty.set(LoadedRoute(component, ctx))
+                  renderStateProperty.set(RouteReady)
 
-              pendingRouteLoad = Some(rendered.toJSPromise)
+                case Some(Failure(error)) =>
+                  $errorProperty.set(Some(error))
+                  renderStateProperty.set(RouteFailure(error))
+
+                case None =>
+                  currentRouteProperty.set(null)
+                  $loadingProperty.set(true)
+                  renderStateProperty.set(RouteLoading)
+
+                  val rendered = loaded.transform { result =>
+                    RenderBackend.withBackend(backend) {
+                      if (token == renderToken) {
+                        pendingRouteLoad = None
+                        $loadingProperty.set(false)
+                        result match {
+                          case Success(component) =>
+                            if (m.route.stateful) {
+                              statefulComponents.update(componentKey, component)
+                            }
+                            currentRouteProperty.set(LoadedRoute(component, ctx))
+                            renderStateProperty.set(RouteReady)
+                          case Failure(error) =>
+                            $errorProperty.set(Some(error))
+                            renderStateProperty.set(RouteFailure(error))
+                        }
+                      }
+                    }
+                    Success(())
+                  }
+
+                  pendingRouteLoad = Some(rendered.toJSPromise)
+              }
           }
         } catch {
           case error: Throwable =>
@@ -124,8 +150,18 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component with 
             renderStateProperty.set(RouteFailure(error))
         }
       case None =>
+        currentRouteProperty.set(null)
         renderStateProperty.set(RouteNotFound(state.path))
     }
+  }
+
+  override def dispose(): Unit = {
+    currentRouteProperty.set(null)
+    statefulComponents.valuesIterator
+      .filter(_.parent.isEmpty)
+      .foreach(_.dispose())
+    statefulComponents.clear()
+    super.dispose()
   }
 
   private[router] def setLoadingRenderer(renderer: Router ?=> Unit): Unit =
@@ -152,6 +188,78 @@ class Router(val routes: Seq[Route], initialUrl: String) extends Component with 
         key -> value
       }.toMap
     } else Map.empty
+  }
+
+  private def clearDetachedCurrentComponent(): Unit = {
+    val current = currentRouteProperty.get
+    if (current != null) {
+      currentRouteProperty.set(null)
+      if (!statefulComponents.valuesIterator.exists(_ eq current.component)) {
+        current.component.dispose()
+      }
+    }
+  }
+
+  private final class RouteOutlet(content: Property[LoadedRoute | Null]) extends Component {
+    override def tagName: String = ""
+
+    private var mounted: LoadedRoute | Null = null
+
+    override def compose(): Unit =
+      addDisposable(content.observe(_ => reconcile()))
+
+    override def dispose(): Unit = {
+      detachMounted()
+      super.dispose()
+    }
+
+    private def reconcile(): Unit = {
+      DslRuntime.updateBranch(this) {
+        val next = content.get
+
+        if (mounted != next) {
+          detachMounted()
+          mounted = null
+
+          if (next != null) {
+            attachMounted(next)
+            mounted = next
+          }
+        }
+      }
+    }
+
+    private def attachMounted(next: LoadedRoute): Unit = {
+      val child = next.component
+      child.parent.foreach { oldParent =>
+        if (oldParent != this) {
+          oldParent.removeChild(child)
+        }
+      }
+
+      if (!children.contains(child)) {
+        if (child.parent.contains(this) || child.isBound) {
+          child.setParent(Some(this))
+          addChild(child)
+
+          if (!RenderBackend.current.isInstanceOf[HydrationRenderBackend]) {
+            syncChildAddition(child)
+          }
+        } else {
+          DslRuntime.provide(next.context) {
+            DslRuntime.mount(child) {}
+          }
+        }
+      }
+    }
+
+    private def detachMounted(): Unit = {
+      val current = mounted
+      if (current != null && children.contains(current.component)) {
+        removeChild(current.component)
+        current.component.setParent(None)
+      }
+    }
   }
 }
 

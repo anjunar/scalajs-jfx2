@@ -6,6 +6,7 @@ import jfx.control.Image.*
 import jfx.control.Link.*
 import jfx.control.{TableColumn, TableView}
 import jfx.core.component.Box.box
+import jfx.core.component.Component
 import jfx.core.component.Component.*
 import jfx.core.state.{ListProperty, Property}
 import jfx.dsl.*
@@ -21,13 +22,14 @@ import jfx.layout.Viewport.*
 import jfx.layout.Viewport
 import jfx.layout.HorizontalLine.horizontalLine
 import jfx.router.Route
-import jfx.router.Route.{asyncRoute, page}
+import jfx.router.Route.route
 import jfx.router.Router.router
 import jfx.router.RouterConfig
 import jfx.ssr.Ssr
 import org.scalajs.dom
 import org.scalajs.dom.HTMLElement
 
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
@@ -83,42 +85,42 @@ object Main {
 
   private def demo(initialPath: String = "/") = {
     val routes = Seq(
-      asyncRoute("/") { page { OverviewPage.render() } },
-      asyncRoute("/button") { page { ButtonPage.render() } },
-      asyncRoute("/input") { page { InputPage.render() } },
-      asyncRoute("/combo-box") { page { ComboBoxPage.render() } },
-      asyncRoute("/carousel") { page { CarouselPage.render() } },
-      asyncRoute("/table-view") {
+      route("/") { _ => routePage { OverviewPage.render() } },
+      route("/button") { _ => routePage { ButtonPage.render() } },
+      route("/input") { _ => routePage { InputPage.render() } },
+      route("/combo-box") { _ => routePage { ComboBoxPage.render() } },
+      route("/carousel") { _ => routePage { CarouselPage.render() } },
+      route("/table-view", stateful = true) { _ =>
         val books = TableViewPage.createRemoteBooks(pageSize = 50)
 
         books.reload(TableViewPage.ShowcaseBookQuery.first(50)).toFuture.map { _ =>
           tableViewPage(books)
-        }.toJSPromise
+        }
       },
-      asyncRoute("/data-grid") {
+      route("/data-grid", stateful = true) { _ =>
         val tiles = DataGridPage.createRemoteTiles(pageSize = 24)
 
         tiles.reload(DataGridPage.ShowcaseTileQuery.first(24)).toFuture.map { _ =>
           dataGridPage(tiles)
-        }.toJSPromise
+        }
       },
-      asyncRoute("/virtual-list") { page { VirtualListViewPage.render() } },
-      asyncRoute("/layout") { page { LayoutPage.render() } },
-      asyncRoute("/window") { page { WindowPage.render() } },
-      asyncRoute("/domain") { page { DomainPage.render() } },
-      asyncRoute("/image") { page { ImagePage.render() } },
-      asyncRoute("/image-cropper") { page { ImageCropperPage.render() } },
-      asyncRoute("/editor") {
+      route("/virtual-list") { _ => routePage { VirtualListViewPage.render() } },
+      route("/layout") { _ => routePage { LayoutPage.render() } },
+      route("/window", stateful = true) { _ => routePage { WindowPage.render() } },
+      route("/domain") { _ => routePage { DomainPage.render() } },
+      route("/image") { _ => routePage { ImagePage.render() } },
+      route("/image-cropper") { _ => routePage { ImageCropperPage.render() } },
+      route("/editor", stateful = true) { _ =>
         val draft = createEditorDraft()
 
         sleep(350) {
-          Route.factory {
+          routeComponent {
             EditorPage.render(draft)
           }
-        }
+        }.toFuture
       },
-      asyncRoute("/hydration-repro") { page { HydrationReproPage.render() } },
-      asyncRoute("/memory-leak-test") { page { MemoryLeakTestPage.render() } }
+      route("/hydration-repro") { _ => routePage { HydrationReproPage.render() } },
+      route("/memory-leak-test") { _ => routePage { MemoryLeakTestPage.render() } }
     )
 
     div {
@@ -231,7 +233,7 @@ object Main {
               }
               div {
                 classes = Seq("app-toolbar__version")
-                text = DemoI18n.text(i18n"v2.2.7")
+                text = DemoI18n.text(i18n"v2.2.8")
               }
             }
 
@@ -259,17 +261,23 @@ object Main {
 
   private def tableViewPage(
     books: RemoteListProperty[TableViewPage.ShowcaseBook, TableViewPage.ShowcaseBookQuery]
-  ): Route.Factory =
-    Route.factory {
+  ): Component =
+    routeComponent {
       TableViewPage.render(books)
     }
 
   private def dataGridPage(
     tiles: RemoteListProperty[DataGridPage.ShowcaseTile, DataGridPage.ShowcaseTileQuery]
-  ): Route.Factory =
-    Route.factory {
+  ): Component =
+    routeComponent {
       DataGridPage.render(tiles)
     }
+
+  private def routePage(render: => Unit): Future[Component] =
+    Future.successful(routeComponent(render))
+
+  private def routeComponent(render: => Unit): Component =
+    new RouteContentPage(() => render)
 
   private def createEditorDraft(): BlogDraft = {
     val draft = new BlogDraft()
@@ -313,4 +321,11 @@ object Main {
     }
   }
 
+}
+
+private final class RouteContentPage(render: () => Unit) extends Component {
+  override def tagName: String = ""
+
+  override def compose(): Unit =
+    render()
 }

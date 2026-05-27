@@ -351,14 +351,14 @@ onScroll:
           i18n"Async route usage",
           i18n"The route is only the SSR shell: it loads the first page before rendering so SSR and hydration share the same initial state."
         ) {
-          codeBlock("scala", """asyncRoute("/table-view") {
+          codeBlock("scala", """route("/table-view", stateful = true) { context =>
   val books = TableViewPage.createRemoteBooks(pageSize = 50)
   
   books.reload(TableViewPage.ShowcaseBookQuery.first(50)).toFuture.map { _ =>
-    Route.factory {
+    Route.component {
       TableViewPage.render(books)
     }
-  }.toJSPromise
+  }
 }""")
         }
       }

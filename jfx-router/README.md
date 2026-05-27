@@ -1,6 +1,6 @@
 # scalajs-jfx2-router
 
-Router provides route definitions, async route loading, current route context and browser navigation.
+Router provides route definitions, async component loading, optional stateful route reuse, current route context and browser navigation.
 
 ## Install
 
@@ -16,17 +16,18 @@ import jfx.core.component.Component.*
 import jfx.layout.Div.div
 import jfx.router.Route.*
 import jfx.router.Router.{loading, router}
+import scala.concurrent.Future
 
 router(Seq(
-  asyncRoute("/") {
-    page {
+  route("/") { _ =>
+    Future.successful(component {
       div { text = "Home" }
-    }
+    })
   },
-  asyncRoute("/users") {
-    page {
+  route("/users", stateful = true) { _ =>
+    Future.successful(component {
       div { text = "Users" }
-    }
+    })
   }
 )) {
   loading {
@@ -40,18 +41,17 @@ router(Seq(
 
 ## Route Context
 
-The route context is available inside a route factory.
+The route context is passed directly into the route loader.
 
 ```scala
-import jfx.router.RouteContext
+import scala.concurrent.Future
 
-asyncRoute("/users") {
-  page {
-    val ctx = summon[RouteContext]
+route("/users") { ctx =>
+  Future.successful(component {
     div {
       text = s"Current path: ${ctx.path}"
     }
-  }
+  })
 }
 ```
 
@@ -59,16 +59,12 @@ asyncRoute("/users") {
 
 ```scala
 import jfx.router.Route
-import scala.scalajs.js
+import scala.concurrent.Future
 
-asyncRoute("/reports") {
-  Route.load(
-    js.Promise.resolve(
-      Route.factory {
-        div { text = "Reports loaded" }
-      }
-    )
-  )
+route("/reports") { _ =>
+  Future.successful(Route.component {
+    div { text = "Reports loaded" }
+  })
 }
 ```
 
@@ -76,13 +72,13 @@ asyncRoute("/reports") {
 
 ```scala
 import jfx.action.Button.button
-import jfx.router.Route.asyncRoute
-import jfx.router.Route.page
+import jfx.router.Route.{component, route}
 import jfx.router.Router.router
+import scala.concurrent.Future
 
 val appRouter = router(Seq(
-  asyncRoute("/") { page { div { text = "Home" } } },
-  asyncRoute("/users") { page { div { text = "Users" } } }
+  route("/") { _ => Future.successful(component { div { text = "Home" } }) },
+  route("/users") { _ => Future.successful(component { div { text = "Users" } }) }
 ))
 
 button("Open users") {
@@ -129,7 +125,7 @@ Pass the initial URL when rendering on the server or in tests.
 
 ```scala
 router(
-  routes = Seq(asyncRoute("/") { page { div { text = "Home" } } }),
+  routes = Seq(route("/") { _ => Future.successful(component { div { text = "Home" } }) }),
   initial = "/"
 )
 ```

@@ -2,17 +2,18 @@ package jfx.router
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import jfx.router.Route.{asyncRoute, page}
+import jfx.router.Route.{component, route}
 import jfx.layout.Div.div
 import jfx.core.component.Component.*
 import jfx.ssr.Ssr
+import scala.concurrent.Future
 
 class RouterSpec extends AnyFlatSpec with Matchers {
 
   "RouteMatcher" should "resolve basic routes" in {
     val routes = Seq(
-      asyncRoute("/") { page { div { text = "Root" } } },
-      asyncRoute("/test") { page { div { text = "Test" } } }
+      route("/") { _ => Future.successful(component { div { text = "Root" } }) },
+      route("/test") { _ => Future.successful(component { div { text = "Test" } }) }
     )
     
     val match1 = RouteMatcher.resolve(routes, "/")
@@ -26,8 +27,8 @@ class RouterSpec extends AnyFlatSpec with Matchers {
 
   it should "resolve wildcard routes" in {
     val routes = Seq(
-      asyncRoute("/") { page { div { text = "Root" } } },
-      asyncRoute("/*") { page { div { text = "Shell" } } }
+      route("/") { _ => Future.successful(component { div { text = "Root" } }) },
+      route("/*") { _ => Future.successful(component { div { text = "Shell" } }) }
     )
 
     val rootMatch = RouteMatcher.resolve(routes, "/")
@@ -42,13 +43,11 @@ class RouterSpec extends AnyFlatSpec with Matchers {
 
   it should "resolve child routes" in {
     val routes = Seq(
-      asyncRoute("/") {
-        page { div { text = "Root" } }
+      route("/") { _ =>
+        Future.successful(component { div { text = "Root" } })
       }.copy(
         children = Seq(
-          asyncRoute("/docs/:slug") {
-            page { div { text = "Docs" } }
-          }
+          route("/docs/:slug") { _ => Future.successful(component { div { text = "Docs" } }) }
         )
       )
     )
@@ -62,7 +61,7 @@ class RouterSpec extends AnyFlatSpec with Matchers {
 
   it should "handle base paths correctly" in {
     val routes = Seq(
-      asyncRoute("/") { page { div { text = "Root" } } }
+      route("/") { _ => Future.successful(component { div { text = "Root" } }) }
     )
     
     val match1 = RouteMatcher.resolve(routes, "/scalajs-jfx2/")
@@ -75,8 +74,8 @@ class RouterSpec extends AnyFlatSpec with Matchers {
 
   "Router" should "render correctly in SSR" in {
     val routes = Seq(
-      asyncRoute("/") { page { div { text = "Home" } } },
-      asyncRoute("/about") { page { div { text = "About" } } }
+      route("/") { _ => Future.successful(component { div { text = "Home" } }) },
+      route("/about") { _ => Future.successful(component { div { text = "About" } }) }
     )
     
     val htmlHome = Ssr.renderToString {
@@ -92,7 +91,7 @@ class RouterSpec extends AnyFlatSpec with Matchers {
 
   it should "allow configuring the loading view via DSL" in {
     val html = Ssr.renderToString {
-      val appRouter = Router.router(Seq(asyncRoute("/") { page { div { text = "Home" } } }), "/") {
+      val appRouter = Router.router(Seq(route("/") { _ => Future.successful(component { div { text = "Home" } }) }), "/") {
         Router.loading {
           div {
             classes = Seq("custom-router-loading")

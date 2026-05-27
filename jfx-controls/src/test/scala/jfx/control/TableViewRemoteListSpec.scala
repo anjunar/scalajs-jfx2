@@ -4,12 +4,13 @@ import jfx.control.TableColumn.*
 import jfx.control.TableView.*
 import jfx.core.component.Component.*
 import jfx.core.state.ListProperty
-import jfx.router.Route.{asyncRoute, page}
+import jfx.router.Route.{component, route}
 import jfx.router.Router.router
 import jfx.ssr.Ssr
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.concurrent.Future
 import scala.scalajs.js
 
 class TableViewRemoteListSpec extends AnyFlatSpec with Matchers {
@@ -58,8 +59,8 @@ class TableViewRemoteListSpec extends AnyFlatSpec with Matchers {
 
     val html = Ssr.renderToString {
       router(Seq(
-        asyncRoute("/") {
-          page {
+        route("/") { _ =>
+          Future.successful(component {
             tableView[String] {
               crawlable = true
               items = remote
@@ -67,7 +68,7 @@ class TableViewRemoteListSpec extends AnyFlatSpec with Matchers {
                 text = item
               }
             }
-          }
+          })
         }
       ), "/?offset=5&limit=5")
     }

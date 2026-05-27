@@ -192,14 +192,13 @@ object DslRuntime {
     }
   }
 
-  /**
-   * Main entry point for DSL: Creates a component and binds it immediately.
-   */
-  def build[C <: Component](factory: => C)(init: C ?=> Unit): C = {
-    val component = factory
+  def mount[C <: Component](component: C): C =
+    mount(component)({})
+
+  def mount[C <: Component](component: C)(init: C ?=> Unit): C = {
     val cursor = currentCursor
     val context = currentContext
-    
+
     // 1. Establish logical parent immediately
     component.setParent(context.parent)
     component.setRegistry(context.registry)
@@ -260,6 +259,12 @@ object DslRuntime {
     activateClientSideIfNeeded(component)
     component
   }
+
+  /**
+   * Main entry point for DSL: Creates a component and binds it immediately.
+   */
+  def build[C <: Component](factory: => C)(init: C ?=> Unit): C =
+    mount(factory)(init)
 
   private def activateClientSideIfNeeded(component: Component): Unit =
     component match {

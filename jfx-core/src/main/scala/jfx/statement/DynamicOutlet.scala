@@ -49,11 +49,15 @@ class DynamicOutlet(
     }
 
     if (!children.contains(child)) {
-      child.setParent(Some(this))
-      addChild(child)
+      if (child.parent.contains(this) || child.isBound) {
+        child.setParent(Some(this))
+        addChild(child)
 
-      if (!RenderBackend.current.isInstanceOf[HydrationRenderBackend]) {
-        syncChildAddition(child)
+        if (!RenderBackend.current.isInstanceOf[HydrationRenderBackend]) {
+          syncChildAddition(child)
+        }
+      } else {
+        DslRuntime.mount(child) {}
       }
     }
   }

@@ -6,12 +6,13 @@ import jfx.core.state.ListProperty
 import jfx.layout.Div.div
 import jfx.layout.VBox.vbox
 import jfx.layout.Viewport.viewport
-import jfx.router.Route.{asyncRoute, page}
+import jfx.router.Route.{component, route}
 import jfx.router.Router.router
 import jfx.ssr.Ssr
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.concurrent.Future
 import scala.scalajs.js
 
 class VirtualListViewSpec extends AnyFlatSpec with Matchers {
@@ -212,8 +213,8 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
     val html = Ssr.renderToString {
       viewport {
         router(Seq(
-          asyncRoute("/virtual-list") {
-            page {
+          route("/virtual-list") { _ =>
+            Future.successful(component {
               virtualList[String] {
                 items = routeItems
                 cellRenderer = { (item: String | Null, index: Int) =>
@@ -227,7 +228,7 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
                   }
                 }
               }
-            }
+            })
           }
         ), "/virtual-list")
       }
@@ -292,10 +293,10 @@ class VirtualListViewSpec extends AnyFlatSpec with Matchers {
     val html = Ssr.renderToString {
       viewport {
         router(Seq(
-          asyncRoute("/virtual-list") {
-            page {
+          route("/virtual-list") { _ =>
+            Future.successful(component {
               pageContent()
-            }
+            })
           }
         ), "/virtual-list")
       }

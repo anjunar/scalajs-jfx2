@@ -203,6 +203,6 @@ function resolveRoutes() {
 }
 
 function extractAsyncRoutes(source) {
-  const matches = [...source.matchAll(/asyncRoute\("([^"]+)"\)/g)];
+  const matches = [...source.matchAll(/route\("([^"]+)"/g)];
   return [...new Set(matches.map(([, path]) => path))];
 }

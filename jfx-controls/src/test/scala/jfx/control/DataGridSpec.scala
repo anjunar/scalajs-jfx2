@@ -4,12 +4,13 @@ import jfx.control.DataGrid.*
 import jfx.core.component.Component.*
 import jfx.core.state.ListProperty
 import jfx.layout.Div.div
-import jfx.router.Route.{asyncRoute, page}
+import jfx.router.Route.{component, route}
 import jfx.router.Router.router
 import jfx.ssr.Ssr
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.concurrent.Future
 import scala.scalajs.js
 
 class DataGridSpec extends AnyFlatSpec with Matchers {
@@ -127,8 +128,8 @@ class DataGridSpec extends AnyFlatSpec with Matchers {
 
     val html = Ssr.renderToString {
       router(Seq(
-        asyncRoute("/") {
-          page {
+        route("/") { _ =>
+          Future.successful(component {
             dataGrid[String] {
               items = localItems
               itemWidthPx = 400
@@ -142,7 +143,7 @@ class DataGridSpec extends AnyFlatSpec with Matchers {
                 }
               }
             }
-          }
+          })
         }
       ), "/?offset=5&limit=4")
     }
