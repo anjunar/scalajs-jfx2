@@ -8,10 +8,14 @@ import jfx.dsl.DslRuntime
 import jfx.layout.Div.div
 import jfx.statement.ObserveRender.observeRender
 
-final class Tabs(initialSelectedIndex: Int = 0) extends Box("section") {
+final class Tabs(
+    initialSelectedIndex: Int = 0,
+    initialRenderMode: Tabs.RenderMode = Tabs.RenderMode.ActiveOnly
+) extends Box("section") {
 
   val $tabsProperty = ListProperty[Tabs.TabSpec]()
   val $selectedIndexProperty = Property(math.max(0, initialSelectedIndex))
+  val $renderModeProperty = Property(initialRenderMode)
   private val $renderVersionProperty = Property(0)
 
   def addTab(tab: Tabs.TabSpec): Unit = {
@@ -78,8 +82,23 @@ final class Tabs(initialSelectedIndex: Int = 0) extends Box("section") {
       addClass("jfx-tabs__content")
 
       observeRender($renderVersionProperty) { _ =>
-        activeTab.foreach { tab =>
-          tab.render(summon[Component])
+        $renderModeProperty.get match {
+          case Tabs.RenderMode.ActiveOnly =>
+            activeTab.foreach { tab =>
+              tab.render(summon[Component])
+            }
+          case Tabs.RenderMode.KeepMountedHidden =>
+            $tabsProperty.get.zipWithIndex.foreach { case (tab, index) =>
+              div {
+                addClass("jfx-tabs__panel")
+                if (index != selectedIndex) {
+                  style {
+                    display = "none"
+                  }
+                }
+                tab.render(summon[Component])
+              }
+            }
         }
       }
     }
@@ -120,10 +139,20 @@ final class Tabs(initialSelectedIndex: Int = 0) extends Box("section") {
 }
 
 object Tabs {
+  enum RenderMode {
+    case ActiveOnly
+    case KeepMountedHidden
+  }
+
   final class TabSpec(val title: String, val render: Component => Unit)
 
   def tabs(init: Tabs ?=> Unit): Tabs =
-    DslRuntime.build(new Tabs())(init)
+    tabs(renderMode = Tabs.RenderMode.ActiveOnly)(init)
+
+  def tabs(
+      renderMode: Tabs.RenderMode
+  )(init: Tabs ?=> Unit): Tabs =
+    DslRuntime.build(new Tabs(initialRenderMode = renderMode))(init)
 
   def tab(title: String)(content: Component ?=> Unit)(using tabs: Tabs): Unit =
     tabs.addTab(
@@ -144,4 +173,12 @@ object Tabs {
 
   def selectedIndex_=(value: ReadOnlyProperty[Int])(using tabs: Tabs): Unit =
     tabs.addDisposable(value.observe(v => tabs.setSelectedIndex(v)))
+
+  def renderMode(using tabs: Tabs): Tabs.RenderMode =
+    tabs.$renderModeProperty.get
+
+  def renderMode_=(value: Tabs.RenderMode)(using tabs: Tabs): Unit = {
+    tabs.$renderModeProperty.set(value)
+    tabs.$renderVersionProperty.setAlways(tabs.$renderVersionProperty.get + 1)
+  }
 }

@@ -1,6 +1,6 @@
 package jfx.control
 
-import jfx.control.Tabs.{selectedIndex_=, tab, tabs}
+import jfx.control.Tabs.{RenderMode, selectedIndex_=, tab, tabs}
 import jfx.core.component.Component.*
 import jfx.layout.Div.div
 import jfx.ssr.Ssr
@@ -26,6 +26,23 @@ class TabsSpec extends AnyFlatSpec with Matchers {
     html should include("Chat")
     html should include("Current location panel")
     html should not include "Chat panel"
+  }
+
+  it should "optionally keep inactive tab content mounted and hidden in SSR" in {
+    val html = Ssr.renderToString {
+      tabs(renderMode = RenderMode.KeepMountedHidden) {
+        tab("Location") {
+          div { text = "Current location panel" }
+        }
+        tab("Chat") {
+          div { text = "Chat panel" }
+        }
+      }
+    }
+
+    html should include("Current location panel")
+    html should include("Chat panel")
+    html should include("""display: none""")
   }
 
   it should "clamp the selected index when moving beyond available tabs" in {
