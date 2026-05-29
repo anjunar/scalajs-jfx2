@@ -2,8 +2,10 @@ package jfx.router
 
 import jfx.core.component.Component
 
-import scala.scalajs.js
 import scala.concurrent.Future
+import scala.scalajs.js
+import scala.scalajs.js.JSConverters.*
+import scala.concurrent.ExecutionContext.Implicits.global
 
 case class RouteContext(
   path: String,
@@ -46,6 +48,13 @@ object Route {
       render()
   }
 
+  final class Factory(private val renderBlock: RouteContext => Unit) {
+    def render(context: RouteContext): Unit =
+      renderBlock(context)
+  }
+
+  type LoaderResult = Factory | Future[Factory] | js.Promise[Factory]
+
   def route(path: String, stateful: Boolean = false)(factory: RouteContext => Future[Component]): Route =
     Route(
       path = path,
@@ -53,8 +62,41 @@ object Route {
       stateful = stateful
     )
 
+  def asyncRoute(path: String, stateful: Boolean = false)(factory: RouteContext ?=> LoaderResult): Route =
+    Route(
+      path = path,
+      load = ctx => normalize(factory(using ctx), ctx),
+      stateful = stateful
+    )
+
+  def page(render: RouteContext ?=> Unit): Factory =
+    new Factory(context => render(using context))
+
+  def factory(render: RouteContext ?=> Unit): Factory =
+    new Factory(context => render(using context))
+
   def component(render: => Unit): Component =
     new BlockComponent(() => render)
+
+  private def normalize(result: LoaderResult, context: RouteContext): Future[Component] =
+    result match {
+      case factory: Factory =>
+        Future.successful(component {
+          factory.render(context)
+        })
+      case future: Future[?] =>
+        future.asInstanceOf[Future[Factory]].map { factory =>
+          component {
+            factory.render(context)
+          }
+        }
+      case promise =>
+        promise.asInstanceOf[js.Promise[Factory]].toFuture.map { factory =>
+          component {
+            factory.render(context)
+          }
+        }
+    }
 }
 
 object RouteMatcher {
