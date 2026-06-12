@@ -15,7 +15,10 @@ case class RouteContext(
   queryParams: Map[String, String],
   state: RouterState,
   routeMatch: RouteMatch
-)
+) {
+  def language: Option[Language] =
+    pathParams.get(LocalizedRoute.languageParam).flatMap(Language.fromCode)
+}
 
 case class RouteMatch(
   route: Route,
@@ -37,6 +40,7 @@ case class Route(
   path: String,
   load: RouteContext => Future[Component],
   stateful: Boolean = false,
+  constraints: Map[String, String => Boolean] = Map.empty,
   children: Seq[Route] = Nil
 )
 
@@ -55,19 +59,41 @@ object Route {
 
   type LoaderResult = Factory | Future[Factory] | js.Promise[Factory]
 
-  def route(path: String, stateful: Boolean = false)(factory: RouteContext => Future[Component]): Route =
+  def route(
+    path: String,
+    stateful: Boolean = false,
+    constraints: Map[String, String => Boolean] = Map.empty
+  )(factory: RouteContext => Future[Component]): Route =
     Route(
       path = path,
       load = factory,
-      stateful = stateful
+      stateful = stateful,
+      constraints = constraints
     )
 
-  def asyncRoute(path: String, stateful: Boolean = false)(factory: RouteContext ?=> LoaderResult): Route =
+  def asyncRoute(
+    path: String,
+    stateful: Boolean = false,
+    constraints: Map[String, String => Boolean] = Map.empty
+  )(factory: RouteContext ?=> LoaderResult): Route =
     Route(
       path = path,
       load = ctx => normalize(factory(using ctx), ctx),
-      stateful = stateful
+      stateful = stateful,
+      constraints = constraints
     )
+
+  def localized(path: String, stateful: Boolean = false)(factory: (Language, RouteContext) => Future[Component]): Route =
+    route(
+      path = LocalizedRoute.routePath(path),
+      stateful = stateful,
+      constraints = Map(LocalizedRoute.languageParam -> Language.isSupported)
+    ) { ctx =>
+      ctx.language match {
+        case Some(language) => factory(language, ctx)
+        case None => Future.failed(new IllegalStateException(s"Missing valid language for route ${ctx.fullPath}"))
+      }
+    }
 
   def page(render: RouteContext ?=> Unit): Factory =
     new Factory(context => render(using context))
@@ -123,10 +149,10 @@ object RouteMatcher {
   private def resolveRoute(parentPath: String, route: Route, targetPath: String): Option[List[RouteMatch]] = {
     val routePath = join(parentPath, route.path)
 
-    if (!prefixMatches(routePath, targetPath)) {
+    if (!prefixMatches(route, routePath, targetPath)) {
       None
     } else {
-      matches(routePath, targetPath) match {
+      matches(route, routePath, targetPath) match {
         case Some(params) =>
           Some(List(RouteMatch(route, routePath, params)))
 
@@ -141,28 +167,38 @@ object RouteMatcher {
     }
   }
 
-  private def matches(routePath: String, requestPath: String): Option[Map[String, String]] = {
+  private def matches(route: Route, routePath: String, requestPath: String): Option[Map[String, String]] = {
     val routeSegments = segments(normalize(routePath))
     val requestSegments = segments(normalize(requestPath))
 
     val wildcardIndex = routeSegments.indexOf("*")
     if (wildcardIndex >= 0) {
-      matchSegments(routeSegments.take(wildcardIndex), requestSegments.take(wildcardIndex))
+      matchSegments(routeSegments.take(wildcardIndex), requestSegments.take(wildcardIndex), route.constraints)
         .filter(_ => requestSegments.length >= wildcardIndex)
         .map(_ + ("*" -> requestSegments.drop(wildcardIndex).map(decode).mkString("/")))
     } else if (routeSegments.length != requestSegments.length) {
       None
     } else {
-      matchSegments(routeSegments, requestSegments)
+      matchSegments(routeSegments, requestSegments, route.constraints)
     }
   }
 
-  private def matchSegments(routeSegments: Vector[String], requestSegments: Vector[String]): Option[Map[String, String]] =
+  private def matchSegments(
+    routeSegments: Vector[String],
+    requestSegments: Vector[String],
+    constraints: Map[String, String => Boolean]
+  ): Option[Map[String, String]] =
     routeSegments.zip(requestSegments).foldLeft(Option(Map.empty[String, String])) {
         case (None, _) => None
         case (Some(params), (routeSegment, requestSegment)) =>
           if (routeSegment.startsWith(":") && routeSegment.length > 1) {
-            Some(params.updated(routeSegment.drop(1), decode(requestSegment)))
+            val name = routeSegment.drop(1)
+            val value = decode(requestSegment)
+            if (constraints.get(name).forall(_(value))) {
+              Some(params.updated(name, value))
+            } else {
+              None
+            }
           } else if (routeSegment == requestSegment) {
             Some(params)
           } else {
@@ -170,7 +206,7 @@ object RouteMatcher {
           }
     }
 
-  private def prefixMatches(routePath: String, requestPath: String): Boolean = {
+  private def prefixMatches(route: Route, routePath: String, requestPath: String): Boolean = {
     val routeSegments = segments(normalize(routePath))
     val requestSegments = segments(normalize(requestPath))
 
@@ -179,7 +215,12 @@ object RouteMatcher {
       (requestSegments.length >= routeSegments.length &&
         routeSegments.zip(requestSegments).forall {
           case (routeSegment, requestSegment) =>
-            routeSegment.startsWith(":") || routeSegment == requestSegment
+            if (routeSegment.startsWith(":") && routeSegment.length > 1) {
+              val name = routeSegment.drop(1)
+              route.constraints.get(name).forall(_(decode(requestSegment)))
+            } else {
+              routeSegment == requestSegment
+            }
         })
   }
 

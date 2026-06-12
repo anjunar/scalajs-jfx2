@@ -81,22 +81,30 @@ final class Tabs(
     div {
       addClass("jfx-tabs__content")
 
-      observeRender($renderVersionProperty) { _ =>
-        $renderModeProperty.get match {
+      observeRender($renderModeProperty) { renderMode =>
+        renderMode match {
           case Tabs.RenderMode.ActiveOnly =>
-            activeTab.foreach { tab =>
-              tab.render(summon[Component])
+            observeRender($renderVersionProperty) { _ =>
+              activeTab.foreach { tab =>
+                tab.render(summon[Component])
+              }
             }
           case Tabs.RenderMode.KeepMountedHidden =>
-            $tabsProperty.get.zipWithIndex.foreach { case (tab, index) =>
-              div {
-                addClass("jfx-tabs__panel")
-                if (index != selectedIndex) {
-                  style {
-                    display = "none"
+            observeRender($tabsProperty.asProperty) { tabs =>
+              tabs.zipWithIndex.foreach { case (tab, index) =>
+                val visibleDisplay =
+                  $selectedIndexProperty.map { currentIndex =>
+                    if (normalizedIndex(currentIndex) == index) ""
+                    else "none"
                   }
+
+                div {
+                  addClass("jfx-tabs__panel")
+                  style {
+                    display = visibleDisplay
+                  }
+                  tab.render(summon[Component])
                 }
-                tab.render(summon[Component])
               }
             }
         }

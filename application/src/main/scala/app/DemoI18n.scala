@@ -22,6 +22,18 @@ object DemoI18n {
       case _ => German
     })
 
+  def syncFromLanguage(language: jfx.router.Language): Unit =
+    localeProperty.set(language match {
+      case jfx.router.Language.German => German
+      case _ => English
+    })
+
+  def currentLanguage: jfx.router.Language =
+    localeProperty.get match {
+      case German => jfx.router.Language.German
+      case _ => jfx.router.Language.English
+    }
+
   def text(message: RuntimeMessage): ReadOnlyProperty[String] =
     resolver.resolve(message, localeProperty)
 

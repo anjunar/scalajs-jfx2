@@ -22,9 +22,8 @@ import jfx.layout.Viewport.*
 import jfx.layout.Viewport
 import jfx.layout.HorizontalLine.horizontalLine
 import jfx.router.Route
-import jfx.router.Route.route
+import jfx.router.Route.{localized, route}
 import jfx.router.Router.router
-import jfx.router.RouterConfig
 import jfx.ssr.Ssr
 import org.scalajs.dom
 import org.scalajs.dom.HTMLElement
@@ -52,6 +51,10 @@ object Main {
     DomainRegistry.init()
     val maybeRoot = Option(dom.document.getElementById("root")).map(_.asInstanceOf[HTMLElement])
     val initialPath = s"${dom.window.location.pathname}${dom.window.location.search}"
+    DemoI18n.syncFromLanguage(DemoRoutes.languageFromUrl(initialPath).getOrElse(jfx.router.Language.default))
+    dom.window.addEventListener("popstate", _ =>
+      DemoI18n.syncFromLanguage(DemoRoutes.languageFromUrl(s"${dom.window.location.pathname}${dom.window.location.search}").getOrElse(jfx.router.Language.default))
+    )
 
     maybeRoot match {
       case Some(root) if root.children.length > 0 =>
@@ -78,6 +81,7 @@ object Main {
 
   @JSExportTopLevel("renderSsr")
   def renderSsr(path: String): js.Promise[String] = {
+    DemoI18n.syncFromLanguage(DemoRoutes.languageFromUrl(path).getOrElse(jfx.router.Language.default))
     Ssr.renderToStringAsync {
       demo(path)
     }
@@ -85,32 +89,57 @@ object Main {
 
   private def demo(initialPath: String = "/") = {
     val routes = Seq(
-      route("/") { _ => routePage { OverviewPage.render() } },
-      route("/button") { _ => routePage { ButtonPage.render() } },
-      route("/input") { _ => routePage { InputPage.render() } },
-      route("/combo-box") { _ => routePage { ComboBoxPage.render() } },
-      route("/carousel") { _ => routePage { CarouselPage.render() } },
-      route("/table-view", stateful = true) { _ =>
+      route(DemoRoutes.homePath) { _ => routePage { OverviewPage.render() } },
+      localized(DemoRoutes.homePath) { (_, _) => routePage { OverviewPage.render() } },
+      route(DemoRoutes.buttonPath) { _ => routePage { ButtonPage.render() } },
+      localized(DemoRoutes.buttonPath) { (_, _) => routePage { ButtonPage.render() } },
+      route(DemoRoutes.inputPath) { _ => routePage { InputPage.render() } },
+      localized(DemoRoutes.inputPath) { (_, _) => routePage { InputPage.render() } },
+      route(DemoRoutes.comboBoxPath) { _ => routePage { ComboBoxPage.render() } },
+      localized(DemoRoutes.comboBoxPath) { (_, _) => routePage { ComboBoxPage.render() } },
+      route(DemoRoutes.carouselPath) { _ => routePage { CarouselPage.render() } },
+      localized(DemoRoutes.carouselPath) { (_, _) => routePage { CarouselPage.render() } },
+      route(DemoRoutes.tableViewPath, stateful = true) { _ =>
         val books = TableViewPage.createRemoteBooks(pageSize = 50)
 
         books.reload(TableViewPage.ShowcaseBookQuery.first(50)).toFuture.map { _ =>
           tableViewPage(books)
         }
       },
-      route("/data-grid", stateful = true) { _ =>
+      localized(DemoRoutes.tableViewPath, stateful = true) { (_, _) =>
+        val books = TableViewPage.createRemoteBooks(pageSize = 50)
+
+        books.reload(TableViewPage.ShowcaseBookQuery.first(50)).toFuture.map { _ =>
+          tableViewPage(books)
+        }
+      },
+      route(DemoRoutes.dataGridPath, stateful = true) { _ =>
         val tiles = DataGridPage.createRemoteTiles(pageSize = 24)
 
         tiles.reload(DataGridPage.ShowcaseTileQuery.first(24)).toFuture.map { _ =>
           dataGridPage(tiles)
         }
       },
-      route("/virtual-list") { _ => routePage { VirtualListViewPage.render() } },
-      route("/layout") { _ => routePage { LayoutPage.render() } },
-      route("/window", stateful = true) { _ => routePage { WindowPage.render() } },
-      route("/domain") { _ => routePage { DomainPage.render() } },
-      route("/image") { _ => routePage { ImagePage.render() } },
-      route("/image-cropper") { _ => routePage { ImageCropperPage.render() } },
-      route("/editor", stateful = true) { _ =>
+      localized(DemoRoutes.dataGridPath, stateful = true) { (_, _) =>
+        val tiles = DataGridPage.createRemoteTiles(pageSize = 24)
+
+        tiles.reload(DataGridPage.ShowcaseTileQuery.first(24)).toFuture.map { _ =>
+          dataGridPage(tiles)
+        }
+      },
+      route(DemoRoutes.virtualListPath) { _ => routePage { VirtualListViewPage.render() } },
+      localized(DemoRoutes.virtualListPath) { (_, _) => routePage { VirtualListViewPage.render() } },
+      route(DemoRoutes.layoutPath) { _ => routePage { LayoutPage.render() } },
+      localized(DemoRoutes.layoutPath) { (_, _) => routePage { LayoutPage.render() } },
+      route(DemoRoutes.windowPath, stateful = true) { _ => routePage { WindowPage.render() } },
+      localized(DemoRoutes.windowPath, stateful = true) { (_, _) => routePage { WindowPage.render() } },
+      route(DemoRoutes.domainPath) { _ => routePage { DomainPage.render() } },
+      localized(DemoRoutes.domainPath) { (_, _) => routePage { DomainPage.render() } },
+      route(DemoRoutes.imagePath) { _ => routePage { ImagePage.render() } },
+      localized(DemoRoutes.imagePath) { (_, _) => routePage { ImagePage.render() } },
+      route(DemoRoutes.imageCropperPath) { _ => routePage { ImageCropperPage.render() } },
+      localized(DemoRoutes.imageCropperPath) { (_, _) => routePage { ImageCropperPage.render() } },
+      route(DemoRoutes.editorPath, stateful = true) { _ =>
         val draft = createEditorDraft()
 
         sleep(350) {
@@ -119,8 +148,19 @@ object Main {
           }
         }.toFuture
       },
-      route("/hydration-repro") { _ => routePage { HydrationReproPage.render() } },
-      route("/memory-leak-test") { _ => routePage { MemoryLeakTestPage.render() } }
+      localized(DemoRoutes.editorPath, stateful = true) { (_, _) =>
+        val draft = createEditorDraft()
+
+        sleep(350) {
+          routeComponent {
+            EditorPage.render(draft)
+          }
+        }.toFuture
+      },
+      route(DemoRoutes.hydrationReproPath) { _ => routePage { HydrationReproPage.render() } },
+      localized(DemoRoutes.hydrationReproPath) { (_, _) => routePage { HydrationReproPage.render() } },
+      route(DemoRoutes.memoryLeakTestPath) { _ => routePage { MemoryLeakTestPage.render() } },
+      localized(DemoRoutes.memoryLeakTestPath) { (_, _) => routePage { MemoryLeakTestPage.render() } }
     )
 
     div {
@@ -142,30 +182,30 @@ object Main {
             div {
               classes = Seq("app-sidebar__nav")
               sidebarSection(i18n"Welcome")
-              navLink("/", i18n"Discover", i18n"The JFX2 vision")
+              navLink(DemoRoutes.homePath, i18n"Discover", i18n"The JFX2 vision")
               
               sidebarSection(i18n"Interaction")
-              navLink("/button", i18n"Actions", i18n"The pulse of the app")
-              navLink("/image", i18n"Images", i18n"Visual identity")
-              navLink("/image-cropper", i18n"ImageCropper", i18n"Upload & crop")
-              navLink("/carousel", i18n"Carousel", i18n"Looping slides with SSR-visible states")
+              navLink(DemoRoutes.buttonPath, i18n"Actions", i18n"The pulse of the app")
+              navLink(DemoRoutes.imagePath, i18n"Images", i18n"Visual identity")
+              navLink(DemoRoutes.imageCropperPath, i18n"ImageCropper", i18n"Upload & crop")
+              navLink(DemoRoutes.carouselPath, i18n"Carousel", i18n"Looping slides with SSR-visible states")
               
               sidebarSection(i18n"Conversation")
-              navLink("/input", i18n"Forms", i18n"Natural dialogue")
-              navLink("/combo-box", i18n"ComboBox", i18n"Elegant selection")
-              navLink("/editor", i18n"Editor", i18n"Lexical playground")
-              navLink("/hydration-repro", i18n"Hydration", i18n"Direct-load editor repro")
-              navLink("/memory-leak-test", i18n"Memory Test", i18n"Editor lifecycle stress")
+              navLink(DemoRoutes.inputPath, i18n"Forms", i18n"Natural dialogue")
+              navLink(DemoRoutes.comboBoxPath, i18n"ComboBox", i18n"Elegant selection")
+              navLink(DemoRoutes.editorPath, i18n"Editor", i18n"Lexical playground")
+              navLink(DemoRoutes.hydrationReproPath, i18n"Hydration", i18n"Direct-load editor repro")
+              navLink(DemoRoutes.memoryLeakTestPath, i18n"Memory Test", i18n"Editor lifecycle stress")
               
               sidebarSection(i18n"Architecture")
-              navLink("/layout", i18n"Layout", i18n"Room for design")
-              navLink("/window", i18n"Windows", i18n"Room for focus")
+              navLink(DemoRoutes.layoutPath, i18n"Layout", i18n"Room for design")
+              navLink(DemoRoutes.windowPath, i18n"Windows", i18n"Room for focus")
 
               sidebarSection(i18n"Knowledge")
-              navLink("/table-view", i18n"Data", i18n"Breathing and flowing")
-              navLink("/data-grid", i18n"DataGrid", i18n"Virtual cards at scale")
-              navLink("/virtual-list", i18n"VirtualList", i18n"Endless expanses")
-              navLink("/domain", i18n"Domain", i18n"Mapping & reflection")
+              navLink(DemoRoutes.tableViewPath, i18n"Data", i18n"Breathing and flowing")
+              navLink(DemoRoutes.dataGridPath, i18n"DataGrid", i18n"Virtual cards at scale")
+              navLink(DemoRoutes.virtualListPath, i18n"VirtualList", i18n"Endless expanses")
+              navLink(DemoRoutes.domainPath, i18n"Domain", i18n"Mapping & reflection")
             }
             
             div {
@@ -213,7 +253,7 @@ object Main {
                 button() {
                   classes = Seq("app-toolbar__choice")
                   text = DemoI18n.localeLabel
-                  onClick { _ => DemoI18n.toggle() }
+                  onClick { _ => DemoRoutes.switchLanguage() }
                 }
               }
               hbox {
@@ -304,6 +344,13 @@ object Main {
 
   private def navLink(path: String, label: RuntimeMessage, sub: RuntimeMessage)(using d: Drawer) = {
     link(path) {
+      attribute(
+        "href",
+        DemoI18n.localeProperty.map {
+          case DemoI18n.German => DemoRoutes.localizedPath(path, jfx.router.Language.German)
+          case _ => DemoRoutes.localizedPath(path, jfx.router.Language.English)
+        }
+      )
       classes = Seq("app-nav-link")
       div {
         classes = Seq("app-nav-link__label")

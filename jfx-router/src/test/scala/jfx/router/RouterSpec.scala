@@ -2,7 +2,7 @@ package jfx.router
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import jfx.router.Route.{component, route}
+import jfx.router.Route.{component, localized, route}
 import jfx.layout.Div.div
 import jfx.core.component.Component.*
 import jfx.ssr.Ssr
@@ -70,6 +70,87 @@ class RouterSpec extends AnyFlatSpec with Matchers {
     
     val match2 = RouteMatcher.resolve(routes, "/scalajs-jfx2/about")
     // Should not match if "/about" is not defined, but here we just check normalization
+  }
+
+  it should "resolve localized routes with typed languages" in {
+    val routes = Seq(
+      localized("/blog") { (language, ctx) =>
+        Future.successful(component {
+          div {
+            text = s"${language.code}:${ctx.language.map(_.code).getOrElse("missing")}"
+          }
+        })
+      }
+    )
+
+    val germanHtml = Ssr.renderToString {
+      Router.router(routes, "/de/blog")
+    }
+    germanHtml should include ("de:de")
+
+    val englishHtml = Ssr.renderToString {
+      Router.router(routes, "/en/blog")
+    }
+    englishHtml should include ("en:en")
+
+    val frenchHtml = Ssr.renderToString {
+      Router.router(routes, "/fr/blog")
+    }
+    frenchHtml should include ("fr:fr")
+  }
+
+  it should "reject unsupported languages for localized routes" in {
+    val routes = Seq(
+      localized("/blog") { (language, _) =>
+        Future.successful(component {
+          div {
+            text = language.code
+          }
+        })
+      }
+    )
+
+    RouteMatcher.resolve(routes, "/xx/blog") shouldBe Nil
+
+    val html = Ssr.renderToString {
+      Router.router(routes, "/xx/blog")
+    }
+    html should include ("No route matched for: /xx/blog")
+  }
+
+  it should "build localized paths consistently" in {
+    LocalizedRoute.path(Language.German, "/blog") shouldBe "/de/blog"
+    LocalizedRoute.path(Language.German, "blog") shouldBe "/de/blog"
+    LocalizedRoute.path(Language.German, "/") shouldBe "/de"
+  }
+
+  it should "keep existing non-localized routes working" in {
+    val routes = Seq(
+      route("/blog") { _ =>
+        Future.successful(component {
+          div {
+            text = "plain-blog"
+          }
+        })
+      },
+      localized("/blog") { (language, _) =>
+        Future.successful(component {
+          div {
+            text = s"localized-${language.code}"
+          }
+        })
+      }
+    )
+
+    val plainHtml = Ssr.renderToString {
+      Router.router(routes, "/blog")
+    }
+    plainHtml should include ("plain-blog")
+
+    val localizedHtml = Ssr.renderToString {
+      Router.router(routes, "/de/blog")
+    }
+    localizedHtml should include ("localized-de")
   }
 
   "Router" should "render correctly in SSR" in {
