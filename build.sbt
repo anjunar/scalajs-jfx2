@@ -1,22 +1,27 @@
 import org.scalajs.linker.interface.{ESVersion, ModuleKind}
 import org.scalajs.sbtplugin.ScalaJSPlugin
 
-ThisBuild / version := "2.3.0-SNAPSHOT"
-ThisBuild / organization := "com.anjunar"
-ThisBuild / organizationName := "Anjunar"
-ThisBuild / organizationHomepage := Some(url("https://github.com/anjunar"))
-ThisBuild / scalaVersion := "3.3.7"
-ThisBuild / homepage := Some(url("https://github.com/anjunar/scalajs-jfx2"))
-ThisBuild / description := "Reactive UI framework for Scala.js with lifecycle control, typed forms, routing, tables, and a composable DSL."
-ThisBuild / licenses := Seq("MIT" -> url("https://opensource.org/licenses/MIT"))
-ThisBuild / scmInfo := Some(
+version := "2.3.0"
+organization := "com.anjunar"
+organizationName := "Anjunar"
+organizationHomepage := Some(url("https://github.com/anjunar"))
+
+scalaVersion := "3.3.8"
+
+homepage := Some(url("https://github.com/anjunar/scalajs-jfx2"))
+description := "Reactive UI framework for Scala.js with lifecycle control, typed forms, routing, tables, and a composable DSL."
+
+licenses := Seq(License.MIT)
+
+scmInfo := Some(
   ScmInfo(
     url("https://github.com/anjunar/scalajs-jfx2"),
     "scm:git:https://github.com/anjunar/scalajs-jfx2.git",
     Some("scm:git:git@github.com:anjunar/scalajs-jfx2.git")
   )
 )
-ThisBuild / developers := List(
+
+developers := List(
   Developer(
     id = "anjunar",
     name = "Patrick Bittner",
@@ -24,15 +29,18 @@ ThisBuild / developers := List(
     url = url("https://github.com/anjunar")
   )
 )
-ThisBuild / versionScheme := Some("early-semver")
-ThisBuild / pomIncludeRepository := { _ => false }
-ThisBuild / publishMavenStyle := true
-ThisBuild / publishTo := {
-  if (isSnapshot.value) {
-    Some("central-snapshots" at "https://central.sonatype.com/repository/maven-snapshots/")
-  } else {
+
+versionScheme := Some("early-semver")
+
+pomIncludeRepository := { _ => false }
+publishMavenStyle := true
+
+publishTo := {
+  val centralSnapshots = "https://central.sonatype.com/repository/maven-snapshots/"
+  if version.value.endsWith("-SNAPSHOT") then
+    Some("central-snapshots" at centralSnapshots)
+  else
     localStaging.value
-  }
 }
 
 lazy val commonJsSettings = Seq(
@@ -44,9 +52,13 @@ lazy val commonJsSettings = Seq(
 
 lazy val commonLibrarySettings = Seq(
   Compile / doc / sources := Seq.empty,
-  Compile / packageDoc / mappings += (LocalRootProject / baseDirectory).value / "README.md" -> "README.md",
-  libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.8.1",
-  libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.19" % Test
+  Compile / packageDoc / mappings += {
+    val converter = fileConverter.value
+    val readme = ((LocalRootProject / baseDirectory).value / "README.md").toPath
+    converter.toVirtualFile(readme) -> "README.md"
+  },
+  libraryDependencies += "org.scala-js" %% "scalajs-dom" % "2.8.1",
+  libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.19" % Test
 )
 
 lazy val jfxCore = Project(id = "scalajs-jfx2-core", base = file("jfx-core"))
@@ -54,7 +66,7 @@ lazy val jfxCore = Project(id = "scalajs-jfx2-core", base = file("jfx-core"))
   .settings(
     name := "scalajs-jfx2-core",
     moduleName := "scalajs-jfx2-core",
-    libraryDependencies += "com.anjunar" %%% "scala-reflect" % "1.1.2"
+    libraryDependencies += "com.anjunar" %% "scala-reflect" % "1.1.2"
   )
   .settings(commonLibrarySettings)
   .settings(commonJsSettings)
@@ -95,7 +107,7 @@ lazy val jfxJson = Project(id = "scalajs-jfx2-json", base = file("jfx-json"))
   .settings(
     name := "scalajs-jfx2-json",
     moduleName := "scalajs-jfx2-json",
-    libraryDependencies += "com.anjunar" %%% "scala-reflect" % "1.1.2"
+    libraryDependencies += "com.anjunar" %% "scala-reflect" % "1.1.2"
   )
   .settings(commonLibrarySettings)
   .settings(commonJsSettings)
@@ -126,7 +138,7 @@ lazy val jfxEditor = Project(id = "scalajs-jfx2-editor", base = file("jfx-editor
   .settings(
     name := "scalajs-jfx2-editor",
     moduleName := "scalajs-jfx2-editor",
-    libraryDependencies += "com.anjunar" %%% "scalajs-lexical" % "1.2.3"
+    libraryDependencies += "com.anjunar" %% "scalajs-lexical" % "1.3.0"
   )
   .settings(commonLibrarySettings)
   .settings(commonJsSettings)
@@ -153,7 +165,18 @@ lazy val jfxSsr = Project(id = "scalajs-jfx2-ssr", base = file("jfx-ssr"))
 
 lazy val app = Project(id = "scalajs-jfx2-demo", base = file("application"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(jfxCore, jfxRouter, jfxViewport, jfxI18n, jfxJson, jfxControls, jfxForms, jfxEditor, jfxWebAuthn, jfxSsr)
+  .dependsOn(
+    jfxCore,
+    jfxRouter,
+    jfxViewport,
+    jfxI18n,
+    jfxJson,
+    jfxControls,
+    jfxForms,
+    jfxEditor,
+    jfxWebAuthn,
+    jfxSsr
+  )
   .settings(
     scalaJSUseMainModuleInitializer := false,
     publish / skip := true
@@ -161,7 +184,19 @@ lazy val app = Project(id = "scalajs-jfx2-demo", base = file("application"))
   .settings(commonJsSettings)
 
 lazy val root = Project(id = "scalajs-jfx2-root", base = file("."))
-  .aggregate(jfxCore, jfxRouter, jfxViewport, jfxI18n, jfxJson, jfxControls, jfxForms, jfxEditor, jfxWebAuthn, jfxSsr, app)
+  .aggregate(
+    jfxCore,
+    jfxRouter,
+    jfxViewport,
+    jfxI18n,
+    jfxJson,
+    jfxControls,
+    jfxForms,
+    jfxEditor,
+    jfxWebAuthn,
+    jfxSsr,
+    app
+  )
   .settings(
     publish / skip := true
   )

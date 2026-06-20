@@ -5,8 +5,8 @@ WebAuthn provides browser facades and high-level helpers for passkey registratio
 ## Install
 
 ```scala
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.2.9"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-webauthn" % "2.2.9"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.3.0"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-webauthn" % "2.3.0"
 ```
 
 ## What It Covers

@@ -12,7 +12,7 @@ $ErrorActionPreference = "Stop"
 
 function Get-BuildVersion {
     $buildSbt = Join-Path $PSScriptRoot "..\\build.sbt"
-    $match = Select-String -Path $buildSbt -Pattern 'ThisBuild\s*/\s*version\s*:=\s*"([^"]+)"' | Select-Object -First 1
+    $match = Select-String -Path $buildSbt -Pattern 'version\s*:=\s*"([^"]+)"' | Select-Object -First 1
     if (-not $match) {
         throw "Konnte Version aus build.sbt nicht lesen."
     }

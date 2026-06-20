@@ -237,8 +237,8 @@ object Main {
                 attribute("rel", "noopener noreferrer")
                 image {
                   classes = Seq("app-toolbar__scala-badge")
-                  src = "https://img.shields.io/badge/Scala.js-1.21.0-DC322F.svg?logo=scala&logoColor=white"
-                  alt = "Scala.js 1.21.0"
+                  src = "https://www.scala-js.org/assets/badges/scalajs-1.22.0.svg?logo=scala&logoColor=white"
+                  alt = "Scala.js 1.22.0"
                 }
               }
               box("a") {
@@ -273,7 +273,7 @@ object Main {
               }
               div {
                 classes = Seq("app-toolbar__version")
-                text = DemoI18n.text(i18n"v2.2.9")
+                text = DemoI18n.text(i18n"v2.3.0")
               }
             }
 

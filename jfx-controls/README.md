@@ -5,9 +5,9 @@ Controls contains reusable UI components that are not form fields: links, images
 ## Install
 
 ```scala
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.2.9"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-router" % "2.2.9"
-libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-controls" % "2.2.9"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-core" % "2.3.0"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-router" % "2.3.0"
+libraryDependencies += "com.anjunar" %%% "scalajs-jfx2-controls" % "2.3.0"
 ```
 
 ## Link
