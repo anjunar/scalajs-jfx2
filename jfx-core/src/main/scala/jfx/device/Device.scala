@@ -17,13 +17,12 @@ final class Device extends Component {
 }
 
 object Device {
-  enum Mode(val cookieValue: String) {
-    case Mobile extends Mode("mobile")
-    case Desktop extends Mode("desktop")
+  enum Mode {
+    case Mobile
+    case Desktop
   }
 
-  private val cookieName = "jfx-device"
-  private val viewportBreakpointPx = 720
+  private val mobileCookieName = "mobile"
 
   val modeProperty: Property[Mode] = Property(resolveInitialMode())
   val isMobileProperty: ReadOnlyProperty[Boolean] = modeProperty.map(_ == Mode.Mobile)
@@ -43,28 +42,27 @@ object Device {
 
   def isDesktop: Boolean = mode == Mode.Desktop
 
-  def set(mode: Mode): Unit = {
+  def set(mode: Mode): Unit =
     modeProperty.set(mode)
-    persistCookie(mode)
-  }
 
-  private[device] def syncFromEnvironment(): Unit = {
-    val next = resolveCurrentMode()
-    modeProperty.set(next)
-    persistCookie(next)
-  }
+  private[device] def syncFromEnvironment(): Unit =
+    modeProperty.set(resolveCurrentMode())
 
   private def resolveInitialMode(): Mode =
     resolveCurrentMode()
 
-  private def resolveCurrentMode(): Mode = {
-    currentCookieMode()
-      .orElse(browserViewportMode())
+  private def resolveCurrentMode(): Mode =
+    currentCookieMobile()
+      .map {
+        case true  => Mode.Mobile
+        case false => Mode.Desktop
+      }
       .getOrElse(Mode.Desktop)
-  }
 
-  private def currentCookieMode(): Option[Mode] =
-    currentCookieString().flatMap(parseCookieHeader)
+  private def currentCookieMobile(): Option[Boolean] =
+    currentCookieString()
+      .flatMap(cookieValue(_, mobileCookieName))
+      .flatMap(parseBoolean)
 
   private def currentCookieString(): Option[String] =
     SsrContext.currentCookie.orElse(browserCookieString())
@@ -76,36 +74,24 @@ object Device {
       None
     }
 
-  private def browserViewportMode(): Option[Mode] =
-    if (isBrowser) {
-      Option.when(dom.window.innerWidth.toDouble <= viewportBreakpointPx)(Mode.Mobile).orElse(Some(Mode.Desktop))
-    } else {
-      None
-    }
-
-  private def persistCookie(mode: Mode): Unit = {
-    if (isBrowser) {
-      val cookie = s"$cookieName=${mode.cookieValue}; path=/; max-age=31536000; samesite=lax"
-      dom.document.cookie = cookie
-    }
-  }
-
-  private def parseCookieHeader(cookieHeader: String): Option[Mode] =
+  private def cookieValue(cookieHeader: String, name: String): Option[String] =
     cookieHeader
       .split(";")
       .iterator
       .map(_.trim)
       .collectFirst {
-        case entry if entry.startsWith(s"$cookieName=") =>
-          parseCookieValue(entry.drop(cookieName.length + 1))
+        case entry if entry.startsWith(s"$name=") =>
+          entry.drop(name.length + 1)
       }
-      .flatten
 
-  private def parseCookieValue(value: String): Option[Mode] =
+  private def parseBoolean(value: String): Option[Boolean] =
     value.trim.toLowerCase match {
-      case "mobile" | "m"   => Some(Mode.Mobile)
-      case "desktop" | "d"  => Some(Mode.Desktop)
-      case _                => None
+      case "true" | "1" | "yes" | "y" | "mobile" | "m" =>
+        Some(true)
+      case "false" | "0" | "no" | "n" =>
+        Some(false)
+      case _ =>
+        None
     }
 
   private def isBrowser: Boolean =
