@@ -1,7 +1,7 @@
 import org.scalajs.linker.interface.{ESVersion, ModuleKind}
 import org.scalajs.sbtplugin.ScalaJSPlugin
 
-version := "2.3.0"
+version := "2.3.1-SNAPSHOT"
 organization := "com.anjunar"
 organizationName := "Anjunar"
 organizationHomepage := Some(url("https://github.com/anjunar"))
@@ -66,7 +66,7 @@ lazy val jfxCore = Project(id = "scalajs-jfx2-core", base = file("jfx-core"))
   .settings(
     name := "scalajs-jfx2-core",
     moduleName := "scalajs-jfx2-core",
-    libraryDependencies += "com.anjunar" %% "scala-reflect" % "1.1.2"
+    libraryDependencies += "com.anjunar" %% "scala-reflect" % "1.1.3"
   )
   .settings(commonLibrarySettings)
   .settings(commonJsSettings)
@@ -107,7 +107,7 @@ lazy val jfxJson = Project(id = "scalajs-jfx2-json", base = file("jfx-json"))
   .settings(
     name := "scalajs-jfx2-json",
     moduleName := "scalajs-jfx2-json",
-    libraryDependencies += "com.anjunar" %% "scala-reflect" % "1.1.2"
+    libraryDependencies += "com.anjunar" %% "scala-reflect" % "1.1.3"
   )
   .settings(commonLibrarySettings)
   .settings(commonJsSettings)

@@ -8,6 +8,7 @@ import jfx.control.{TableColumn, TableView}
 import jfx.core.component.Box.box
 import jfx.core.component.Component
 import jfx.core.component.Component.*
+import jfx.device.Device
 import jfx.core.state.{ListProperty, Property}
 import jfx.dsl.*
 import jfx.form.Input.*
@@ -163,134 +164,136 @@ object Main {
       localized(DemoRoutes.memoryLeakTestPath) { (_, _) => routePage { MemoryLeakTestPage.render() } }
     )
 
-    div {
-      classes = Seq("app-shell")
+    Device.device {
+      div {
+        classes = Seq("app-shell")
 
-      drawer {
-        classes = Seq("app-shell-drawer")
-        open = true
+        drawer {
+          classes = Seq("app-shell-drawer")
+          open = true
 
-        drawerNavigation {
-          div {
-            classes = Seq("app-sidebar")
+          drawerNavigation {
+            div {
+              classes = Seq("app-sidebar")
             
-            div {
-              classes = Seq("app-sidebar__header")
-              div { classes = Seq("app-sidebar__logo"); text = DemoI18n.text(i18n"JFX2 API") }
-            }
+              div {
+                classes = Seq("app-sidebar__header")
+                div { classes = Seq("app-sidebar__logo"); text = DemoI18n.text(i18n"JFX2 API") }
+              }
 
-            div {
-              classes = Seq("app-sidebar__nav")
-              sidebarSection(i18n"Welcome")
-              navLink(DemoRoutes.homePath, i18n"Discover", i18n"The JFX2 vision")
+              div {
+                classes = Seq("app-sidebar__nav")
+                sidebarSection(i18n"Welcome")
+                navLink(DemoRoutes.homePath, i18n"Discover", i18n"The JFX2 vision")
               
-              sidebarSection(i18n"Interaction")
-              navLink(DemoRoutes.buttonPath, i18n"Actions", i18n"The pulse of the app")
-              navLink(DemoRoutes.imagePath, i18n"Images", i18n"Visual identity")
-              navLink(DemoRoutes.imageCropperPath, i18n"ImageCropper", i18n"Upload & crop")
-              navLink(DemoRoutes.carouselPath, i18n"Carousel", i18n"Looping slides with SSR-visible states")
+                sidebarSection(i18n"Interaction")
+                navLink(DemoRoutes.buttonPath, i18n"Actions", i18n"The pulse of the app")
+                navLink(DemoRoutes.imagePath, i18n"Images", i18n"Visual identity")
+                navLink(DemoRoutes.imageCropperPath, i18n"ImageCropper", i18n"Upload & crop")
+                navLink(DemoRoutes.carouselPath, i18n"Carousel", i18n"Looping slides with SSR-visible states")
               
-              sidebarSection(i18n"Conversation")
-              navLink(DemoRoutes.inputPath, i18n"Forms", i18n"Natural dialogue")
-              navLink(DemoRoutes.comboBoxPath, i18n"ComboBox", i18n"Elegant selection")
-              navLink(DemoRoutes.editorPath, i18n"Editor", i18n"Lexical playground")
-              navLink(DemoRoutes.hydrationReproPath, i18n"Hydration", i18n"Direct-load editor repro")
-              navLink(DemoRoutes.memoryLeakTestPath, i18n"Memory Test", i18n"Editor lifecycle stress")
+                sidebarSection(i18n"Conversation")
+                navLink(DemoRoutes.inputPath, i18n"Forms", i18n"Natural dialogue")
+                navLink(DemoRoutes.comboBoxPath, i18n"ComboBox", i18n"Elegant selection")
+                navLink(DemoRoutes.editorPath, i18n"Editor", i18n"Lexical playground")
+                navLink(DemoRoutes.hydrationReproPath, i18n"Hydration", i18n"Direct-load editor repro")
+                navLink(DemoRoutes.memoryLeakTestPath, i18n"Memory Test", i18n"Editor lifecycle stress")
               
-              sidebarSection(i18n"Architecture")
-              navLink(DemoRoutes.layoutPath, i18n"Layout", i18n"Room for design")
-              navLink(DemoRoutes.windowPath, i18n"Windows", i18n"Room for focus")
+                sidebarSection(i18n"Architecture")
+                navLink(DemoRoutes.layoutPath, i18n"Layout", i18n"Room for design")
+                navLink(DemoRoutes.windowPath, i18n"Windows", i18n"Room for focus")
 
-              sidebarSection(i18n"Knowledge")
-              navLink(DemoRoutes.tableViewPath, i18n"Data", i18n"Breathing and flowing")
-              navLink(DemoRoutes.dataGridPath, i18n"DataGrid", i18n"Virtual cards at scale")
-              navLink(DemoRoutes.virtualListPath, i18n"VirtualList", i18n"Endless expanses")
-              navLink(DemoRoutes.domainPath, i18n"Domain", i18n"Mapping & reflection")
-            }
+                sidebarSection(i18n"Knowledge")
+                navLink(DemoRoutes.tableViewPath, i18n"Data", i18n"Breathing and flowing")
+                navLink(DemoRoutes.dataGridPath, i18n"DataGrid", i18n"Virtual cards at scale")
+                navLink(DemoRoutes.virtualListPath, i18n"VirtualList", i18n"Endless expanses")
+                navLink(DemoRoutes.domainPath, i18n"Domain", i18n"Mapping & reflection")
+              }
             
-            div {
-              classes = Seq("app-sidebar__footer")
-              text = DemoI18n.text(i18n"Built with JFX2")
+              div {
+                classes = Seq("app-sidebar__footer")
+                text = DemoI18n.text(i18n"Built with JFX2")
+              }
             }
           }
-        }
 
-        drawerContent {
-          div {
-            classes = Seq("app-main")
+          drawerContent {
+            div {
+              classes = Seq("app-main")
             
-            div {
-              classes = Seq("app-toolbar")
-              button("menu") {
-                classes = Seq("app-toolbar__menu-toggle", "material-icons")
-                onClick { _ => toggle() }
-              }
               div {
-                classes = Seq("app-toolbar__title")
-                text = DemoI18n.text(i18n"Live Documentation")
-              }
-              div { classes = Seq("spacer"); style { flex = "1" } }
-              box("a") {
-                classes = Seq("app-toolbar__scala-link")
-                attribute("href", "https://www.scala-js.org/")
-                attribute("target", "_blank")
-                attribute("rel", "noopener noreferrer")
-                image {
-                  classes = Seq("app-toolbar__scala-badge")
-                  src = "https://www.scala-js.org/assets/badges/scalajs-1.22.0.svg?logo=scala&logoColor=white"
-                  alt = "Scala.js 1.22.0"
+                classes = Seq("app-toolbar")
+                button("menu") {
+                  classes = Seq("app-toolbar__menu-toggle", "material-icons")
+                  onClick { _ => toggle() }
+                }
+                div {
+                  classes = Seq("app-toolbar__title")
+                  text = DemoI18n.text(i18n"Live Documentation")
+                }
+                div { classes = Seq("spacer"); style { flex = "1" } }
+                box("a") {
+                  classes = Seq("app-toolbar__scala-link")
+                  attribute("href", "https://www.scala-js.org/")
+                  attribute("target", "_blank")
+                  attribute("rel", "noopener noreferrer")
+                  image {
+                    classes = Seq("app-toolbar__scala-badge")
+                    src = "https://www.scala-js.org/assets/badges/scalajs-1.22.0.svg?logo=scala&logoColor=white"
+                    alt = "Scala.js 1.22.0"
+                  }
+                }
+                box("a") {
+                  classes = Seq("app-toolbar__github")
+                  attribute("href", "https://github.com/anjunar/scalajs-jfx2")
+                  attribute("target", "_blank")
+                  attribute("rel", "noopener noreferrer")
+                  text = DemoI18n.text(i18n"GitHub")
+                }
+                hbox {
+                  classes = "app-toolbar__chooser app-toolbar__language"
+                  button() {
+                    classes = Seq("app-toolbar__choice")
+                    text = DemoI18n.localeLabel
+                    onClick { _ => DemoRoutes.switchLanguage() }
+                  }
+                }
+                hbox {
+                  classes = "app-toolbar__chooser app-toolbar__theme"
+                  button() {
+                    classes = Seq("app-toolbar__choice")
+                    text = DemoI18n.text(i18n"Light")
+                    classIf("is-active", Theme.modeProperty.map(_ == Mode.Light))
+                    onClick { _ => Theme.set(Mode.Light) }
+                  }
+                  button() {
+                    classes = Seq("app-toolbar__choice")
+                    text = DemoI18n.text(i18n"Dark")
+                    classIf("is-active", Theme.modeProperty.map(_ == Mode.Dark))
+                    onClick { _ => Theme.set(Mode.Dark) }
+                  }
+                }
+                div {
+                  classes = Seq("app-toolbar__version")
+                  text = DemoI18n.text(i18n"v2.3.0")
                 }
               }
-              box("a") {
-                classes = Seq("app-toolbar__github")
-                attribute("href", "https://github.com/anjunar/scalajs-jfx2")
-                attribute("target", "_blank")
-                attribute("rel", "noopener noreferrer")
-                text = DemoI18n.text(i18n"GitHub")
-              }
-              hbox {
-                classes = "app-toolbar__chooser app-toolbar__language"
-                button() {
-                  classes = Seq("app-toolbar__choice")
-                  text = DemoI18n.localeLabel
-                  onClick { _ => DemoRoutes.switchLanguage() }
-                }
-              }
-              hbox {
-                classes = "app-toolbar__chooser app-toolbar__theme"
-                button() {
-                  classes = Seq("app-toolbar__choice")
-                  text = DemoI18n.text(i18n"Light")
-                  classIf("is-active", Theme.modeProperty.map(_ == Mode.Light))
-                  onClick { _ => Theme.set(Mode.Light) }
-                }
-                button() {
-                  classes = Seq("app-toolbar__choice")
-                  text = DemoI18n.text(i18n"Dark")
-                  classIf("is-active", Theme.modeProperty.map(_ == Mode.Dark))
-                  onClick { _ => Theme.set(Mode.Dark) }
-                }
-              }
-              div {
-                classes = Seq("app-toolbar__version")
-                text = DemoI18n.text(i18n"v2.3.0")
-              }
-            }
 
-            viewport {
-              style { flex = "1"; overflow = "auto" }
-              div {
-                classes = Seq("app-content-viewport")
-                router(routes, initialPath)
+              viewport {
+                style { flex = "1"; overflow = "auto" }
+                div {
+                  classes = Seq("app-content-viewport")
+                  router(routes, initialPath)
+                }
               }
-            }
 
-            div {
-              classes = Seq("app-footer")
               div {
-                classes = Seq("app-footer__text")
-                val year = new js.Date().getFullYear().toInt
-                text = DemoI18n.text(i18n"© $year Anjunar. Pure Scala.js Architecture.")
+                classes = Seq("app-footer")
+                div {
+                  classes = Seq("app-footer__text")
+                  val year = new js.Date().getFullYear().toInt
+                  text = DemoI18n.text(i18n"© $year Anjunar. Pure Scala.js Architecture.")
+                }
               }
             }
           }
@@ -361,7 +364,7 @@ object Main {
         text = DemoI18n.text(sub)
       }
       addDisposable(host.addEventListener("click", _ => {
-        if (dom.window.innerWidth <= 720) {
+        if (Device.isMobile) {
           open = false // Close drawer after navigation only on mobile
         }
       }))

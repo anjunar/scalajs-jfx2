@@ -27,4 +27,3 @@ object SsrRequestContext {
       cookie = cookie
     ).asInstanceOf[SsrRequestContext]
 }
-

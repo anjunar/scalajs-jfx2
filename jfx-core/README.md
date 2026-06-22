@@ -153,6 +153,27 @@ drawer {
 }
 ```
 
+## Device
+
+`Device.device` provides a shared mobile/desktop mode that is resolved from cookies first so SSR and the browser see the same state.
+
+```scala
+import jfx.device.Device
+import jfx.layout.Div.div
+
+Device.device {
+  div {
+    if (Device.isMobile) {
+      text = "Mobile layout"
+    } else {
+      text = "Desktop layout"
+    }
+  }
+}
+```
+
+The current mode is also exposed as `Device.modeProperty`, so you can react anywhere in the app without tying the logic to the router.
+
 ## Statements
 
 `condition` renders one branch.

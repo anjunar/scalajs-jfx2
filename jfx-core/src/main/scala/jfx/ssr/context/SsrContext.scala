@@ -48,4 +48,3 @@ object SsrContext {
   def currentCookie: Option[String] =
     active.toOption.flatMap(_.cookie.toOption).filter(_.nonEmpty)
 }
-
